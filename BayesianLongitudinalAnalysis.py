@@ -146,8 +146,9 @@ if __name__ == '__main__':
 
 
 
+
     # save the model
-    with open(DOUBLE_RESULTS_PATH + "idata_m3.pkl", 'wb') as handle:
+    with open(DOUBLE_RESULTS_PATH + "idata_m3_"+analyzed_features+"_"+str(n)+".pkl", 'wb') as handle:
         pickle.dump(idata_m3, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     # # print rhat
@@ -159,5 +160,5 @@ if __name__ == '__main__':
           .to_array()
           .to_series()
           .plot(kind="barh"))
-    plt.savefig(DOUBLE_RESULTS_PATH + "r_hat.png")
+    plt.savefig(DOUBLE_RESULTS_PATH + "r_hat_"+analyzed_features+"_"+str(n)+".png")
 
