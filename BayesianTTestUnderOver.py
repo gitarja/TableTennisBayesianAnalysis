@@ -6,7 +6,7 @@ import pandas as pd
 import arviz as az
 import pymc as pm
 import matplotlib.pyplot as plt
-from  Double.BayesianAnalysis.OutliersLib import OutliersDetection
+from  OutliersLib import OutliersDetection
 from sklearn.linear_model import LinearRegression
 
 np.random.seed(1945)  # For Replicability

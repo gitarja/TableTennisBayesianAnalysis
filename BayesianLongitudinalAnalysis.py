@@ -1,13 +1,13 @@
 import os
 import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.dirname(__file__))
 import numpy as np
 from Validation.CrossValidation import SubjectCrossValidation, DoubleSubjectCrossValidation
 from Double.GlobalFeaturesReader import GlobalFeaturesReader, GlobalDoubleFeaturesReader
 import pandas as pd
 import pymc as pm
 import matplotlib.pyplot as plt
-from Double.BayesianAnalysis.OutliersLib import OutliersDetection
+from OutliersLib import OutliersDetection
 import arviz as az
 from Utils.Conf import DOUBLE_RESULTS_PATH, DOUBLE_FEATURES_FILE_PATH
 import pickle
@@ -132,7 +132,7 @@ if __name__ == '__main__':
         # likelihood
         outcome = pm.Binomial("y", n=n, p=growth_model, observed=df[analyzed_features].values, dims="obs")
 
-        pm.model_to_graphviz(model).view()
+        # pm.model_to_graphviz(model).view()
         idata_m3 = pm.sample_prior_predictive()
         idata_m3.extend(
             pm.sample(random_seed=100, target_accept=.8, idata_kwargs={"log_likelihood": True}, draws=5000, chains=4, tune=2000, cores=10)
@@ -145,12 +145,14 @@ if __name__ == '__main__':
     with open(DOUBLE_RESULTS_PATH + "idata_m3.pkl", 'wb') as handle:
         pickle.dump(idata_m3, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
+    # print rhat
+    az.summary(idata_m3).to_csv(DOUBLE_RESULTS_PATH + "idata_m3_summary.csv")
+
     # plot rhat
     nc_rhat = az.rhat(idata_m3)
     ax = (nc_rhat.max()
           .to_array()
           .to_series()
           .plot(kind="barh"))
-    plt.show()
-    az.plot_trace(idata_m3)
-    plt.show()
+    plt.savefig("r_hat.png")
+

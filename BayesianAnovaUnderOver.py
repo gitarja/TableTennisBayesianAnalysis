@@ -6,7 +6,7 @@ import pandas as pd
 import pymc as pm
 import matplotlib.pyplot as plt
 import scipy.stats as stats
-from Double.BayesianAnalysis.OutliersLib import OutliersDetection
+from OutliersLib import OutliersDetection
 
 np.random.seed(1945)  # For Replicability
 

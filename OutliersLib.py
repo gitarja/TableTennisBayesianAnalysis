@@ -36,6 +36,7 @@ def OutliersDetection(X, y):
     labels[(outlier_idx) & (y > mean)] = 3
     labels[(outlier_idx) & (y < mean)] = 2
 
+
     # show the linear reg
     # plt.plot(X, mean, color="black")
     # # plt.plot(X, preds.transpose(), alpha=0.01, color="C1")
