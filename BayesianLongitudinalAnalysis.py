@@ -1,8 +1,8 @@
 import os
-# This must happen before pymc is imported, so you might
-# need to restart the kernel for it to take effect.
-os.environ['MKL_NUM_THREADS'] = '1'
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
+# # This must happen before pymc is imported, so you might
+# # need to restart the kernel for it to take effect.
+# os.environ['MKL_NUM_THREADS'] = '1'
+# os.environ['OPENBLAS_NUM_THREADS'] = '1'
 import sys
 sys.path.append(os.path.dirname(__file__))
 import numpy as np

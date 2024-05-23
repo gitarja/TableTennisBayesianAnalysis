@@ -1,0 +1,7 @@
+How to solve stuck in sampling in linux
+# This must happen before pymc is imported, so you might
+# need to restart the kernel for it to take effect.
+os.environ['MKL_NUM_THREADS'] = '1'
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+
+conda install -c conda-forge "libblas=*=*mkl"
