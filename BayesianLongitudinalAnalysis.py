@@ -1,4 +1,5 @@
 import os
+os.environ['THEANO_FLAGS'] = 'mode=FAST_COMPILE'
 import sys
 sys.path.append(os.path.dirname(__file__))
 import numpy as np
@@ -12,8 +13,6 @@ from OutliersLib import OutliersDetection
 import arviz as az
 from Utils.Conf import DOUBLE_RESULTS_PATH, DOUBLE_FEATURES_FILE_PATH
 import pickle
-import multiprocessing as mp
-mp.set_start_method('forkserver')
 np.random.seed(1945)  # For Replicability
 
 if __name__ == '__main__':
