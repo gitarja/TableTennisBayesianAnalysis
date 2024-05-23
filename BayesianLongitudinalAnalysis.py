@@ -146,8 +146,8 @@ if __name__ == '__main__':
     with open(DOUBLE_RESULTS_PATH + "idata_m3.pkl", 'wb') as handle:
         pickle.dump(idata_m3, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-    # print rhat
-    az.summary(idata_m3).to_pickle(DOUBLE_RESULTS_PATH + "idata_m3_summary.pkl")
+    # # print rhat
+    # az.summary(idata_m3).to_pickle(DOUBLE_RESULTS_PATH + "idata_m3_summary.pkl")
 
     # plot rhat
     nc_rhat = az.rhat(idata_m3)
@@ -155,5 +155,5 @@ if __name__ == '__main__':
           .to_array()
           .to_series()
           .plot(kind="barh"))
-    plt.savefig("r_hat.png")
+    plt.savefig(DOUBLE_RESULTS_PATH + "r_hat.png")
 
