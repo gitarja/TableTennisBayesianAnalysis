@@ -69,11 +69,11 @@ if __name__ == '__main__':
 
     coords = {"ids": session_id_idx, "obs": range(len(df[analyzed_features]))}
     with pm.Model(coords=coords) as model:
-        th_segments = pm.MutableData("th_segments", df["th_segments"].values)
+        th_segments = pm.Data("th_segments", df["th_segments"].values)
 
-        control = pm.ConstantData("control", df["control"].values.astype(float))
-        over = pm.ConstantData("over", df["control"].values.astype(float))
-        under = pm.ConstantData("under", df["control"].values.astype(float))
+        control = pm.Data("control", df["control"].values.astype(float))
+        over = pm.Data("over", df["control"].values.astype(float))
+        under = pm.Data("under", df["control"].values.astype(float))
 
 
         # level 1
