@@ -4,6 +4,7 @@ sys.path.append(os.path.dirname(__file__))
 import numpy as np
 from Validation.CrossValidation import SubjectCrossValidation, DoubleSubjectCrossValidation
 from Double.GlobalFeaturesReader import GlobalFeaturesReader, GlobalDoubleFeaturesReader
+from Utils.Conf import N_CORE, N_TUNE, N_CHAINS, N_SAMPLES, TARGET_ACC, ANALYZED_FEATURES
 import pandas as pd
 import pymc as pm
 import matplotlib.pyplot as plt
@@ -16,7 +17,7 @@ np.random.seed(1945)  # For Replicability
 if __name__ == '__main__':
     n = 10
 
-    analyzed_features = "hitter_pf_rate"
+    analyzed_features = ANALYZED_FEATURES
     # load single and double data
     single_fr = SubjectCrossValidation()
     double_fr = DoubleSubjectCrossValidation()
@@ -135,7 +136,7 @@ if __name__ == '__main__':
         # pm.model_to_graphviz(model).view()
         idata_m3 = pm.sample_prior_predictive()
         idata_m3.extend(
-            pm.sample(random_seed=100, target_accept=.8, idata_kwargs={"log_likelihood": True}, draws=5000, chains=4, tune=2000, cores=30)
+            pm.sample(random_seed=100, target_accept=N_TUNE, idata_kwargs={"log_likelihood": True}, draws=N_SAMPLES, chains=N_CHAINS, tune=N_TUNE, cores=N_CORE)
         )
         idata_m3.extend(pm.sample_posterior_predictive(idata_m3))
 
