@@ -12,6 +12,8 @@ from OutliersLib import OutliersDetection
 import arviz as az
 from Utils.Conf import DOUBLE_RESULTS_PATH, DOUBLE_FEATURES_FILE_PATH
 import pickle
+import multiprocessing as mp
+mp.set_start_method('forkserver')
 np.random.seed(1945)  # For Replicability
 
 if __name__ == '__main__':
@@ -77,8 +79,8 @@ if __name__ == '__main__':
 
 
         # level 1
-        global_intercept_raw = pm.Normal("global_intercept_raw ", 0, 1)
-        global_th_segment_raw  = pm.Normal("global_th_segment_raw ", 0, 1)
+        global_intercept_raw = pm.Normal("global_intercept_raw ", 0, 0.5)
+        global_th_segment_raw  = pm.Normal("global_th_segment_raw ", 0, 0.5)
 
         global_intercept_mu =  pm.Normal("global_intercept_mu", 0, 1)
         global_intercept_sigma = pm.HalfNormal("global_intercept_sigma", 1)
