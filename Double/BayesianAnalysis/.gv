@@ -1,0 +1,122 @@
+digraph {
+	subgraph cluster10670 {
+		under [label="under
+~
+ConstantData" shape=box style="rounded, filled"]
+		group_intercept [label="group_intercept
+~
+Deterministic" shape=box]
+		growth_model [label="growth_model
+~
+Deterministic" shape=box]
+		control [label="control
+~
+ConstantData" shape=box style="rounded, filled"]
+		th_segments [label="th_segments
+~
+MutableData" shape=box style="rounded, filled"]
+		group_th_segments [label="group_th_segments
+~
+Deterministic" shape=box]
+		over [label="over
+~
+ConstantData" shape=box style="rounded, filled"]
+		label=10670 labeljust=r labelloc=b style=rounded
+	}
+	global_th_segment [label="global_th_segment
+~
+Deterministic" shape=box]
+	global_over_seg [label="global_over_seg
+~
+Normal" shape=ellipse]
+	global_intercept_mu [label="global_intercept_mu
+~
+Normal" shape=ellipse]
+	global_control_seg [label="global_control_seg
+~
+Normal" shape=ellipse]
+	global_under [label="global_under
+~
+Normal" shape=ellipse]
+	global_under_seg [label="global_under_seg
+~
+Normal" shape=ellipse]
+	group_intercept_mu [label="group_intercept_mu
+~
+Normal" shape=ellipse]
+	group_intercept_sigma [label="group_intercept_sigma
+~
+HalfNormal" shape=ellipse]
+	global_th_segment_mu [label="global_th_segment_mu
+~
+Normal" shape=ellipse]
+	group_th_segments_sigma [label="group_th_segments_sigma
+~
+HalfNormal" shape=ellipse]
+	"global_th_segment_raw " [label="global_th_segment_raw 
+~
+Normal" shape=ellipse]
+	"global_intercept_raw " [label="global_intercept_raw 
+~
+Normal" shape=ellipse]
+	global_th_segment_sigma [label="global_th_segment_sigma
+~
+HalfNormal" shape=ellipse]
+	"global_intercept " [label="global_intercept 
+~
+Deterministic" shape=box]
+	global_control [label="global_control
+~
+Normal" shape=ellipse]
+	group_th_segments_mu [label="group_th_segments_mu
+~
+Normal" shape=ellipse]
+	global_over [label="global_over
+~
+Normal" shape=ellipse]
+	global_intercept_sigma [label="global_intercept_sigma
+~
+HalfNormal" shape=ellipse]
+	subgraph "clusterids (10670)" {
+		group_th_segments_raw [label="group_th_segments_raw
+~
+Normal" shape=ellipse]
+		group_intercept_raw [label="group_intercept_raw
+~
+Normal" shape=ellipse]
+		label="ids (10670)" labeljust=r labelloc=b style=rounded
+	}
+	subgraph "clusterobs (10670)" {
+		y [label="y
+~
+Binomial" shape=ellipse style=filled]
+		label="obs (10670)" labeljust=r labelloc=b style=rounded
+	}
+	global_intercept_mu -> "global_intercept "
+	global_intercept_sigma -> "global_intercept "
+	"global_intercept_raw " -> "global_intercept "
+	global_th_segment_mu -> global_th_segment
+	"global_th_segment_raw " -> global_th_segment
+	global_th_segment_sigma -> global_th_segment
+	group_intercept_mu -> group_intercept
+	group_intercept_sigma -> group_intercept
+	group_intercept_raw -> group_intercept
+	group_th_segments_raw -> group_th_segments
+	group_th_segments_mu -> group_th_segments
+	group_th_segments_sigma -> group_th_segments
+	global_th_segment -> growth_model
+	global_under_seg -> growth_model
+	under -> growth_model
+	global_control_seg -> growth_model
+	global_under -> growth_model
+	group_intercept -> growth_model
+	group_th_segments -> growth_model
+	th_segments -> growth_model
+	control -> growth_model
+	global_over -> growth_model
+	"global_intercept " -> growth_model
+	global_control -> growth_model
+	over -> growth_model
+	global_over_seg -> growth_model
+	growth_model -> y
+}
