@@ -1,5 +1,4 @@
 import os
-os.environ['THEANO_FLAGS'] = 'mode=FAST_COMPILE'
 import sys
 sys.path.append(os.path.dirname(__file__))
 import numpy as np
