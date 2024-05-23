@@ -135,7 +135,7 @@ if __name__ == '__main__':
         # pm.model_to_graphviz(model).view()
         idata_m3 = pm.sample_prior_predictive()
         idata_m3.extend(
-            pm.sample(random_seed=100, target_accept=.8, idata_kwargs={"log_likelihood": True}, draws=5000, chains=4, tune=2000, cores=10)
+            pm.sample(random_seed=100, target_accept=.8, idata_kwargs={"log_likelihood": True}, draws=5000, chains=4, tune=2000, cores=30)
         )
         idata_m3.extend(pm.sample_posterior_predictive(idata_m3))
 
