@@ -147,7 +147,7 @@ if __name__ == '__main__':
         pickle.dump(idata_m3, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     # print rhat
-    az.summary(idata_m3).to_csv(DOUBLE_RESULTS_PATH + "idata_m3_summary.csv")
+    az.summary(idata_m3).to_pickle(DOUBLE_RESULTS_PATH + "idata_m3_summary.pkl")
 
     # plot rhat
     nc_rhat = az.rhat(idata_m3)
