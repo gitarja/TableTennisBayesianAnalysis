@@ -8,7 +8,7 @@ sys.path.append(os.path.dirname(__file__))
 import numpy as np
 from Validation.CrossValidation import SubjectCrossValidation, DoubleSubjectCrossValidation
 from Double.GlobalFeaturesReader import GlobalFeaturesReader, GlobalDoubleFeaturesReader
-from Utils.Conf import N_CORE, N_TUNE, N_CHAINS, N_SAMPLES, TARGET_ACC, ANALYZED_FEATURES
+from Utils.Conf import N_CORE, N_TUNE, N_CHAINS, N_SAMPLES, BINOMINAL, ANALYZED_FEATURES, TARGET_ACC
 import pandas as pd
 import pymc as pm
 import matplotlib.pyplot as plt
@@ -135,12 +135,16 @@ if __name__ == '__main__':
             )
 
         # likelihood
-        outcome = pm.Binomial("y", n=n, p=growth_model, observed=df[analyzed_features].values, dims="obs")
+        if BINOMINAL:
+            outcome = pm.Binomial("y", n=n, p=growth_model, observed=df[analyzed_features].values, dims="obs")
+        else:
+            global_sigma = pm.HalfNormal("global_sigma", 1)
+            outcome = pm.Normal("y", growth_model, global_sigma, observed=df[analyzed_features].values, dims="obs")
 
         # pm.model_to_graphviz(model).view()
         idata_m3 = pm.sample_prior_predictive()
         idata_m3.extend(
-            pm.sample(random_seed=100, target_accept=N_TUNE, idata_kwargs={"log_likelihood": True}, draws=N_SAMPLES, chains=N_CHAINS, tune=N_TUNE, cores=N_CORE)
+            pm.sample(random_seed=100, target_accept=TARGET_ACC, idata_kwargs={"log_likelihood": True}, draws=N_SAMPLES, chains=N_CHAINS, tune=N_TUNE, cores=N_CORE)
         )
         idata_m3.extend(pm.sample_posterior_predictive(idata_m3))
 
