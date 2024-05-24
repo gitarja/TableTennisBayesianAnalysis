@@ -1,11 +1,9 @@
 import os
-
 # This must happen before pymc is imported, so you might
 # need to restart the kernel for it to take effect.
 os.environ['MKL_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 import sys
-
 sys.path.append(os.path.dirname(__file__))
 import numpy as np
 from Validation.CrossValidation import SubjectCrossValidation, DoubleSubjectCrossValidation
@@ -18,7 +16,6 @@ from OutliersLib import OutliersDetection
 import arviz as az
 from Utils.Conf import DOUBLE_RESULTS_PATH, DOUBLE_FEATURES_FILE_PATH
 import pickle
-
 np.random.seed(1945)  # For Replicability
 
 if __name__ == '__main__':
@@ -38,25 +35,24 @@ if __name__ == '__main__':
     over_idx = np.argwhere(labels == 2).flatten()
     under_idx = np.argwhere(labels == 3).flatten()
 
+
     inlier_group = group_label[inlier_idx]
     over_group = group_label[over_idx]
     under_group = group_label[under_idx]
 
     # load data
 
+
     # control group
-    control_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_FEATURES_FILE_PATH, include_subjects=inlier_group,
-                                                exclude_failure=False, exclude_no_pair=EXCLUDE_NO_PAIR)
+    control_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_FEATURES_FILE_PATH, include_subjects=inlier_group, exclude_failure=False, exclude_no_pair=EXCLUDE_NO_PAIR)
     control_features = control_reader.getSegmentateFeatures(group_label="control", n_segment=n)
 
     # control group
-    over_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_FEATURES_FILE_PATH, include_subjects=over_group,
-                                             exclude_failure=False, exclude_no_pair=EXCLUDE_NO_PAIR)
+    over_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_FEATURES_FILE_PATH, include_subjects=over_group, exclude_failure=False, exclude_no_pair=EXCLUDE_NO_PAIR)
     over_features = over_reader.getSegmentateFeatures(group_label="over", n_segment=n)
 
     # control group
-    under_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_FEATURES_FILE_PATH, include_subjects=under_group,
-                                              exclude_failure=False, exclude_no_pair=EXCLUDE_NO_PAIR)
+    under_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_FEATURES_FILE_PATH, include_subjects=under_group, exclude_failure=False, exclude_no_pair=EXCLUDE_NO_PAIR)
     under_features = under_reader.getSegmentateFeatures(group_label="under", n_segment=n)
 
     print(control_features.shape)
@@ -84,28 +80,73 @@ if __name__ == '__main__':
         over = pm.Data("over", df["control"].values.astype(float), mutable=True)
         under = pm.Data("under", df["control"].values.astype(float), mutable=True)
 
+
         # level 1
+        global_th_segment_mu = pm.Normal("global_th_segment_mu", 0, 1)
+        global_intercept_mu = pm.Normal("global_intercept_mu", 0, 1)
 
 
-        global_intercept = pm.Normal("global_intercept",0, 1)
-        global_th_segment = pm.Normal("global_th_segment",0,  1)
 
-        global_control = pm.Normal("global_control", 0, 1)
+        global_intercept_tilde = pm.Normal("global_intercept_tilde", 0, 1)
+        global_th_segment_tilde  = pm.Normal("global_th_segment_tilde", 0, 1)
+
+        global_intercept_sigma = pm.HalfNormal("global_intercept_sigma", 1)
+        global_th_segment_sigma = pm.HalfNormal("global_th_segment_sigma", 1)
+
+
+
+
+        global_intercept = pm.Deterministic("global_intercept", global_intercept_mu +  global_intercept_tilde * global_intercept_sigma)
+        global_th_segment = pm.Deterministic("global_th_segment", global_th_segment_mu + global_th_segment_tilde * global_th_segment_sigma)
+
+
+
+        global_control =  pm.Normal("global_control", 0, 1)
         global_under = pm.Normal("global_under", 0, 1)
         global_over = pm.Normal("global_over", 0, 1)
 
-        global_control_seg = pm.Normal("global_control_seg", 0, 1)
-        global_under_seg = pm.Normal("global_under_seg", 0, 1)
-        global_over_seg = pm.Normal("global_over_seg", 0, 1)
+
+
+        # beta for segments
+
+        global_control_seg_mu = pm.Normal("global_control_seg_mu", 0, 1)
+        global_under_seg_mu = pm.Normal("global_under_seg_mu", 0, 1)
+        global_over_seg_mu = pm.Normal("global_over_seg_mu", 0, 1)
+
+
+        global_control_seg_tilde = pm.Normal("global_control_seg_raw", 0, 1)
+        global_under_seg_tilde = pm.Normal("global_under_seg_raw", 0, 1)
+        global_over_seg_tilde = pm.Normal("global_over_seg_raw", 0, 1)
+
+        global_control_seg_sigma = pm.HalfNormal("global_control_seg_sigma", 1)
+        global_under_seg_sigma = pm.HalfNormal("global_under_seg_sigma",  1)
+        global_over_seg_sigma = pm.HalfNormal("global_over_seg_sigma", 1)
+
+        global_control_seg = pm.Deterministic("global_control_seg", global_control_seg_mu + global_control_seg_tilde * global_control_seg_sigma)
+        global_under_seg =  pm.Deterministic("global_under_seg", global_under_seg_mu + global_under_seg_tilde * global_under_seg_sigma)
+        global_over_seg = pm.Deterministic("global_over_seg", global_over_seg_mu + global_over_seg_tilde * global_over_seg_sigma)
 
         # level 2
+        group_intercept_mu = pm.Normal("group_intercept_mu", 0, 1)
+        group_th_segments_mu = pm.Normal("group_th_segments_mu", 0, 1)
+
+
+        group_intercept_tilde = pm.Normal("group_intercept_tilde", 0, 1, dims="ids")
+        group_th_segments_tilde = pm.Normal("group_th_segments_tilde", 0, 1, dims="ids")
+
 
         group_intercept_sigma = pm.HalfNormal("group_intercept_sigma", 1)
-
         group_th_segments_sigma = pm.HalfNormal("group_th_segments_sigma", 1)
 
-        group_intercept = pm.Normal("group_intercept", 0, group_intercept_sigma, dims="ids")
-        group_th_segments = pm.Normal("group_th_segments", 0, group_th_segments_sigma, dims="ids")
+
+        group_intercept = pm.Deterministic("group_intercept",
+                                           group_intercept_mu + group_intercept_tilde * group_intercept_sigma)
+        group_th_segments = pm.Deterministic("group_th_segments",
+                                             group_th_segments_mu + group_th_segments_tilde * group_th_segments_sigma)
+
+
+
+
 
         # likelihood
         if BINOMINAL:
@@ -127,30 +168,32 @@ if __name__ == '__main__':
         else:
             growth_model = pm.Deterministic(
                 "growth_model",
-                (global_intercept + group_intercept[session_id_idx])
-                + global_control * control
-                + global_under * under
-                + global_over * over
-                + global_control_seg * (control * th_segments)
-                + global_over_seg * (over * th_segments)
-                + global_under_seg * (under * th_segments)
-                + (global_th_segment + group_th_segments[session_id_idx]) * th_segments,
+                    (global_intercept + group_intercept[session_id_idx])
+                    + global_control * control
+                    + global_under * under
+                    + global_over * over
+                    + global_control_seg * (control * th_segments)
+                    + global_over_seg * (over * th_segments)
+                    + global_under_seg * (under * th_segments)
+                    + (global_th_segment + group_th_segments[session_id_idx]) * th_segments,
 
             )
             global_sigma = pm.HalfStudentT("global_sigma", 1, 3)
             outcome = pm.Normal("y", growth_model, global_sigma, observed=df[analyzed_features].values, dims="obs")
         print(model.debug())
-        pm.model_to_graphviz(model).view()
+        # pm.model_to_graphviz(model).view()
         idata_m3 = pm.sample_prior_predictive()
         idata_m3.extend(
-            pm.sample(random_seed=100, target_accept=TARGET_ACC, idata_kwargs={"log_likelihood": True}, draws=N_SAMPLES,
-                      chains=N_CHAINS, tune=N_TUNE, cores=N_CORE)
+            pm.sample(random_seed=100, target_accept=TARGET_ACC, idata_kwargs={"log_likelihood": True}, draws=N_SAMPLES, chains=N_CHAINS, tune=N_TUNE, cores=N_CORE)
         )
         idata_m3.extend(pm.sample_posterior_predictive(idata_m3))
 
+
+
+
     # save the model
-    with open(DOUBLE_RESULTS_PATH + "idata_m3_" + analyzed_features + "_" + str(n) + ".pkl", 'wb') as handle:
-        print("write data into: " + "idata_m3_" + analyzed_features + "_" + str(n) + ".pkl")
+    with open(DOUBLE_RESULTS_PATH + "idata_m3_"+analyzed_features+"_"+str(n)+".pkl", 'wb') as handle:
+        print("write data into: " + "idata_m3_"+analyzed_features+"_"+str(n)+".pkl")
         pickle.dump(idata_m3, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     # # print rhat
@@ -162,4 +205,5 @@ if __name__ == '__main__':
           .to_array()
           .to_series()
           .plot(kind="barh"))
-    plt.savefig(DOUBLE_RESULTS_PATH + "r_hat_" + analyzed_features + "_" + str(n) + ".png")
+    plt.savefig(DOUBLE_RESULTS_PATH + "r_hat_"+analyzed_features+"_"+str(n)+".png")
+

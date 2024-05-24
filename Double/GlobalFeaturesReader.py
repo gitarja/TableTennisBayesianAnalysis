@@ -168,10 +168,13 @@ class GlobalDoubleFeaturesReader:
 
 
 
+        #normalize racket movement sim
+        racket_mov_sim = np.concatenate(racket_mov_sim)
+        racket_mov_sim_norm = (racket_mov_sim - np.mean(racket_mov_sim)) / np.std(racket_mov_sim)
         fetures_summary = {
 
             "forward_swing_sim": np.concatenate(forward_sim),
-            "racket_mov_sim": np.concatenate(racket_mov_sim),
+            "racket_mov_sim": racket_mov_sim_norm,
             "hitter_pf_rate": np.concatenate(hitter_pf_rate),
             "hitter_al1_rate": np.concatenate(hitter_al1_rate),
             "hitter_al2_rate": np.concatenate(hitter_al2_rate),
