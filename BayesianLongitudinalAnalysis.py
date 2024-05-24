@@ -8,7 +8,7 @@ sys.path.append(os.path.dirname(__file__))
 import numpy as np
 from Validation.CrossValidation import SubjectCrossValidation, DoubleSubjectCrossValidation
 from Double.GlobalFeaturesReader import GlobalFeaturesReader, GlobalDoubleFeaturesReader
-from Utils.Conf import N_CORE, N_TUNE, N_CHAINS, N_SAMPLES, BINOMINAL, ANALYZED_FEATURES, TARGET_ACC
+from Utils.Conf import N_CORE, N_TUNE, N_CHAINS, N_SAMPLES, BINOMINAL, ANALYZED_FEATURES, TARGET_ACC, EXCLUDE_NO_PAIR
 import pandas as pd
 import pymc as pm
 import matplotlib.pyplot as plt
@@ -44,15 +44,15 @@ if __name__ == '__main__':
 
 
     # control group
-    control_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_FEATURES_FILE_PATH, include_subjects=inlier_group, exclude_failure=False, exclude_no_pair=True)
+    control_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_FEATURES_FILE_PATH, include_subjects=inlier_group, exclude_failure=False, exclude_no_pair=EXCLUDE_NO_PAIR)
     control_features = control_reader.getSegmentateFeatures(group_label="control", n_segment=n)
 
     # control group
-    over_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_FEATURES_FILE_PATH, include_subjects=over_group, exclude_failure=False, exclude_no_pair=True)
+    over_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_FEATURES_FILE_PATH, include_subjects=over_group, exclude_failure=False, exclude_no_pair=EXCLUDE_NO_PAIR)
     over_features = over_reader.getSegmentateFeatures(group_label="over", n_segment=n)
 
     # control group
-    under_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_FEATURES_FILE_PATH, include_subjects=under_group, exclude_failure=False, exclude_no_pair=True)
+    under_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_FEATURES_FILE_PATH, include_subjects=under_group, exclude_failure=False, exclude_no_pair=EXCLUDE_NO_PAIR)
     under_features = under_reader.getSegmentateFeatures(group_label="under", n_segment=n)
 
     print(control_features.shape)
