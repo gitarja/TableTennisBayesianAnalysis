@@ -1,11 +1,11 @@
 digraph {
 	subgraph cluster9530 {
-		growth_model [label="growth_model
-~
-Deterministic" shape=box]
 		control [label="control
 ~
 Data" shape=box style="rounded, filled"]
+		growth_model [label="growth_model
+~
+Deterministic" shape=box]
 		over [label="over
 ~
 Data" shape=box style="rounded, filled"]
@@ -17,44 +17,44 @@ Data" shape=box style="rounded, filled"]
 Data" shape=box style="rounded, filled"]
 		label=9530 labeljust=r labelloc=b style=rounded
 	}
-	global_control [label="global_control
-~
-Normal" shape=ellipse]
-	global_th_segment [label="global_th_segment
-~
-Normal" shape=ellipse]
 	global_under [label="global_under
 ~
 Normal" shape=ellipse]
 	global_over_seg [label="global_over_seg
 ~
 Normal" shape=ellipse]
-	global_intercept [label="global_intercept
+	global_sigma [label="global_sigma
 ~
-Normal" shape=ellipse]
-	group_intercept_sigma [label="group_intercept_sigma
-~
-HalfNormal" shape=ellipse]
-	global_under_seg [label="global_under_seg
+HalfStudentT" shape=ellipse]
+	global_th_segment [label="global_th_segment
 ~
 Normal" shape=ellipse]
 	global_control_seg [label="global_control_seg
 ~
 Normal" shape=ellipse]
+	group_intercept_sigma [label="group_intercept_sigma
+~
+HalfNormal" shape=ellipse]
 	group_th_segments_sigma [label="group_th_segments_sigma
 ~
 HalfNormal" shape=ellipse]
-	global_sigma [label="global_sigma
+	global_control [label="global_control
 ~
-HalfStudentT" shape=ellipse]
+Normal" shape=ellipse]
+	global_intercept [label="global_intercept
+~
+Normal" shape=ellipse]
+	global_under_seg [label="global_under_seg
+~
+Normal" shape=ellipse]
 	global_over [label="global_over
 ~
 Normal" shape=ellipse]
 	subgraph "clusterids (9530)" {
-		group_th_segments [label="group_th_segments
+		group_intercept [label="group_intercept
 ~
 Normal" shape=ellipse]
-		group_intercept [label="group_intercept
+		group_th_segments [label="group_th_segments
 ~
 Normal" shape=ellipse]
 		label="ids (9530)" labeljust=r labelloc=b style=rounded
@@ -67,20 +67,20 @@ Normal" shape=ellipse style=filled]
 	}
 	group_intercept_sigma -> group_intercept
 	group_th_segments_sigma -> group_th_segments
-	global_control -> growth_model
 	group_intercept -> growth_model
-	global_th_segment -> growth_model
-	global_over_seg -> growth_model
+	control -> growth_model
 	global_under -> growth_model
-	global_over -> growth_model
-	global_intercept -> growth_model
+	global_over_seg -> growth_model
 	group_th_segments -> growth_model
+	global_th_segment -> growth_model
 	over -> growth_model
 	under -> growth_model
-	control -> growth_model
-	global_under_seg -> growth_model
-	th_segments -> growth_model
 	global_control_seg -> growth_model
-	global_sigma -> y
+	global_control -> growth_model
+	th_segments -> growth_model
+	global_intercept -> growth_model
+	global_under_seg -> growth_model
+	global_over -> growth_model
 	growth_model -> y
+	global_sigma -> y
 }

@@ -10,13 +10,15 @@ sys.path.append(os.path.dirname(__file__))
 import numpy as np
 from Validation.CrossValidation import SubjectCrossValidation, DoubleSubjectCrossValidation
 from Double.GlobalFeaturesReader import GlobalFeaturesReader, GlobalDoubleFeaturesReader
-from Utils.Conf import N_CORE, N_TUNE, N_CHAINS, N_SAMPLES, BINOMINAL, ANALYZED_FEATURES, TARGET_ACC, EXCLUDE_NO_PAIR
+from Utils.Conf import N_CORE, N_TUNE, N_CHAINS, N_SAMPLES, BINOMINAL, ANALYZED_FEATURES, TARGET_ACC, EXCLUDE_NO_PAIR, \
+    CENTERED
 import pandas as pd
 import pymc as pm
 import matplotlib.pyplot as plt
 from OutliersLib import OutliersDetection
 import arviz as az
 from Utils.Conf import DOUBLE_RESULTS_PATH, DOUBLE_FEATURES_FILE_PATH
+from LongitudinalModels import NonCenteredModel, CenteredModel
 import pickle
 
 np.random.seed(1945)  # For Replicability
@@ -77,70 +79,15 @@ if __name__ == '__main__':
     session_id_idx, unique_ids = pd.factorize(df["session_id"])
 
     coords = {"ids": session_id_idx, "obs": range(len(df[analyzed_features]))}
-    with pm.Model(coords=coords) as model:
-        th_segments = pm.Data("th_segments", df["th_segments"].values, mutable=True)
+    if CENTERED:
+        model = CenteredModel(coords, df, BINOMINAL, session_id_idx, analyzed_features, n)
+    else:
+        model = NonCenteredModel(coords, df, BINOMINAL, session_id_idx, analyzed_features, n)
 
-        control = pm.Data("control", df["control"].values.astype(float), mutable=True)
-        over = pm.Data("over", df["control"].values.astype(float), mutable=True)
-        under = pm.Data("under", df["control"].values.astype(float), mutable=True)
-
-        # level 1
-
-
-        global_intercept = pm.Normal("global_intercept",0, 1)
-        global_th_segment = pm.Normal("global_th_segment",0,  1)
-
-        global_control = pm.Normal("global_control", 0, 1)
-        global_under = pm.Normal("global_under", 0, 1)
-        global_over = pm.Normal("global_over", 0, 1)
-
-        global_control_seg = pm.Normal("global_control_seg", 0, 1)
-        global_under_seg = pm.Normal("global_under_seg", 0, 1)
-        global_over_seg = pm.Normal("global_over_seg", 0, 1)
-
-        # level 2
-
-        group_intercept_sigma = pm.HalfNormal("group_intercept_sigma", 1)
-
-        group_th_segments_sigma = pm.HalfNormal("group_th_segments_sigma", 1)
-
-        group_intercept = pm.Normal("group_intercept", 0, group_intercept_sigma, dims="ids")
-        group_th_segments = pm.Normal("group_th_segments", 0, group_th_segments_sigma, dims="ids")
-
-        # likelihood
-        if BINOMINAL:
-            growth_model = pm.Deterministic(
-                "growth_model",
-                pm.math.invlogit(
-                    (global_intercept + group_intercept[session_id_idx])
-                    + global_control * control
-                    + global_under * under
-                    + global_over * over
-                    + global_control_seg * (control * th_segments)
-                    + global_over_seg * (over * th_segments)
-                    + global_under_seg * (under * th_segments)
-                    + (global_th_segment + group_th_segments[session_id_idx]) * th_segments,
-                )
-
-            )
-            outcome = pm.Binomial("y", n=n, p=growth_model, observed=df[analyzed_features].values, dims="obs")
-        else:
-            growth_model = pm.Deterministic(
-                "growth_model",
-                (global_intercept + group_intercept[session_id_idx])
-                + global_control * control
-                + global_under * under
-                + global_over * over
-                + global_control_seg * (control * th_segments)
-                + global_over_seg * (over * th_segments)
-                + global_under_seg * (under * th_segments)
-                + (global_th_segment + group_th_segments[session_id_idx]) * th_segments,
-
-            )
-            global_sigma = pm.HalfStudentT("global_sigma", 1, 3)
-            outcome = pm.Normal("y", growth_model, global_sigma, observed=df[analyzed_features].values, dims="obs")
+    print("Start running sample")
+    with model:
         print(model.debug())
-        pm.model_to_graphviz(model).view()
+        # pm.model_to_graphviz(model).view()
         idata_m3 = pm.sample_prior_predictive()
         idata_m3.extend(
             pm.sample(random_seed=100, target_accept=TARGET_ACC, idata_kwargs={"log_likelihood": True}, draws=N_SAMPLES,
@@ -152,9 +99,6 @@ if __name__ == '__main__':
     with open(DOUBLE_RESULTS_PATH + "idata_m3_" + analyzed_features + "_" + str(n) + ".pkl", 'wb') as handle:
         print("write data into: " + "idata_m3_" + analyzed_features + "_" + str(n) + ".pkl")
         pickle.dump(idata_m3, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-    # # print rhat
-    # az.summary(idata_m3).to_pickle(DOUBLE_RESULTS_PATH + "idata_m3_summary.pkl")
 
     # plot rhat
     nc_rhat = az.rhat(idata_m3)

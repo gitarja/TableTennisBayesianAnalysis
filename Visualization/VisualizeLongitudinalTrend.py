@@ -16,7 +16,6 @@ posterior = az.extract(idata.posterior)
 group_intercept = posterior["group_intercept"].mean(dim="ids")
 group_th_segments = posterior["group_th_segments"].mean(dim="ids")
 
-
 a = posterior["global_intercept"].mean() + group_intercept
 b = posterior["global_th_segment"].mean() + group_th_segments
 
