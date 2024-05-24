@@ -163,7 +163,7 @@ class GlobalDoubleFeaturesReader:
             hitter_pf_duration.append(group["hitter_pr_p3_fx_duration_clean"].rolling(window=n_segment).mean().values[n_segment-1:])
 
             receiver_p1_al_prec.append(group["receiver_pr_p1_al_prec"].rolling(window=n_segment).mean().values[n_segment-1:])
-            th_segments.append(np.log2(group["observation_label"].rolling(window=n_segment).mean().values[n_segment-1:]+1))
+            th_segments.append(group["observation_label"].rolling(window=n_segment).mean().values[n_segment-1:])
             session_id.append(group.session_id.values[n_segment-1:])
 
 

@@ -44,15 +44,15 @@ if __name__ == '__main__':
 
 
     # control group
-    control_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_FEATURES_FILE_PATH, include_subjects=inlier_group, exclude_failure=False, exclude_no_pair=False)
+    control_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_FEATURES_FILE_PATH, include_subjects=inlier_group, exclude_failure=False, exclude_no_pair=True)
     control_features = control_reader.getSegmentateFeatures(group_label="control", n_segment=n)
 
     # control group
-    over_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_FEATURES_FILE_PATH, include_subjects=over_group, exclude_failure=False, exclude_no_pair=False)
+    over_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_FEATURES_FILE_PATH, include_subjects=over_group, exclude_failure=False, exclude_no_pair=True)
     over_features = over_reader.getSegmentateFeatures(group_label="over", n_segment=n)
 
     # control group
-    under_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_FEATURES_FILE_PATH, include_subjects=under_group, exclude_failure=False, exclude_no_pair=False)
+    under_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_FEATURES_FILE_PATH, include_subjects=under_group, exclude_failure=False, exclude_no_pair=True)
     under_features = under_reader.getSegmentateFeatures(group_label="under", n_segment=n)
 
     print(control_features.shape)
@@ -65,7 +65,8 @@ if __name__ == '__main__':
     # dummies.columns = ['control','over','under']
     df = indv.join(dummies)
 
-
+    # az.plot_dist(df["th_segments"])
+    # plt.show()
 
     mu = df[analyzed_features].mean()
     sigma = df[analyzed_features].std() * 2
@@ -73,16 +74,16 @@ if __name__ == '__main__':
 
     coords = {"ids": session_id_idx, "obs": range(len(df[analyzed_features]))}
     with pm.Model(coords=coords) as model:
-        th_segments = pm.Data("th_segments", df["th_segments"].values)
+        th_segments = pm.Data("th_segments", df["th_segments"].values, mutable=True)
 
-        control = pm.Data("control", df["control"].values.astype(float))
-        over = pm.Data("over", df["control"].values.astype(float))
-        under = pm.Data("under", df["control"].values.astype(float))
+        control = pm.Data("control", df["control"].values.astype(float), mutable=True)
+        over = pm.Data("over", df["control"].values.astype(float), mutable=True)
+        under = pm.Data("under", df["control"].values.astype(float), mutable=True)
 
 
         # level 1
-        global_intercept_raw = pm.Normal("global_intercept_raw ", 0, 0.5)
-        global_th_segment_raw  = pm.Normal("global_th_segment_raw ", 0, 0.5)
+        global_intercept_raw = pm.Normal("global_intercept_raw", 0, 1)
+        global_th_segment_raw  = pm.Normal("global_th_segment_raw", 0, 1)
 
         global_intercept_mu =  pm.Normal("global_intercept_mu", 0, 1)
         global_intercept_sigma = pm.HalfNormal("global_intercept_sigma", 1)
@@ -91,7 +92,7 @@ if __name__ == '__main__':
         global_th_segment_mu = pm.Normal("global_th_segment_mu", 0, 1)
         global_th_segment_sigma = pm.HalfNormal("global_th_segment_sigma", 1)
 
-        global_intercept = pm.Deterministic("global_intercept ", global_intercept_mu + global_intercept_raw * global_intercept_sigma)
+        global_intercept = pm.Deterministic("global_intercept", global_intercept_mu + global_intercept_raw * global_intercept_sigma)
         global_th_segment = pm.Deterministic("global_th_segment", global_th_segment_mu + global_th_segment_raw * global_th_segment_sigma)
 
 
@@ -105,8 +106,8 @@ if __name__ == '__main__':
         global_over_seg = pm.Normal("global_over_seg", 0, 1)
 
         # level 2
-        group_intercept_raw = pm.Normal("group_intercept_raw", 0, 0.5, dims="ids")
-        group_th_segments_raw = pm.Normal("group_th_segments_raw", 0, 0.5, dims="ids")
+        group_intercept_raw = pm.Normal("group_intercept_raw", 0, 1, dims="ids")
+        group_th_segments_raw = pm.Normal("group_th_segments_raw", 0, 1, dims="ids")
 
         group_intercept_mu = pm.Normal("group_intercept_mu", 0, 1)
         group_intercept_sigma = pm.HalfNormal("group_intercept_sigma", 1)
@@ -133,6 +134,8 @@ if __name__ == '__main__':
             )
 
             )
+
+
 
         # likelihood
         if BINOMINAL:
