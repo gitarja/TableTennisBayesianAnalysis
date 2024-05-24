@@ -65,8 +65,8 @@ if __name__ == '__main__':
     # dummies.columns = ['control','over','under']
     df = indv.join(dummies)
 
-    az.plot_dist(df["th_segments"])
-    plt.show()
+    # az.plot_dist(df["th_segments"])
+    # plt.show()
 
     mu = df[analyzed_features].mean()
     sigma = df[analyzed_features].std() * 2
