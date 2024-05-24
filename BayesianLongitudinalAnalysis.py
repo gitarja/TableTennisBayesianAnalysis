@@ -65,8 +65,8 @@ if __name__ == '__main__':
     # dummies.columns = ['control','over','under']
     df = indv.join(dummies)
 
-    # az.plot_dist(df["th_segments"])
-    # plt.show()
+    az.plot_dist(df["th_segments"])
+    plt.show()
 
     mu = df[analyzed_features].mean()
     sigma = df[analyzed_features].std() * 2
@@ -120,30 +120,43 @@ if __name__ == '__main__':
         group_th_segments = pm.Deterministic("group_th_segments",
                                              group_th_segments_mu + group_th_segments_raw * group_th_segments_sigma)
 
-        growth_model = pm.Deterministic(
-                "growth_model",
-            pm.math.invlogit(
-            (global_intercept + group_intercept[session_id_idx])
-            +global_control * control
-            +global_under * under
-            +global_over * over
-            +global_control_seg * (control * th_segments)
-            +global_over_seg * (over * th_segments)
-            +global_under_seg * (under * th_segments)
-            +(global_th_segment + group_th_segments[session_id_idx]) * th_segments,
-            )
 
-            )
 
 
 
         # likelihood
         if BINOMINAL:
+            growth_model = pm.Deterministic(
+                "growth_model",
+                pm.math.invlogit(
+                    (global_intercept + group_intercept[session_id_idx])
+                    + global_control * control
+                    + global_under * under
+                    + global_over * over
+                    + global_control_seg * (control * th_segments)
+                    + global_over_seg * (over * th_segments)
+                    + global_under_seg * (under * th_segments)
+                    + (global_th_segment + group_th_segments[session_id_idx]) * th_segments,
+                )
+
+            )
             outcome = pm.Binomial("y", n=n, p=growth_model, observed=df[analyzed_features].values, dims="obs")
         else:
+            growth_model = pm.Deterministic(
+                "growth_model",
+                    (global_intercept + group_intercept[session_id_idx])
+                    + global_control * control
+                    + global_under * under
+                    + global_over * over
+                    + global_control_seg * (control * th_segments)
+                    + global_over_seg * (over * th_segments)
+                    + global_under_seg * (under * th_segments)
+                    + (global_th_segment + group_th_segments[session_id_idx]) * th_segments,
+
+            )
             global_sigma = pm.HalfNormal("global_sigma", 1)
             outcome = pm.Normal("y", growth_model, global_sigma, observed=df[analyzed_features].values, dims="obs")
-
+        print(model.debug())
         # pm.model_to_graphviz(model).view()
         idata_m3 = pm.sample_prior_predictive()
         idata_m3.extend(
