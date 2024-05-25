@@ -24,7 +24,7 @@ import pickle
 np.random.seed(1945)  # For Replicability
 
 if __name__ == '__main__':
-    n = 10
+    n = 2
 
     analyzed_features = ANALYZED_FEATURES
     # load single and double data

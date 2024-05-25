@@ -6,7 +6,7 @@ import xarray as xr
 import numpy as np
 # save the model
 n=10
-analyzed_features = "forward_swing_sim"
+analyzed_features = "racket_mov_sim"
 with open(DOUBLE_RESULTS_PATH + "idata_m3_" + analyzed_features + "_" + str(n) + ".pkl", 'rb') as handle:
     idata = pickle.load(handle)
 
@@ -34,7 +34,7 @@ time_xi = xr.DataArray(np.arange(0, 8, 0.1))
 ax.plot(
     time_xi,
     (a + b * time_xi + global_control * 1 + global_control_seg * (time_xi * 1)).T,
-    color="#377eb8",
+    color="blue",
     linewidth=0.2,
     alpha=0.2,
 )
@@ -42,7 +42,7 @@ ax.plot(
 ax.plot(
     time_xi,
     (a + b * time_xi + global_under * 1 + global_under_seg * (time_xi * 1)).T,
-    color="#4daf4a",
+    color="green",
     linewidth=0.2,
     alpha=0.2,
 )
@@ -50,7 +50,7 @@ ax.plot(
 ax.plot(
     time_xi,
     (a + b * time_xi + global_over * 1 + global_over_seg * (time_xi * 1)).T,
-    color="#e41a1c",
+    color="red",
     linewidth=0.2,
     alpha=0.2,
 )

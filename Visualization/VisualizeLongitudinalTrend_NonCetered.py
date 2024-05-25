@@ -6,7 +6,7 @@ import xarray as xr
 import numpy as np
 # save the model
 n=10
-analyzed_features = "forward_swing_sim"
+analyzed_features = "hitter_pf_rate"
 with open(DOUBLE_RESULTS_PATH + "idata_m3_" + analyzed_features + "_" + str(n) + ".pkl", 'rb') as handle:
     idata = pickle.load(handle)
 
