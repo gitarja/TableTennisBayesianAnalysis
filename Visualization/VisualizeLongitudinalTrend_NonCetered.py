@@ -10,6 +10,8 @@ analyzed_features = "hitter_pf_rate"
 with open(DOUBLE_RESULTS_PATH + "idata_m3_" + analyzed_features + "_" + str(n) + ".pkl", 'rb') as handle:
     idata = pickle.load(handle)
 
+
+
 fig, ax = plt.subplots(figsize=(20, 8))
 posterior = az.extract(idata.posterior)
 
@@ -43,11 +45,28 @@ global_control = posterior["global_control"].mean()
 global_under = posterior["global_under"].mean()
 global_over = posterior["global_over"].mean()
 
-global_control_seg = posterior["global_control_seg"].mean()
-global_under_seg = posterior["global_under_seg"].mean()
-global_over_seg = posterior["global_over_seg"].mean()
+# th group
+
+global_control_seg_mu = posterior["global_control_seg_mu"].mean()
+global_under_seg_mu = posterior["global_under_seg_mu"].mean()
+global_over_seg_mu = posterior["global_over_seg_mu"].mean()
+
+global_control_seg_tilde = posterior["global_control_seg_tilde"].mean()
+global_under_seg_tilde =posterior["global_under_seg_tilde"].mean()
+global_over_seg_tilde = posterior["global_over_seg_tilde"].mean()
+
+global_control_seg_sigma = posterior["global_control_seg_sigma"].mean()
+global_under_seg_sigma = posterior["global_under_seg_sigma"].mean()
+global_over_seg_sigma = posterior["global_over_seg_sigma"].mean()
+
+
+global_control_seg = global_control_seg_mu + global_control_seg_tilde * global_control_seg_sigma
+global_under_seg = global_under_seg_mu + global_under_seg_tilde * global_under_seg_sigma
+global_over_seg = global_over_seg_mu + global_over_seg_tilde * global_over_seg_sigma
 
 time_xi = xr.DataArray(np.arange(0, 8, 0.1))
+
+
 
 # control
 ax.plot(

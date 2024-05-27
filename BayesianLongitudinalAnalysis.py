@@ -24,7 +24,7 @@ import pickle
 np.random.seed(1945)  # For Replicability
 
 if __name__ == '__main__':
-    n = 2
+    n = 10
 
     analyzed_features = ANALYZED_FEATURES
     # load single and double data
@@ -71,8 +71,12 @@ if __name__ == '__main__':
     # dummies.columns = ['control','over','under']
     df = indv.join(dummies)
 
-    # az.plot_dist(df[analyzed_features])
-    # plt.show()
+    #az.plot_dist(control_features[analyzed_features])
+    #plt.show()
+    #az.plot_dist(under_features[analyzed_features])
+    #plt.show()
+    #az.plot_dist(over_features[analyzed_features])
+    #plt.show()
 
     mu = df[analyzed_features].mean()
     sigma = df[analyzed_features].std() * 2
@@ -84,7 +88,7 @@ if __name__ == '__main__':
     else:
         model = NonCenteredModel(coords, df, BINOMINAL, session_id_idx, analyzed_features, n)
 
-    print("Start running sample")
+    print("Run: Start")
     with model:
         print(model.debug())
         # pm.model_to_graphviz(model).view()
