@@ -46,9 +46,9 @@ def CenteredModel(coords, df, BINOMINAL, session_id_idx, analyzed_features, n):
                 )
 
             )
-            #outcome = pm.Binomial("y", n=n, p=growth_model, observed=df[analyzed_features].values, dims="obs")
+            outcome = pm.Binomial("y", n=n, p=growth_model, observed=df[analyzed_features].values, dims="obs")
 
-            outcome = pm.Poisson("y", mu=growth_model, observed=df[analyzed_features].values, dims="obs")
+
         else:
             growth_model = pm.Deterministic(
                 "growth_model",
@@ -149,9 +149,9 @@ def NonCenteredModel(coords, df, BINOMINAL, session_id_idx, analyzed_features, n
                 )
 
             )
-            # outcome = pm.Binomial("y", n=n, p=growth_model, observed=df[analyzed_features].values, dims="obs")
+            outcome = pm.Binomial("y", n=n, p=growth_model, observed=df[analyzed_features].values, dims="obs")
 
-            outcome = pm.Poisson("y", mu=growth_model, observed=df[analyzed_features].values, dims="obs")
+
 
         else:
             growth_model = pm.Deterministic(

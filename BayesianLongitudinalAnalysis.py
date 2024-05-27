@@ -71,12 +71,15 @@ if __name__ == '__main__':
     # dummies.columns = ['control','over','under']
     df = indv.join(dummies)
 
-    #az.plot_dist(control_features[analyzed_features])
-    #plt.show()
-    #az.plot_dist(under_features[analyzed_features])
-    #plt.show()
-    #az.plot_dist(over_features[analyzed_features])
-    #plt.show()
+    # df = df.sample(frac=0.35)
+    # az.plot_dist(df[analyzed_features].values.astype(int))
+    # plt.show()
+    # az.plot_dist(control_features[analyzed_features])
+    # plt.show()
+    # az.plot_dist(under_features[analyzed_features])
+    # plt.show()
+    # az.plot_dist(over_features[analyzed_features])
+    # plt.show()
 
     mu = df[analyzed_features].mean()
     sigma = df[analyzed_features].std() * 2

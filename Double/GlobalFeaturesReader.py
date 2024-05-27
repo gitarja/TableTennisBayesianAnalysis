@@ -156,7 +156,7 @@ class GlobalDoubleFeaturesReader:
 
             group['hitter_pr_p3_fx_duration_clean'] = group["hitter_pr_p3_fx_duration"].fillna(0)
             forward_sim.append(group["forward_swing_sim"].rolling(window=n_segment).mean().values[n_segment-1:])
-            racket_mov_sim.append(group["racket_movement_sim_lcc"].rolling(window=n_segment).mean().values[n_segment-1:])
+            racket_mov_sim.append(group["racket_movement_sim_lcss"].rolling(window=n_segment).mean().values[n_segment-1:])
             hitter_pf_rate.append(group["hitter_pr_p3_fx"].rolling(window=n_segment).sum().values[n_segment-1:])
             hitter_al1_rate.append(group["hitter_pr_p1_al"].rolling(window=n_segment).mean().values[n_segment-1:])
             hitter_al2_rate.append(group["hitter_pr_p2_al"].rolling(window=n_segment).mean().values[n_segment-1:])
@@ -177,7 +177,7 @@ class GlobalDoubleFeaturesReader:
 
             "forward_swing_sim": np.concatenate(forward_sim),
             "racket_mov_sim": np.concatenate(racket_mov_sim),
-            "hitter_pf_rate": np.concatenate(hitter_pf_rate),
+            "hitter_pf_rate": np.concatenate(hitter_pf_rate).astype(int),
             "hitter_al1_rate": np.concatenate(hitter_al1_rate),
             "hitter_al2_rate": np.concatenate(hitter_al2_rate),
             "hitter_pf_duration": np.concatenate(hitter_pf_duration),
