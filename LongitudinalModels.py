@@ -119,11 +119,11 @@ def NonCenteredModel(coords, df, BINOMINAL, session_id_idx, analyzed_features, n
                                            global_over_seg_mu + global_over_seg_tilde * global_over_seg_sigma)
 
         # level 2
-        group_intercept_mu = pm.Normal("group_intercept_mu", 0, 1)
-        group_th_segments_mu = pm.Normal("group_th_segments_mu", 0, 1)
+        group_intercept_mu = pm.Normal("group_intercept_mu", 0, 1, shape=len(session_id_idx), dims="ids")
+        group_th_segments_mu = pm.Normal("group_th_segments_mu", 0, 1, shape=len(session_id_idx), dims="ids")
 
-        group_intercept_tilde = pm.Normal("group_intercept_tilde", 0, 1, dims="ids")
-        group_th_segments_tilde = pm.Normal("group_th_segments_tilde", 0, 1, dims="ids")
+        group_intercept_tilde = pm.Normal("group_intercept_tilde", 0, 1)
+        group_th_segments_tilde = pm.Normal("group_th_segments_tilde", 0, 1)
 
         group_intercept_sigma = pm.HalfNormal("group_intercept_sigma", 1)
         group_th_segments_sigma = pm.HalfNormal("group_th_segments_sigma", 1)

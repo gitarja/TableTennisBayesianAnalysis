@@ -32,10 +32,9 @@ if __name__ == '__main__':
     over_group = group_label[over_idx]
     under_group = group_label[under_idx]
 
-    features = ["receiver_p1_al", "receiver_p2_al", "receiver_pursuit", "receiver_pursuit_duration", "hitter_p1_al", "hitter_p2_al", "hitter_pursuit",
-                "hitter_pursuit_duration", "receiver_fs_ball_racket_dir_std"]
+    # features = ["receiver_p1_al", "receiver_p2_al", "receiver_pursuit", "receiver_pursuit_duration", "hitter_p1_al", "hitter_p2_al", "hitter_pursuit"]
 
-    # features = ["receiver_fs_ball_racket_dir_std"]
+    features = ["hitter_pursuit_duration"]
 
     for f in features:
         analyzed_features = f
@@ -70,9 +69,9 @@ if __name__ == '__main__':
         with pm.Model() as model:  # model specifications in PyMC3 are wrapped in a with-statement
             # Define priors
             sigma = pm.HalfCauchy("sigma", beta=10)
-            control = pm.Normal('control', mu=control_features[analyzed_features].mean(), sigma=control_features[analyzed_features].std())
-            over = pm.Normal('over', mu=over_features[analyzed_features].mean(), sigma=over_features[analyzed_features].std())
-            under = pm.Normal('under', mu=under_features[analyzed_features].mean(), sigma=under_features[analyzed_features].std())
+            control = pm.Normal('control', mu=df[analyzed_features].mean(), sigma=df[analyzed_features].std() * 2)
+            over = pm.Normal('over', mu=df[analyzed_features].mean(), sigma=df[analyzed_features].std()* 2)
+            under = pm.Normal('under', mu=df[analyzed_features].mean(), sigma=df[analyzed_features].std()* 2)
 
             global_mu = pm.Deterministic("global_mu", control * df['control'] + under * df['under'] + over * df['over'])
             # Define likelihood
@@ -84,7 +83,7 @@ if __name__ == '__main__':
             # likelihood = pm.StudentT("likelihood", nu=7, mu=global_mu, sigma=sigma, observed=df[analyzed_features].values)
 
             # Inference!
-            trace = pm.sample(4000, cores=4, chains=4, random_seed=100, tune=1000,  target_accept=1.0)  # draw 4000 posterior samples using NUTS sampling
+            trace = pm.sample(4000, cores=4, chains=4, random_seed=100, tune=1000,  target_accept=0.8)  # draw 4000 posterior samples using NUTS sampling
 
         # pm.model_to_graphviz(model).view()
         trace_post = az.extract(trace.posterior)
