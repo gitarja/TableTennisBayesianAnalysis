@@ -27,6 +27,9 @@ if __name__ == '__main__':
     n = 10
 
     analyzed_features = ANALYZED_FEATURES
+
+    print("Analysis of " + analyzed_features + " with n_segment: " + str(n))
+
     # load single and double data
     single_fr = SubjectCrossValidation()
     double_fr = DoubleSubjectCrossValidation()
@@ -71,14 +74,17 @@ if __name__ == '__main__':
     # dummies.columns = ['control','over','under']
     df = indv.join(dummies)
 
-    # df = df.sample(frac=0.25)
+    # df = df.sample(frac=0.1)
     # az.plot_dist(df[analyzed_features].values)
     # plt.show()
     # az.plot_dist(control_features[analyzed_features])
+    # print(control_features[analyzed_features].mean())
     # plt.show()
     # az.plot_dist(under_features[analyzed_features])
+    # print(under_features[analyzed_features].mean())
     # plt.show()
     # az.plot_dist(over_features[analyzed_features])
+    # print(over_features[analyzed_features].mean())
     # plt.show()
 
     mu = df[analyzed_features].mean()
