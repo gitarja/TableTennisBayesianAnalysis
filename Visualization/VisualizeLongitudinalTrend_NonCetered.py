@@ -10,7 +10,8 @@ analyzed_features = "hitter_pf_rate"
 with open(DOUBLE_RESULTS_PATH + "idata_m3_" + analyzed_features + "_" + str(n) + ".pkl", 'rb') as handle:
     idata = pickle.load(handle)
 
-
+az.plot_trace(idata)
+plt.show()
 # print(az.summary(
 #     idata,
 #     var_names=[

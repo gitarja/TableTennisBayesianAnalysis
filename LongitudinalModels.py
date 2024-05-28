@@ -97,9 +97,25 @@ def NonCenteredModel(coords, df, BINOMINAL, session_id_idx, analyzed_features, n
         # global_under = pm.Normal("global_under", 0, 1)
         # global_over = pm.Normal("global_over", 0, 1)
 
-        global_control = pm.StudentT("global_control",  nu=1, mu=0, sigma=1)
-        global_under = pm.StudentT("global_under",  nu=1, mu=0, sigma=1)
-        global_over = pm.StudentT("global_over",  nu=1, mu=0, sigma=1)
+        # beta for groups
+        global_control_mu = pm.Normal("global_control_mu", 0, 1)
+        global_under_mu = pm.Normal("global_under_mu", 0, 1)
+        global_over_mu = pm.Normal("global_over_mu", 0, 1)
+
+        global_control_tilde = pm.Normal("global_control_tilde", 0, 1)
+        global_under_tilde = pm.Normal("global_under_tilde", 0, 1)
+        global_over_tilde = pm.Normal("global_over_tilde", 0, 1)
+
+        global_control_sigma = pm.HalfNormal("global_control_sigma", 1)
+        global_under_sigma = pm.HalfNormal("global_under_sigma", 1)
+        global_over_sigma = pm.HalfNormal("global_over_sigma", 1)
+
+        global_control = pm.Deterministic("global_control",
+                                              global_control_mu + global_control_tilde * global_control_sigma)
+        global_under = pm.Deterministic("global_under",
+                                            global_under_mu + global_under_tilde * global_under_sigma)
+        global_over = pm.Deterministic("global_over",
+                                           global_over_mu + global_over_tilde * global_over_sigma)
 
         # beta for segments
 
@@ -141,7 +157,7 @@ def NonCenteredModel(coords, df, BINOMINAL, session_id_idx, analyzed_features, n
         if BINOMINAL:
             growth_model = pm.Deterministic(
                 "growth_model",
-                    pm.math.invlogit(
+
                     (global_intercept + group_intercept[session_id_idx])
                     + global_control * control
                     + global_under * under
@@ -151,10 +167,11 @@ def NonCenteredModel(coords, df, BINOMINAL, session_id_idx, analyzed_features, n
                     + global_over_seg * (over * th_segments)
                     + (global_th_segment + group_th_segments[session_id_idx]) * th_segments,
 
-                    )
+
             )
 
-            outcome = pm.Binomial("y", n=n, p=growth_model, observed=df[analyzed_features].values, dims="obs")
+
+            outcome = pm.Binomial("y", n=n, p=pm.math.invlogit(growth_model), observed=df[analyzed_features].values, dims="obs")
 
 
 
