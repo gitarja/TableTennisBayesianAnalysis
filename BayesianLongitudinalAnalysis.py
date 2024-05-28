@@ -74,7 +74,7 @@ if __name__ == '__main__':
     # dummies.columns = ['control','over','under']
     df = indv.join(dummies)
 
-    # df = df.sample(frac=0.1)
+    df = df.sample(frac=0.1)
     # az.plot_dist(df[analyzed_features].values)
     # plt.show()
     # az.plot_dist(control_features[analyzed_features])

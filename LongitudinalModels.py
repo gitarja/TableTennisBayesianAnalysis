@@ -1,6 +1,7 @@
 import pymc as pm
-
-
+import pytensor.tensor as pt
+import numpy as np
+eps = np.finfo(float).eps
 def CenteredModel(coords, df, BINOMINAL, session_id_idx, analyzed_features, n):
     with pm.Model(coords=coords) as model:
         th_segments = pm.Data("th_segments", df["th_segments"].values, mutable=True)
@@ -157,7 +158,7 @@ def NonCenteredModel(coords, df, BINOMINAL, session_id_idx, analyzed_features, n
         if BINOMINAL:
             growth_model = pm.Deterministic(
                 "growth_model",
-
+                pm.math.invlogit(
                     (global_intercept + group_intercept[session_id_idx])
                     + global_control * control
                     + global_under * under
@@ -165,13 +166,14 @@ def NonCenteredModel(coords, df, BINOMINAL, session_id_idx, analyzed_features, n
                     + global_control_seg * (control * th_segments)
                     + global_under_seg * (under * th_segments)
                     + global_over_seg * (over * th_segments)
-                    + (global_th_segment + group_th_segments[session_id_idx]) * th_segments,
-
-
+                    + (global_th_segment + group_th_segments[session_id_idx]) * th_segments
+                )
+                , dims="obs"
             )
 
-
-            outcome = pm.Binomial("y", n=n, p=pm.math.invlogit(growth_model), observed=df[analyzed_features].values, dims="obs")
+            p = pt.switch(pt.eq(growth_model, 0), eps, growth_model)
+            p = pt.switch(pt.eq(p, 1), 1 - eps, growth_model)
+            outcome = pm.Binomial("y", n=n, p=p, observed=df[analyzed_features].values, dims="obs")
 
 
 
@@ -186,7 +188,7 @@ def NonCenteredModel(coords, df, BINOMINAL, session_id_idx, analyzed_features, n
                 + global_under_seg * (under * th_segments)
                 + global_over_seg * (over * th_segments)
                 + (global_th_segment + group_th_segments[session_id_idx]) * th_segments,
-
+                dims="obs"
             )
             global_sigma = pm.HalfStudentT("global_sigma", 1, 3)
             outcome = pm.Normal("y", growth_model, global_sigma, observed=df[analyzed_features].values, dims="obs")
