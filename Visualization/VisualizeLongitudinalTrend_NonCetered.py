@@ -6,7 +6,7 @@ import xarray as xr
 import numpy as np
 # save the model
 n=10
-analyzed_features = "hitter_pf_rate"
+analyzed_features = "racket_mov_sim"
 with open(DOUBLE_RESULTS_PATH + "idata_m3_" + analyzed_features + "_" + str(n) + ".pkl", 'rb') as handle:
     idata = pickle.load(handle)
 
@@ -91,7 +91,7 @@ time_xi = xr.DataArray(np.arange(0, 8, 0.1))
 
 
 # control
-ax.plot_hd(
+ax.plot(
     time_xi,
     (a + b * time_xi + global_control * 1 + global_control_seg * (time_xi * 1)).T,
     color="#377eb8",
