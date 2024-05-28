@@ -157,7 +157,7 @@ class GlobalDoubleFeaturesReader:
             group['hitter_pr_p3_fx_duration_clean'] = group["hitter_pr_p3_fx_duration"].fillna(0)
             forward_sim.append(group["forward_swing_sim"].rolling(window=n_segment).mean().values[n_segment-1:])
             racket_mov_sim.append(group["racket_movement_sim_dtw"].rolling(window=n_segment).mean().values[n_segment-1:])
-            hitter_pf_rate.append(group["hitter_pr_p3_fx"].rolling(window=n_segment).mean().values[n_segment-1:])
+            hitter_pf_rate.append(group["hitter_pr_p3_fx"].rolling(window=n_segment).sum().values[n_segment-1:])
             hitter_al1_rate.append(group["hitter_pr_p1_al"].rolling(window=n_segment).mean().values[n_segment-1:])
             hitter_al2_rate.append(group["hitter_pr_p2_al"].rolling(window=n_segment).mean().values[n_segment-1:])
             hitter_pf_duration.append(group["hitter_pr_p3_fx_duration_clean"].rolling(window=n_segment).mean().values[n_segment-1:])

@@ -93,9 +93,13 @@ def NonCenteredModel(coords, df, BINOMINAL, session_id_idx, analyzed_features, n
 
 
 
-        global_control = pm.Normal("global_control", 0, 1)
-        global_under = pm.Normal("global_under", 0, 1)
-        global_over = pm.Normal("global_over", 0, 1)
+        # global_control = pm.Normal("global_control", 0, 1)
+        # global_under = pm.Normal("global_under", 0, 1)
+        # global_over = pm.Normal("global_over", 0, 1)
+
+        global_control = pm.StudentT("global_control",  nu=1, mu=0, sigma=1)
+        global_under = pm.StudentT("global_under",  nu=1, mu=0, sigma=1)
+        global_over = pm.StudentT("global_over",  nu=1, mu=0, sigma=1)
 
         # beta for segments
 
@@ -137,7 +141,7 @@ def NonCenteredModel(coords, df, BINOMINAL, session_id_idx, analyzed_features, n
         if BINOMINAL:
             growth_model = pm.Deterministic(
                 "growth_model",
-                pm.math.invlogit(
+                    pm.math.invlogit(
                     (global_intercept + group_intercept[session_id_idx])
                     + global_control * control
                     + global_under * under
@@ -146,9 +150,10 @@ def NonCenteredModel(coords, df, BINOMINAL, session_id_idx, analyzed_features, n
                     + global_under_seg * (under * th_segments)
                     + global_over_seg * (over * th_segments)
                     + (global_th_segment + group_th_segments[session_id_idx]) * th_segments,
-                )
 
+                    )
             )
+
             outcome = pm.Binomial("y", n=n, p=growth_model, observed=df[analyzed_features].values, dims="obs")
 
 

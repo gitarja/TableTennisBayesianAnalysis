@@ -100,7 +100,7 @@ if __name__ == '__main__':
     print("Run: Start")
     with model:
         print(model.debug())
-        # pm.model_to_graphviz(model).view()
+        pm.model_to_graphviz(model).view()
         idata_m3 = pm.sample_prior_predictive()
         idata_m3.extend(
             pm.sample(random_seed=100, target_accept=TARGET_ACC, idata_kwargs={"log_likelihood": True}, draws=N_SAMPLES,
