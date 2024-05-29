@@ -82,6 +82,8 @@ class GlobalDoubleFeaturesReader:
         hitter_pursuit = []
         hitter_pursuit_duration = []
 
+        racket_movement_sim = []
+
         subject1 = []
         subject2 = []
         for name, group in group_df:
@@ -106,6 +108,8 @@ class GlobalDoubleFeaturesReader:
             receiver_racket_to_root_std.append(group["receiver_racket_to_root"].std())
             receiver_fs_ball_racket_dir_std.append(group["receiver_ec_fs_ball_racket_dir"].std())
 
+            racket_movement_sim.append(group["racket_movement_sim_dtw"].mean())
+
 
 
         fetures_summary = {
@@ -122,6 +126,7 @@ class GlobalDoubleFeaturesReader:
             "receiver_start_fs_std": np.asarray(receiver_start_fs_std),
             "receiver_racket_to_root_std": np.asarray(receiver_racket_to_root_std),
             "receiver_fs_ball_racket_dir_std": np.asarray(receiver_fs_ball_racket_dir_std),
+            "racket_mov_sim": np.asarray(racket_movement_sim),
             "group": group_label
         }
 

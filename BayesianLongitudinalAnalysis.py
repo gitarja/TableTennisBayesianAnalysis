@@ -74,7 +74,7 @@ if __name__ == '__main__':
     # dummies.columns = ['control','over','under']
     df = indv.join(dummies)
 
-    # df = df.sample(frac=0.1)
+    df = df.sample(frac=0.1)
     # az.plot_dist(df[analyzed_features].values)
     # plt.show()
     # az.plot_dist(control_features[analyzed_features])
@@ -91,7 +91,7 @@ if __name__ == '__main__':
     sigma = df[analyzed_features].std() * 2
     session_id_idx, unique_ids = pd.factorize(df["session_id"])
 
-    coords = {"ids": session_id_idx, "obs": range(len(df[analyzed_features]))}
+    coords = {"ids": unique_ids, "obs": range(len(df[analyzed_features]))}
     if CENTERED:
         model = CenteredModel(coords, df, BINOMINAL, session_id_idx, analyzed_features, n)
     else:

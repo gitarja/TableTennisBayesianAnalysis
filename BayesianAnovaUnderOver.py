@@ -32,9 +32,9 @@ if __name__ == '__main__':
     over_group = group_label[over_idx]
     under_group = group_label[under_idx]
 
-    # features = ["receiver_p1_al", "receiver_p2_al", "receiver_pursuit", "receiver_pursuit_duration", "hitter_p1_al", "hitter_p2_al", "hitter_pursuit"]
+    features = ["receiver_p1_al", "receiver_p2_al", "receiver_pursuit", "receiver_pursuit_duration", "hitter_p1_al", "hitter_p2_al", "hitter_pursuit", "racket_mov_sim"]
 
-    features = ["hitter_pursuit_duration"]
+    # features = ["hitter_pursuit_duration"]
 
     for f in features:
         analyzed_features = f
@@ -42,15 +42,15 @@ if __name__ == '__main__':
         path = "F:\\users\\prasetia\\data\\TableTennis\\Experiment_1_cooperation\\cleaned\\summary\\double_episode_features.pkl"
 
         # control group
-        control_reader = GlobalDoubleFeaturesReader(file_path=path, include_subjects=inlier_group, exclude_failure=False)
+        control_reader = GlobalDoubleFeaturesReader(file_path=path, include_subjects=inlier_group, exclude_failure=True, exclude_no_pair=False)
         control_features = control_reader.getGlobalFeatures(group_label="control")
 
         # overestimated group
-        over_reader = GlobalDoubleFeaturesReader(file_path=path, include_subjects=over_group, exclude_failure=False)
+        over_reader = GlobalDoubleFeaturesReader(file_path=path, include_subjects=over_group, exclude_failure=True, exclude_no_pair=False)
         over_features = over_reader.getGlobalFeatures(group_label="over")
 
         # underestimated group
-        under_reader = GlobalDoubleFeaturesReader(file_path=path, include_subjects=under_group, exclude_failure=False)
+        under_reader = GlobalDoubleFeaturesReader(file_path=path, include_subjects=under_group, exclude_failure=True, exclude_no_pair=False)
         under_features = under_reader.getGlobalFeatures(group_label="under")
 
         print(control_features.shape)
