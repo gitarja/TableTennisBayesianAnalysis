@@ -6,9 +6,20 @@ import xarray as xr
 import numpy as np
 # save the model
 n=10
-analyzed_features = "hitter_pf_rate"
+analyzed_features = "racket_mov_sim"
 with open(DOUBLE_RESULTS_PATH + "idata_m3_" + analyzed_features + "_" + str(n) + ".pkl", 'rb') as handle:
     idata = pickle.load(handle)
+
+
+a = az.summary(
+    idata,
+    stat_focus="median",
+)
+
+
+# az.plot_trace(idata)
+# plt.show()
+
 
 fig, ax = plt.subplots(figsize=(20, 8))
 posterior = az.extract(idata.posterior)
@@ -28,7 +39,7 @@ global_control_seg = posterior["global_control_seg"].mean()
 global_under_seg = posterior["global_under_seg"].mean()
 global_over_seg = posterior["global_over_seg"].mean()
 
-time_xi = xr.DataArray(np.arange(0, 8, 0.1))
+time_xi = xr.DataArray(np.arange(0, 10, 0.1))
 
 # control
 ax.plot(

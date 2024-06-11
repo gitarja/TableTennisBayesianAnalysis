@@ -6,7 +6,7 @@ import pandas as pd
 import pymc as pm
 import matplotlib.pyplot as plt
 import scipy.stats as stats
-from OutliersLib import OutliersDetection
+from GroupClassification import outliersDetection
 
 np.random.seed(1945)  # For Replicability
 
@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     X = np.average(X, axis=-1, keepdims=False)
 
-    labels = OutliersDetection(X, y)
+    labels = outliersDetection(X, y)
     inlier_idx = np.argwhere(labels == 1).flatten()
     over_idx = np.argwhere(labels == 2).flatten()
     under_idx = np.argwhere(labels == 3).flatten()
@@ -32,9 +32,9 @@ if __name__ == '__main__':
     over_group = group_label[over_idx]
     under_group = group_label[under_idx]
 
-    features = ["receiver_p1_al", "receiver_p2_al", "receiver_pursuit", "receiver_pursuit_duration", "hitter_p1_al", "hitter_p2_al", "hitter_pursuit", "racket_mov_sim"]
+    # features = ["receiver_p1_al", "receiver_p2_al", "receiver_pursuit", "receiver_pursuit_duration", "hitter_p1_al", "hitter_p2_al", "hitter_pursuit",  "hitter_pursuit_duration", "racket_mov_sim"]
 
-    # features = ["hitter_pursuit_duration"]
+    features = ["hitter_pursuit_duration"]
 
     for f in features:
         analyzed_features = f

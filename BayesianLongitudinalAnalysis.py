@@ -15,7 +15,7 @@ from Utils.Conf import N_CORE, N_TUNE, N_CHAINS, N_SAMPLES, BINOMINAL, ANALYZED_
 import pandas as pd
 import pymc as pm
 import matplotlib.pyplot as plt
-from OutliersLib import OutliersDetection
+from GroupClassification import outliersDetection
 import arviz as az
 from Utils.Conf import DOUBLE_RESULTS_PATH, DOUBLE_FEATURES_FILE_PATH
 from LongitudinalModels import NonCenteredModel, CenteredModel
@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
     X = np.average(X, axis=-1, keepdims=False)
 
-    labels = OutliersDetection(X, y)
+    labels = outliersDetection(X, y)
     inlier_idx = np.argwhere(labels == 1).flatten()
     over_idx = np.argwhere(labels == 2).flatten()
     under_idx = np.argwhere(labels == 3).flatten()

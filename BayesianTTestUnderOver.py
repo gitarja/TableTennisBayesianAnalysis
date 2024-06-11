@@ -6,7 +6,7 @@ import pandas as pd
 import arviz as az
 import pymc as pm
 import matplotlib.pyplot as plt
-from  OutliersLib import OutliersDetection
+from  GroupClassification import outliersDetection
 from sklearn.linear_model import LinearRegression
 
 np.random.seed(1945)  # For Replicability
@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
     X = np.average(X, axis=-1, keepdims=False)
 
-    labels = OutliersDetection(X, y)
+    labels = outliersDetection(X, y)
     inlier_idx = np.argwhere(labels == 1).flatten()
     over_idx = np.argwhere(labels == 2).flatten()
     under_idx = np.argwhere(labels == 3).flatten()

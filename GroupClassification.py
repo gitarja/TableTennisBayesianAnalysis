@@ -1,9 +1,12 @@
+import pandas as pd
 import pymc as pm
 import xarray as xr
 import numpy as np
 import arviz as az
 import matplotlib.pyplot as plt
-def OutliersDetection(X, y):
+from scipy import stats
+from Utils.Conf import SINGLE_FEATURES_FILE_PATH, DOUBLE_SUMMARY_FILE_PATH
+def outliersDetection(X, y):
     labels = np.ones_like(y)
     with pm.Model() as model:  # model specifications in PyMC are wrapped in a with-statement
         # Define priors
@@ -47,6 +50,33 @@ def OutliersDetection(X, y):
     # plt.legend(loc=0)
     # plt.show()
     return labels
+
+
+
+def movementSimilarity(X, feature_col="ec_fs_ball_racket_ratio"):
+    single_df = pd.read_pickle(SINGLE_FEATURES_FILE_PATH)
+    double_summary = pd.read_csv(DOUBLE_SUMMARY_FILE_PATH)
+
+    double_summary_X = double_summary.loc[double_summary.file_name.isin(X)]
+    labels = np.zeros(len(double_summary_X))
+    sim_scores = []
+    pval_scores = []
+    for index, row in double_summary_X.iterrows():
+        subject_1_sample = single_df.loc[single_df["id_subject"] == row["Subject1"]]
+        subject_2_sample =  single_df.loc[single_df["id_subject"] == row["Subject2"]]
+
+        sim_score = stats.ks_2samp(subject_1_sample[feature_col].values, subject_2_sample[feature_col].values)
+
+        sim_scores.append(sim_score.statistic)
+        pval_scores.append(sim_score.pvalue)
+
+    sim_scores = np.asarray(sim_scores)
+    pval_scores = np.asarray(pval_scores)
+
+    labels[pval_scores < 0.05] = 1
+    return sim_scores, pval_scores, labels
+
+
 
 
 
