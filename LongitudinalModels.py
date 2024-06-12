@@ -78,8 +78,9 @@ def CenteredModelSim(coords, df, BINOMINAL, session_id_idx, analyzed_features, n
 
         else:
             global_sigma = pm.HalfStudentT("global_sigma", 1, 3)
-            # outcome = pm.Normal("y", growth_model, global_sigma, observed=df[analyzed_features].values, dims="obs")
-            outcome = pm.TruncatedNormal("y", growth_model, global_sigma, observed=df[analyzed_features].values, dims="obs", lower=0.0, upper=1.0)
+            outcome = pm.Normal.dist(growth_model, global_sigma)
+            censored_normal = pm.Censored("y", outcome, lower=0, upper=1,  observed=df[analyzed_features].values, dims="obs")
+            # outcome = pm.TruncatedNormal("y", growth_model, global_sigma, observed=df[analyzed_features].values, dims="obs", lower=0.0, upper=1.0)
 
         return model
 

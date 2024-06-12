@@ -1,78 +1,78 @@
 digraph {
 	subgraph cluster9558 {
-		over_sim [label="over_sim
-~
-MutableData" shape=box style="rounded, filled"]
-		under_dis [label="under_dis
-~
-MutableData" shape=box style="rounded, filled"]
-		control_dis [label="control_dis
-~
-MutableData" shape=box style="rounded, filled"]
-		over_dis [label="over_dis
+		th_segments [label="th_segments
 ~
 MutableData" shape=box style="rounded, filled"]
 		control_sim [label="control_sim
 ~
 MutableData" shape=box style="rounded, filled"]
+		over_dis [label="over_dis
+~
+MutableData" shape=box style="rounded, filled"]
+		under_dis [label="under_dis
+~
+MutableData" shape=box style="rounded, filled"]
 		under_sim [label="under_sim
 ~
 MutableData" shape=box style="rounded, filled"]
-		th_segments [label="th_segments
+		over_sim [label="over_sim
+~
+MutableData" shape=box style="rounded, filled"]
+		control_dis [label="control_dis
 ~
 MutableData" shape=box style="rounded, filled"]
 		label=9558 labeljust=r labelloc=b style=rounded
 	}
-	global_intercept [label="global_intercept
-~
-Normal" shape=ellipse]
-	global_control_sim [label="global_control_sim
-~
-Normal" shape=ellipse]
-	global_sigma [label="global_sigma
-~
-HalfStudentT" shape=ellipse]
-	global_under_sim_seg [label="global_under_sim_seg
-~
-Normal" shape=ellipse]
-	global_over_sim_seg [label="global_over_sim_seg
-~
-Normal" shape=ellipse]
-	global_under_sim [label="global_under_sim
-~
-Normal" shape=ellipse]
 	global_over_sim [label="global_over_sim
-~
-Normal" shape=ellipse]
-	global_control_dis [label="global_control_dis
-~
-Normal" shape=ellipse]
-	global_control_dis_seg [label="global_control_dis_seg
 ~
 Normal" shape=ellipse]
 	global_under_dis_seg [label="global_under_dis_seg
 ~
 Normal" shape=ellipse]
-	global_under_dis [label="global_under_dis
+	global_th_segment [label="global_th_segment
+~
+Normal" shape=ellipse]
+	global_under_sim [label="global_under_sim
 ~
 Normal" shape=ellipse]
 	global_over_dis_seg [label="global_over_dis_seg
 ~
 Normal" shape=ellipse]
-	global_th_segment [label="global_th_segment
+	global_under_sim_seg [label="global_under_sim_seg
 ~
 Normal" shape=ellipse]
-	global_control_sim_seg [label="global_control_sim_seg
+	global_control_dis_seg [label="global_control_dis_seg
+~
+Normal" shape=ellipse]
+	global_intercept [label="global_intercept
+~
+Normal" shape=ellipse]
+	global_under_dis [label="global_under_dis
+~
+Normal" shape=ellipse]
+	global_control_dis [label="global_control_dis
 ~
 Normal" shape=ellipse]
 	global_over_dis [label="global_over_dis
 ~
 Normal" shape=ellipse]
-	subgraph "clusterids (64)" {
-		group_intercept [label="group_intercept
+	global_control_sim [label="global_control_sim
 ~
 Normal" shape=ellipse]
+	global_control_sim_seg [label="global_control_sim_seg
+~
+Normal" shape=ellipse]
+	global_over_sim_seg [label="global_over_sim_seg
+~
+Normal" shape=ellipse]
+	global_sigma [label="global_sigma
+~
+HalfStudentT" shape=ellipse]
+	subgraph "clusterids (64)" {
 		group_th_segments [label="group_th_segments
+~
+Normal" shape=ellipse]
+		group_intercept [label="group_intercept
 ~
 Normal" shape=ellipse]
 		label="ids (64)" labeljust=r labelloc=b style=rounded
@@ -83,32 +83,32 @@ Normal" shape=ellipse]
 Deterministic" shape=box]
 		y [label="y
 ~
-TruncatedNormal" shape=ellipse style=filled]
+Censored" shape=ellipse style=filled]
 		label="obs (9558)" labeljust=r labelloc=b style=rounded
 	}
-	global_control_sim -> growth_model
-	over_dis -> growth_model
-	global_over_sim -> growth_model
-	group_intercept -> growth_model
-	global_control_dis -> growth_model
-	global_under_dis_seg -> growth_model
 	control_sim -> growth_model
-	global_under_sim_seg -> growth_model
-	global_control_sim_seg -> growth_model
-	under_sim -> growth_model
-	global_over_dis -> growth_model
-	global_intercept -> growth_model
-	over_sim -> growth_model
-	under_dis -> growth_model
-	control_dis -> growth_model
-	global_over_sim_seg -> growth_model
-	global_control_dis_seg -> growth_model
-	global_under_sim -> growth_model
+	global_over_sim -> growth_model
 	group_th_segments -> growth_model
-	global_under_dis -> growth_model
-	global_over_dis_seg -> growth_model
+	global_under_dis_seg -> growth_model
+	global_under_sim -> growth_model
 	global_th_segment -> growth_model
+	under_dis -> growth_model
+	under_sim -> growth_model
+	global_intercept -> growth_model
+	global_control_dis -> growth_model
+	global_control_sim -> growth_model
+	control_dis -> growth_model
 	th_segments -> growth_model
+	global_over_dis_seg -> growth_model
+	over_dis -> growth_model
+	group_intercept -> growth_model
+	global_under_sim_seg -> growth_model
+	global_control_dis_seg -> growth_model
+	global_under_dis -> growth_model
+	global_control_sim_seg -> growth_model
+	global_over_dis -> growth_model
+	global_over_sim_seg -> growth_model
+	over_sim -> growth_model
 	global_sigma -> y
 	growth_model -> y
 }
