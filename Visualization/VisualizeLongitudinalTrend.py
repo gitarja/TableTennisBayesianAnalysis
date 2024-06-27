@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import arviz as az
 import xarray as xr
 import numpy as np
+from scipy.special import expit
 # save the model
 n=10
 analyzed_features = "racket_mov_sim"
@@ -11,10 +12,15 @@ with open(DOUBLE_RESULTS_PATH + "idata_m3_" + analyzed_features + "_" + str(n) +
     idata = pickle.load(handle)
 
 
-a = az.summary(
-    idata,
-    stat_focus="median",
-)
+# a = az.summary(
+#     idata,
+#     stat_focus="median",
+# )
+
+# evalutae model
+hierarchical_loo = az.loo(idata)
+
+print(hierarchical_loo)
 
 
 # az.plot_trace(idata)
@@ -39,7 +45,7 @@ global_control_seg = posterior["global_control_seg"].mean()
 global_under_seg = posterior["global_under_seg"].mean()
 global_over_seg = posterior["global_over_seg"].mean()
 
-time_xi = xr.DataArray(np.arange(0, 10, 0.1))
+time_xi = xr.DataArray(np.arange(0, 20, 0.1))
 
 # control
 ax.plot(

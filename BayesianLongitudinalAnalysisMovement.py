@@ -109,8 +109,8 @@ if __name__ == '__main__':
     df = indv.join(dummies)
 
 
-    az.plot_dist(df[analyzed_features].values)
-    plt.show()
+    # az.plot_dist(df[analyzed_features].values)
+    # plt.show()
 
 
     mu = df[analyzed_features].mean()
@@ -136,6 +136,10 @@ if __name__ == '__main__':
     with open(DOUBLE_RESULTS_PATH + "idata_m3_" + analyzed_features + "_" + str(n) + ".pkl", 'wb') as handle:
         print("write data into: " + "idata_m3_" + analyzed_features + "_" + str(n) + ".pkl")
         pickle.dump(idata_m3, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+
+
 
     # plot rhat
     nc_rhat = az.rhat(idata_m3)

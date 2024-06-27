@@ -1,7 +1,8 @@
 import numpy as np
 from scipy.special import logit, expit
 import pandas as pd
-
+from Utils.Conf import SINGLE_FEATURES_FILE_PATH
+from scipy import stats
 class GlobalFeaturesReader:
 
 
@@ -43,8 +44,10 @@ class GlobalFeaturesReader:
 
 class GlobalDoubleFeaturesReader:
 
-    def __init__(self, file_path="", include_subjects=["test"], exclude_failure=True, exclude_no_pair = False):
+    def __init__(self, file_path="", file_summary_path="", include_subjects=["test"], exclude_failure=True, exclude_no_pair = False):
         df = pd.read_pickle(file_path)
+
+        self.df_summary = pd.read_csv(file_summary_path)
 
         # select subjects subjects
         df = df.loc[df["session_id"].isin(include_subjects), :]
@@ -52,6 +55,8 @@ class GlobalDoubleFeaturesReader:
 
 
         if exclude_failure:
+            # 0: failure
+            # -1: stop
             df = df.loc[(df["success"] != 0)| (df["success"] != -1)]
         else:
             df = df.loc[df["success"] != -1]
@@ -66,49 +71,112 @@ class GlobalDoubleFeaturesReader:
 
     def getGlobalFeatures(self, group_label="control"):
 
+        single_df = pd.read_pickle(SINGLE_FEATURES_FILE_PATH)
         group_df = self.df.groupby(['session_id'])
+
+        # receiver
         receiver_p1_al = []
         receiver_p2_al = []
+        receiver_p1_al_prec = []
+        receiver_p1_al_onset = []
+        receiver_p2_al_prec = []
+        receiver_p2_al_onset = []
+        receiver_p1_cs = []
+        receiver_p2_cs = []
         receiver_pursuit = []
         receiver_pursuit_duration = []
+
+
         receiver_start_fs_std = []
         receiver_racket_to_root_std = []
         receiver_fs_ball_racket_dir_std = []
 
 
+        # hitter
         hitter_p1_al = []
         hitter_p2_al = []
-
+        hitter_p1_al_prec = []
+        hitter_p1_al_onset = []
+        hitter_p2_al_prec = []
+        hitter_p2_al_onset = []
+        hitter_p1_cs = []
+        hitter_p2_cs = []
         hitter_pursuit = []
         hitter_pursuit_duration = []
 
         racket_movement_sim = []
+        single_movement_sim = []
+
+        bouncing_point_var = []
+        s1_bouncing_point_var = []
+        s2_bouncing_point_var = []
+
+        group_skill = []
+
 
         subject1 = []
         subject2 = []
         for name, group in group_df:
 
-            # percentage of AL in phase 1 and 2
+            # receiver
             receiver_p1_al.append(group["receiver_pr_p1_al"].mean())
             receiver_p2_al.append(group["receiver_pr_p2_al"].mean())
             receiver_pursuit.append(group["receiver_pr_p3_fx"].mean())
             receiver_pursuit_duration.append(group["receiver_pr_p3_fx_duration"].mean())
+            receiver_p1_al_prec.append(group["receiver_pr_p1_al_prec"].mean())
+            receiver_p1_al_onset.append(group["receiver_pr_p1_al_onset"].mean())
+            receiver_p2_al_prec.append(group["receiver_pr_p2_al_prec"].mean())
+            receiver_p2_al_onset.append(group["receiver_pr_p2_al_onset"].mean())
+            receiver_p1_cs.append(group["receiver_pr_p1_cs"].mean())
+            receiver_p2_cs.append(group["receiver_pr_p2_cs"].mean())
 
+
+
+
+            # AL in P1 precision
+
+
+            # hitter
             hitter_p1_al.append(group["hitter_pr_p1_al"].mean())
             hitter_p2_al.append(group["hitter_pr_p2_al"].mean())
-            # duration of pursuit
             hitter_pursuit.append(group["hitter_pr_p3_fx"].mean())
             hitter_pursuit_duration.append(group["hitter_pr_p3_fx_duration"].mean())
+            hitter_p1_al_prec.append(group["hitter_pr_p1_al_prec"].mean())
+            hitter_p1_al_onset.append(group["hitter_pr_p1_al_onset"].mean())
+            hitter_p2_al_prec.append(group["hitter_pr_p2_al_prec"].mean())
+            hitter_p2_al_onset.append(group["hitter_pr_p2_al_onset"].mean())
+            hitter_p1_cs.append(group["hitter_pr_p1_cs"].mean())
+            hitter_p2_cs.append(group["hitter_pr_p2_cs"].mean())
 
+            # bouncing point variance
+
+            bouncing_point_var.append(0.5 * (group["s1_bouncing_point_dist"].mean() + group["s2_bouncing_point_dist"].mean()))
+            s1_bouncing_point_var.append(group["s1_bouncing_point_dist"].mean())
+            s2_bouncing_point_var.append(group["s2_bouncing_point_dist"].mean())
+
+            # subject
 
             subject1.append(group["id_subject1"].values[0])
             subject2.append(group["id_subject2"].values[0])
+
+
+
+            subject_1_sample = single_df.loc[single_df["id_subject"] == group["id_subject1"].values[0]]
+            subject_2_sample = single_df.loc[single_df["id_subject"] == group["id_subject2"].values[0]]
+
+            sim_score = stats.ks_2samp(subject_1_sample["ec_fs_ball_racket_ratio"].values, subject_2_sample["ec_fs_ball_racket_ratio"].values)
+
+            single_movement_sim.append(sim_score.statistic)
 
             receiver_start_fs_std.append(group["receiver_ec_start_fs"].std())
             receiver_racket_to_root_std.append(group["receiver_racket_to_root"].std())
             receiver_fs_ball_racket_dir_std.append(group["receiver_ec_fs_ball_racket_dir"].std())
 
-            racket_movement_sim.append(group["racket_movement_sim_dtw"].mean())
+            racket_movement_sim.append(group["hand_movement_sim_lcss"].mean())
+
+
+            # fixed effect
+            group_skill.append(self.df_summary[self.df_summary["file_name"] ==name[0]]["skill"].values[0])
 
 
 
@@ -117,16 +185,38 @@ class GlobalDoubleFeaturesReader:
             "receiver_p2_al": np.asarray(receiver_p2_al),
             "receiver_pursuit":  np.asarray(receiver_pursuit),
             "receiver_pursuit_duration": np.asarray(receiver_pursuit_duration),
+            "receiver_p1_al_prec": np.asarray(receiver_p1_al_prec),
+            "receiver_p1_al_onset": np.asarray(receiver_p1_al_onset),
+            "receiver_p2_al_prec": np.asarray(receiver_p2_al_prec),
+            "receiver_p2_al_onset": np.asarray(receiver_p2_al_onset),
+            "receiver_p1_cs": np.asarray(receiver_p1_cs),
+            "receiver_p2_cs": np.asarray(receiver_p2_cs),
+
+
             "hitter_p1_al": np.asarray(hitter_p1_al),
             "hitter_p2_al": np.asarray(hitter_p2_al),
             "hitter_pursuit": np.asarray(hitter_pursuit),
             "hitter_pursuit_duration": np.asarray(hitter_pursuit_duration),
-            "subject1": np.asarray(subject1),
-            "subject2": np.asarray(subject2),
+            "hitter_p1_al_prec": np.asarray(hitter_p1_al_prec),
+            "hitter_p1_al_onset": np.asarray(hitter_p1_al_onset),
+            "hitter_p2_al_prec": np.asarray(hitter_p2_al_prec),
+            "hitter_p2_al_onset": np.asarray(hitter_p2_al_onset),
+            "hitter_p1_cs": np.asarray(hitter_p1_cs),
+            "hitter_p2_cs": np.asarray(hitter_p2_cs),
+
             "receiver_start_fs_std": np.asarray(receiver_start_fs_std),
             "receiver_racket_to_root_std": np.asarray(receiver_racket_to_root_std),
             "receiver_fs_ball_racket_dir_std": np.asarray(receiver_fs_ball_racket_dir_std),
-            "racket_mov_sim": np.asarray(racket_movement_sim),
+            "hand_mov_sim": np.asarray(racket_movement_sim),
+            "single_mov_sim": np.asarray(single_movement_sim),
+
+            "bouncing_point_var": np.asarray(bouncing_point_var),
+            "s1_bouncing_point_var": np.asarray(s1_bouncing_point_var),
+            "s2_bouncing_point_var": np.asarray(s2_bouncing_point_var),
+
+            "group_skill": np.asarray(group_skill),
+            "subject1": np.asarray(subject1),
+            "subject2": np.asarray(subject2),
             "group": group_label
         }
 
@@ -161,7 +251,7 @@ class GlobalDoubleFeaturesReader:
 
             group['hitter_pr_p3_fx_duration_clean'] = group["hitter_pr_p3_fx_duration"].fillna(0)
             forward_sim.append(group["forward_swing_sim"].rolling(window=n_segment).mean().values[n_segment-1:])
-            racket_mov_sim.append(group["racket_movement_sim_lcss"].rolling(window=n_segment).mean().values[n_segment-1:])
+            racket_mov_sim.append(group["hand_movement_sim_lcss"].rolling(window=n_segment).mean().values[n_segment-1:])
             hitter_pf_rate.append(group["hitter_pr_p3_fx"].rolling(window=n_segment).sum().values[n_segment-1:])
             hitter_al1_rate.append(group["hitter_pr_p1_al"].rolling(window=n_segment).mean().values[n_segment-1:])
             hitter_al2_rate.append(group["hitter_pr_p2_al"].rolling(window=n_segment).mean().values[n_segment-1:])

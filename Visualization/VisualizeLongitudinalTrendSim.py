@@ -11,14 +11,17 @@ with open(DOUBLE_RESULTS_PATH + "idata_m3_" + analyzed_features + "_" + str(n) +
     idata = pickle.load(handle)
 
 
-# a = az.summary(
-#     idata,
-#     stat_focus="median",
-# )
+a = az.summary(
+    idata,
+    stat_focus="mean",
+)
+# evalutae model
+hierarchical_loo = az.loo(idata)
 
+print(hierarchical_loo)
 
-# az.plot_trace(idata)
-# plt.show()
+az.plot_trace(idata)
+plt.show()
 
 
 fig, ax = plt.subplots(figsize=(20, 8))

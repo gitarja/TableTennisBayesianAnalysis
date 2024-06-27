@@ -1,114 +1,118 @@
 digraph {
-	subgraph cluster9558 {
-		th_segments [label="th_segments
-~
-MutableData" shape=box style="rounded, filled"]
-		control_sim [label="control_sim
-~
-MutableData" shape=box style="rounded, filled"]
-		over_dis [label="over_dis
-~
-MutableData" shape=box style="rounded, filled"]
-		under_dis [label="under_dis
-~
-MutableData" shape=box style="rounded, filled"]
-		under_sim [label="under_sim
-~
-MutableData" shape=box style="rounded, filled"]
-		over_sim [label="over_sim
-~
-MutableData" shape=box style="rounded, filled"]
-		control_dis [label="control_dis
-~
-MutableData" shape=box style="rounded, filled"]
-		label=9558 labeljust=r labelloc=b style=rounded
-	}
-	global_over_sim [label="global_over_sim
+	control_mean [label="control_mean
 ~
 Normal" shape=ellipse]
-	global_under_dis_seg [label="global_under_dis_seg
-~
-Normal" shape=ellipse]
-	global_th_segment [label="global_th_segment
-~
-Normal" shape=ellipse]
-	global_under_sim [label="global_under_sim
-~
-Normal" shape=ellipse]
-	global_over_dis_seg [label="global_over_dis_seg
-~
-Normal" shape=ellipse]
-	global_under_sim_seg [label="global_under_sim_seg
-~
-Normal" shape=ellipse]
-	global_control_dis_seg [label="global_control_dis_seg
-~
-Normal" shape=ellipse]
-	global_intercept [label="global_intercept
-~
-Normal" shape=ellipse]
-	global_under_dis [label="global_under_dis
-~
-Normal" shape=ellipse]
-	global_control_dis [label="global_control_dis
-~
-Normal" shape=ellipse]
-	global_over_dis [label="global_over_dis
-~
-Normal" shape=ellipse]
-	global_control_sim [label="global_control_sim
-~
-Normal" shape=ellipse]
-	global_control_sim_seg [label="global_control_sim_seg
-~
-Normal" shape=ellipse]
-	global_over_sim_seg [label="global_over_sim_seg
-~
-Normal" shape=ellipse]
-	global_sigma [label="global_sigma
-~
-HalfStudentT" shape=ellipse]
-	subgraph "clusterids (64)" {
-		group_th_segments [label="group_th_segments
-~
-Normal" shape=ellipse]
-		group_intercept [label="group_intercept
-~
-Normal" shape=ellipse]
-		label="ids (64)" labeljust=r labelloc=b style=rounded
-	}
-	subgraph "clusterobs (9558)" {
-		growth_model [label="growth_model
+	diff_means_over_control [label="diff_means_over_control
 ~
 Deterministic" shape=box]
-		y [label="y
+	diff_stds_over_control [label="diff_stds_over_control
 ~
-Censored" shape=ellipse style=filled]
-		label="obs (9558)" labeljust=r labelloc=b style=rounded
+Deterministic" shape=box]
+	beta_over_skill [label="beta_over_skill
+~
+Normal" shape=ellipse]
+	under_sigma [label="under_sigma
+~
+Uniform" shape=ellipse]
+	diff_means_under_control [label="diff_means_under_control
+~
+Deterministic" shape=box]
+	diff_means_under_over [label="diff_means_under_over
+~
+Deterministic" shape=box]
+	effect_under_over [label="effect_under_over
+~
+Deterministic" shape=box]
+	diff_stds_under_over [label="diff_stds_under_over
+~
+Deterministic" shape=box]
+	effect_under_control [label="effect_under_control
+~
+Deterministic" shape=box]
+	under_mean [label="under_mean
+~
+Normal" shape=ellipse]
+	control_sigma [label="control_sigma
+~
+Uniform" shape=ellipse]
+	nu_minus_one [label="nu_minus_one
+~
+Exponential" shape=ellipse]
+	beta_under_skill [label="beta_under_skill
+~
+Normal" shape=ellipse]
+	beta_control_skill [label="beta_control_skill
+~
+Normal" shape=ellipse]
+	effect_over_control [label="effect_over_control
+~
+Deterministic" shape=box]
+	over_mean [label="over_mean
+~
+Normal" shape=ellipse]
+	nu [label="nu
+~
+Deterministic" shape=box]
+	nu_log10 [label="nu_log10
+~
+Deterministic" shape=box]
+	over_sigma [label="over_sigma
+~
+Uniform" shape=ellipse]
+	diff_stds_under_control [label="diff_stds_under_control
+~
+Deterministic" shape=box]
+	subgraph cluster38 {
+		control [label="control
+~
+StudentT" shape=ellipse style=filled]
+		label=38 labeljust=r labelloc=b style=rounded
 	}
-	control_sim -> growth_model
-	global_over_sim -> growth_model
-	group_th_segments -> growth_model
-	global_under_dis_seg -> growth_model
-	global_under_sim -> growth_model
-	global_th_segment -> growth_model
-	under_dis -> growth_model
-	under_sim -> growth_model
-	global_intercept -> growth_model
-	global_control_dis -> growth_model
-	global_control_sim -> growth_model
-	control_dis -> growth_model
-	th_segments -> growth_model
-	global_over_dis_seg -> growth_model
-	over_dis -> growth_model
-	group_intercept -> growth_model
-	global_under_sim_seg -> growth_model
-	global_control_dis_seg -> growth_model
-	global_under_dis -> growth_model
-	global_control_sim_seg -> growth_model
-	global_over_dis -> growth_model
-	global_over_sim_seg -> growth_model
-	over_sim -> growth_model
-	global_sigma -> y
-	growth_model -> y
+	subgraph cluster12 {
+		under [label="under
+~
+StudentT" shape=ellipse style=filled]
+		label=12 labeljust=r labelloc=b style=rounded
+	}
+	subgraph cluster14 {
+		over [label="over
+~
+StudentT" shape=ellipse style=filled]
+		label=14 labeljust=r labelloc=b style=rounded
+	}
+	nu_minus_one -> nu
+	nu -> nu_log10
+	control_sigma -> control
+	control_mean -> control
+	nu -> control
+	beta_control_skill -> control
+	under_mean -> under
+	beta_under_skill -> under
+	nu -> under
+	under_sigma -> under
+	over_sigma -> over
+	over_mean -> over
+	nu -> over
+	beta_over_skill -> over
+	under_mean -> diff_means_under_control
+	control_mean -> diff_means_under_control
+	control_mean -> diff_means_over_control
+	over_mean -> diff_means_over_control
+	under_mean -> diff_means_under_over
+	over_mean -> diff_means_under_over
+	control_sigma -> diff_stds_under_control
+	under_sigma -> diff_stds_under_control
+	control_sigma -> diff_stds_over_control
+	over_sigma -> diff_stds_over_control
+	over_sigma -> diff_stds_under_over
+	under_sigma -> diff_stds_under_over
+	control_sigma -> effect_under_control
+	diff_means_under_control -> effect_under_control
+	under_sigma -> effect_under_control
+	over_sigma -> effect_over_control
+	diff_means_over_control -> effect_over_control
+	control_sigma -> effect_over_control
+	over_sigma -> effect_under_over
+	diff_means_under_over -> effect_under_over
+	under_sigma -> effect_under_over
 }

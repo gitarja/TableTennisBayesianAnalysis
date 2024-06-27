@@ -41,6 +41,11 @@ def CenteredModelSim(coords, df, BINOMINAL, session_id_idx, analyzed_features, n
         global_over_dis_seg = pm.Normal("global_over_dis_seg", 0, 0.75)
 
         # level 2
+
+
+        # group_intercept_sigma = pm.HalfStudentT("group_intercept_sigma", 1, 3)
+        # group_th_segments_sigma = pm.HalfStudentT("group_th_segments_sigma", 1, 3)
+
         group_intercept = pm.Normal("group_intercept", 0, 1, dims="ids")
         group_th_segments = pm.Normal("group_th_segments", 0, 0.15, dims="ids")
 
@@ -77,10 +82,9 @@ def CenteredModelSim(coords, df, BINOMINAL, session_id_idx, analyzed_features, n
                                   dims="obs")
 
         else:
-            global_sigma = pm.HalfStudentT("global_sigma", 1, 3)
-            outcome = pm.Normal.dist(growth_model, global_sigma)
-            censored_normal = pm.Censored("y", outcome, lower=0, upper=1,  observed=df[analyzed_features].values, dims="obs")
-            # outcome = pm.TruncatedNormal("y", growth_model, global_sigma, observed=df[analyzed_features].values, dims="obs", lower=0.0, upper=1.0)
+            # global_sigma = pm.HalfStudentT("global_sigma", 1, 3)
+            outcome = pm.Normal("y", mu=pm.math.invlogit(growth_model), sigma=0.5, observed=df[analyzed_features].values, dims="obs")
+
 
         return model
 
@@ -138,8 +142,8 @@ def CenteredModel(coords, df, BINOMINAL, session_id_idx, analyzed_features, n):
                                   dims="obs")
 
         else:
-            global_sigma = pm.HalfStudentT("global_sigma", 1, 3)
-            outcome = pm.Normal("y", growth_model, global_sigma, observed=df[analyzed_features].values, dims="obs")
+            # global_sigma = pm.HalfStudentT("global_sigma", 1, 3)
+            outcome = pm.Normal("y", pm.math.invlogit(growth_model), 5, observed=df[analyzed_features].values, dims="obs")
 
     return model
 
