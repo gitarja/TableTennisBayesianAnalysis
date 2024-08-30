@@ -7,69 +7,10 @@ import numpy as np
 from scipy.special import expit
 # save the model
 n=10
-analyzed_features = "racket_mov_sim"
+analyzed_features = "stable_rate"
 with open(DOUBLE_RESULTS_PATH + "idata_m3_" + analyzed_features + "_" + str(n) + ".pkl", 'rb') as handle:
     idata = pickle.load(handle)
 
 
-# a = az.summary(
-#     idata,
-#     stat_focus="median",
-# )
-
-# evalutae model
-hierarchical_loo = az.loo(idata)
-
-print(hierarchical_loo)
-
-
-# az.plot_trace(idata)
-# plt.show()
-
-
-fig, ax = plt.subplots(figsize=(20, 8))
-posterior = az.extract(idata.posterior)
-
-group_intercept = posterior["group_intercept"].mean(dim="ids")
-group_th_segments = posterior["group_th_segments"].mean(dim="ids")
-
-a = posterior["global_intercept"].mean() + group_intercept
-b = posterior["global_th_segment"].mean() + group_th_segments
-
-
-global_control = posterior["global_control"].mean()
-global_under = posterior["global_under"].mean()
-global_over = posterior["global_over"].mean()
-
-global_control_seg = posterior["global_control_seg"].mean()
-global_under_seg = posterior["global_under_seg"].mean()
-global_over_seg = posterior["global_over_seg"].mean()
-
-time_xi = xr.DataArray(np.arange(0, 20, 0.1))
-
-# control
-ax.plot(
-    time_xi,
-    (a + b * time_xi + global_control * 1 + global_control_seg * (time_xi * 1)).T,
-    color="blue",
-    linewidth=0.2,
-    alpha=0.2,
-)
-#under
-ax.plot(
-    time_xi,
-    (a + b * time_xi + global_under * 1 + global_under_seg * (time_xi * 1)).T,
-    color="green",
-    linewidth=0.2,
-    alpha=0.2,
-)
-# over
-ax.plot(
-    time_xi,
-    (a + b * time_xi + global_over * 1 + global_over_seg * (time_xi * 1)).T,
-    color="red",
-    linewidth=0.2,
-    alpha=0.2,
-)
-
+az.plot_ppc(idata, figsize=(20, 7))
 plt.show()

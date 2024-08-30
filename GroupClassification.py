@@ -16,14 +16,17 @@ def outliersDetection(X, y):
 
         # Define likelihood
         mu = pm.Deterministic("mu", intercept + slope * X)
-        # likelihood = pm.StudentT("y", nu=3, mu=mu, sigma=sigma, observed=y)
-        likelihood = pm.Normal("y", mu=mu, sigma=sigma, observed=y)
+        likelihood = pm.StudentT("y", nu=3, mu=mu, sigma=sigma, observed=y)
+        # likelihood = pm.Normal("y", mu=mu, sigma=sigma, observed=y)
 
         # Inference!
         # draw 3000 posterior samples using NUTS sampling
-        trace = pm.sample(tune=500, chains=4, cores=4, random_seed=100, draws=1000, target_accept=0.8)
+        idata = pm.sample(tune=500, chains=4, cores=4, random_seed=100, draws=1000, target_accept=0.95, idata_kwargs={"log_likelihood": True})
 
-    post = az.extract(trace.posterior)
+    hierarchical_loo = az.loo(idata)
+
+    print(hierarchical_loo)
+    post = az.extract(idata.posterior)
     preds = post["intercept"] + post["slope"] * xr.DataArray(X)
 
     std = np.std(preds, axis=0) * 5 # ref https://doi.org/10.1109/TIP.2008.926150
@@ -38,19 +41,21 @@ def outliersDetection(X, y):
 
 
     outlier_idx =  ~((y >  min_pred) & (y < max_pred))
-    labels[(outlier_idx) & (y > mean)] = 3
-    labels[(outlier_idx) & (y < mean)] = 2
-
+    labels[(outlier_idx) & (y > mean)] = 3 # efficient
+    labels[(outlier_idx) & (y < mean)] = 2 #  inefficient
 
     # show the linear reg
-    plt.plot(X, mean, color="black")
-    # plt.plot(X, preds.transpose(), alpha=0.01, color="C1")
-    plt.scatter(X[labels==1], y[labels==1], label="control", color="#377eb8")
-    plt.scatter(X[labels == 2], y[labels == 2], label="overestimate", color="#e41a1c")
-    plt.scatter(X[labels == 3], y[labels == 3], label="underestimate", color="#4daf4a")
-
-    plt.legend(loc=0)
-    plt.show()
+    # plt.plot(X, mean, color="black")
+    # sortedX_idx = np.argsort(X)
+    # plt.fill_between(X[sortedX_idx], mean[sortedX_idx] - std[sortedX_idx], mean[sortedX_idx] + std[sortedX_idx], alpha=.1, color="#377eb8")
+    # # plt.plot(X, preds.transpose(), alpha=0.01, color="C1")
+    # plt.scatter(X[labels==1], y[labels==1], label="control", color="#377eb8", s=30)
+    #
+    # plt.scatter(X[labels == 2], y[labels == 2], label="overestimate", color="#e41a1c", s=30)
+    # plt.scatter(X[labels == 3], y[labels == 3], label="underestimate", color="#4daf4a", s=30)
+    #
+    # # plt.legend(loc=0)
+    # plt.show()
     return labels
 
 

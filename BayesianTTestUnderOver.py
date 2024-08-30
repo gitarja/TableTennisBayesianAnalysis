@@ -29,43 +29,44 @@ if __name__ == '__main__':
 
     labels = outliersDetection(X, y)
     inlier_idx = np.argwhere(labels == 1).flatten()
-    over_idx = np.argwhere(labels == 2).flatten()
-    under_idx = np.argwhere(labels == 3).flatten()
+    inefficient_idx = np.argwhere(labels == 2).flatten()
+    efficient_idx = np.argwhere(labels == 3).flatten()
 
     inlier_group = group_label[inlier_idx]
-    over_group = group_label[over_idx]
-    under_group = group_label[under_idx]
+    inefficient_group = group_label[inefficient_idx]
+    efficient_group = group_label[efficient_idx]
 
-    features = ["receiver_p1_al",
-                "receiver_p2_al",
-                "receiver_pursuit",
-                "receiver_pursuit_duration",
-                "receiver_p1_al_prec",
-                "receiver_p1_al_onset",
-                "receiver_p2_al_prec",
-                "receiver_p2_al_onset",
-                "receiver_p1_cs",
-                "receiver_p2_cs",
-                "hitter_p1_al",
-                "hitter_p2_al",
-                "hitter_pursuit",
-                "hitter_pursuit_duration",
-                "hitter_p1_al_prec",
-                "hitter_p1_al_onset",
-                "hitter_p2_al_prec",
-                "hitter_p2_al_onset",
-                "hitter_p1_cs",
-                "hitter_p2_cs",
-                "receiver_start_fs_std",
-                "receiver_racket_to_root_std",
-                "receiver_fs_ball_racket_dir_std",
-                "hand_mov_sim",
-                "single_mov_sim",
-                "bouncing_point_var",
-                "s1_bouncing_point_var",
-                "s2_bouncing_point_var"]
+    # features = ["receiver_p1_al",
+    #             "receiver_p2_al",
+    #             "receiver_pursuit",
+    #             "receiver_pursuit_duration",
+    #             "receiver_p1_al_prec",
+    #             "receiver_p1_al_onset",
+    #             "receiver_p2_al_prec",
+    #             "receiver_p2_al_onset",
+    #             "receiver_p1_cs",
+    #             "receiver_p2_cs",
+    #             "hitter_p1_al",
+    #             "hitter_p2_al",
+    #             "hitter_pursuit",
+    #             "hitter_pursuit_duration",
+    #             "hitter_p1_al_prec",
+    #             "hitter_p1_al_onset",
+    #             "hitter_p2_al_prec",
+    #             "hitter_p2_al_onset",
+    #             "hitter_p1_cs",
+    #             "hitter_p2_cs",
+    #             "receiver_start_fs_std",
+    #             "receiver_racket_to_root_std",
+    #             "receiver_fs_ball_racket_dir_std",
+    #             "hand_mov_sim",
+    #             "single_mov_sim",
+    #             "bouncing_point_var",
+    #             "s1_bouncing_point_var",
+    #             "s2_bouncing_point_var",
+    #             "receiver_racket_ball_force_ratio_std"]
 
-    # features = ["hitter_pursuit"]
+    features = ["stable_percentage"]
 
     # load data
 
@@ -73,27 +74,27 @@ if __name__ == '__main__':
     control_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_SUMMARY_FEATURES_PATH,
                                                 file_summary_path=DOUBLE_SUMMARY_FILE_PATH,
                                                 include_subjects=inlier_group, exclude_failure=True,
-                                                exclude_no_pair=False)
+                                                exclude_no_pair=False, hmm_probs=True)
     control_features = control_reader.getGlobalFeatures(group_label="control")
 
-    # overestimated group
-    over_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_SUMMARY_FEATURES_PATH,
+    # inefficientestimated group
+    inefficient_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_SUMMARY_FEATURES_PATH,
                                              file_summary_path=DOUBLE_SUMMARY_FILE_PATH,
-                                             include_subjects=over_group, exclude_failure=True,
-                                             exclude_no_pair=False)
-    over_features = over_reader.getGlobalFeatures(group_label="over")
+                                             include_subjects=inefficient_group, exclude_failure=True,
+                                             exclude_no_pair=False, hmm_probs=True)
+    inefficient_features = inefficient_reader.getGlobalFeatures(group_label="inefficient")
 
-    # underestimated group
-    under_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_SUMMARY_FEATURES_PATH,
+    # efficientestimated group
+    efficient_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_SUMMARY_FEATURES_PATH,
                                               file_summary_path=DOUBLE_SUMMARY_FILE_PATH,
-                                              include_subjects=under_group, exclude_failure=True,
-                                              exclude_no_pair=False)
-    under_features = under_reader.getGlobalFeatures(group_label="under")
+                                              include_subjects=efficient_group, exclude_failure=True,
+                                              exclude_no_pair=False, hmm_probs=True)
+    efficient_features = efficient_reader.getGlobalFeatures(group_label="efficient")
 
     print(control_features.shape)
-    print(over_features.shape)
-    print(under_features.shape)
-    indv = pd.concat([control_features, over_features, under_features]).reset_index()
+    print(inefficient_features.shape)
+    print(efficient_features.shape)
+    indv = pd.concat([control_features, inefficient_features, efficient_features]).reset_index()
 
     # One Hot Encode Data
     dummies = pd.get_dummies(indv.group)
@@ -113,23 +114,23 @@ if __name__ == '__main__':
         mu_s = df[analyzed_features].std() * 2
 
         control_values = df.loc[df["group"] == "control"][analyzed_features].values
-        under_values = df.loc[df["group"] == "under"][analyzed_features].values
-        over_values = df.loc[df["group"] == "over"][analyzed_features].values
+        efficient_values = df.loc[df["group"] == "efficient"][analyzed_features].values
+        inefficient_values = df.loc[df["group"] == "inefficient"][analyzed_features].values
 
         control_skill = df.loc[df["group"] == "control"]["group_skill"].values
-        under_skill = df.loc[df["group"] == "under"]["group_skill"].values
-        over_skill = df.loc[df["group"] == "over"]["group_skill"].values
+        efficient_skill = df.loc[df["group"] == "efficient"]["group_skill"].values
+        inefficient_skill = df.loc[df["group"] == "inefficient"]["group_skill"].values
 
         # # plot observed data
         _, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(14, 8))
 
         print(np.average(control_values))
-        print(np.average(under_values))
-        print(np.average(over_values))
+        print(np.average(efficient_values))
+        print(np.average(inefficient_values))
 
         az.plot_violin(control_values, ax=ax1)
-        az.plot_violin(under_values, ax=ax2)
-        az.plot_violin(over_values, ax=ax3)
+        az.plot_violin(efficient_values, ax=ax2)
+        az.plot_violin(inefficient_values, ax=ax3)
 
         plt.savefig(DOUBLE_RESULTS_PATH_TTEST + "data_dist\\" + analyzed_features + ".png")
         # plt.show()
@@ -138,8 +139,8 @@ if __name__ == '__main__':
             # Define priors
 
             control_mean = pm.Normal('control_mean', mu=mu_m, sigma=mu_s)
-            over_mean = pm.Normal('over_mean', mu=mu_m, sigma=mu_s)
-            under_mean = pm.Normal('under_mean', mu=mu_m, sigma=mu_s)
+            inefficient_mean = pm.Normal('inefficient_mean', mu=mu_m, sigma=mu_s)
+            efficient_mean = pm.Normal('efficient_mean', mu=mu_m, sigma=mu_s)
 
             # beta fixed effects
             beta_control = pm.Normal('beta_control', mu=0, sigma=10)
@@ -149,8 +150,8 @@ if __name__ == '__main__':
             sigma_high = 10 ** 4 if mu_m > 1 else 10. ** 2
 
             control_sigma = pm.Uniform("control_sigma", lower=sigma_low, upper=sigma_high)
-            under_sigma = pm.Uniform("under_sigma", lower=sigma_low, upper=sigma_high)
-            over_sigma = pm.Uniform("over_sigma", lower=sigma_low, upper=sigma_high)
+            efficient_sigma = pm.Uniform("efficient_sigma", lower=sigma_low, upper=sigma_high)
+            inefficient_sigma = pm.Uniform("inefficient_sigma", lower=sigma_low, upper=sigma_high)
 
             # Define nu
             nu_minus_one = pm.Exponential("nu_minus_one", 1 / 29.0)
@@ -159,30 +160,30 @@ if __name__ == '__main__':
 
             control = pm.StudentT("control", nu=nu, mu=control_mean + (beta_control * control_skill),
                                   sigma=control_sigma, observed=control_values)
-            under = pm.StudentT("under", nu=nu, mu=under_mean + (beta_control * under_skill), sigma=under_sigma,
-                                observed=under_values)
-            over = pm.StudentT("over", nu=nu, mu=over_mean + (beta_control * over_skill), sigma=over_sigma,
-                               observed=over_values)
+            efficient = pm.StudentT("efficient", nu=nu, mu=efficient_mean + (beta_control * efficient_skill), sigma=efficient_sigma,
+                                observed=efficient_values)
+            inefficient = pm.StudentT("inefficient", nu=nu, mu=inefficient_mean + (beta_control * inefficient_skill), sigma=inefficient_sigma,
+                               observed=inefficient_values)
 
             # compute diff means
-            diff_means_under_control = pm.Deterministic('diff_means_under_control', under_mean - control_mean)
-            diff_means_over_control = pm.Deterministic('diff_means_over_control', over_mean - control_mean)
-            diff_means_under_over = pm.Deterministic('diff_means_under_over', under_mean - over_mean)
+            diff_means_efficient_control = pm.Deterministic('diff_means_efficient_control', efficient_mean - control_mean)
+            diff_means_inefficient_control = pm.Deterministic('diff_means_inefficient_control', inefficient_mean - control_mean)
+            diff_means_efficient_inefficient = pm.Deterministic('diff_means_efficient_inefficient', efficient_mean - inefficient_mean)
 
             # compute diff std
-            diff_stds_under_control = pm.Deterministic("diff_stds_under_control", under_sigma - control_sigma)
-            diff_stds_over_control = pm.Deterministic("diff_stds_over_control", over_sigma - control_sigma)
-            diff_stds_under_over = pm.Deterministic("diff_stds_under_over", under_sigma - over_sigma)
+            diff_stds_efficient_control = pm.Deterministic("diff_stds_efficient_control", efficient_sigma - control_sigma)
+            diff_stds_inefficient_control = pm.Deterministic("diff_stds_inefficient_control", inefficient_sigma - control_sigma)
+            diff_stds_efficient_inefficient = pm.Deterministic("diff_stds_efficient_inefficient", efficient_sigma - inefficient_sigma)
 
             # compute effect size
-            effect_under_control = pm.Deterministic(
-                "effect_under_control", diff_means_under_control / np.sqrt((control_sigma ** 2 + under_sigma ** 2) / 2)
+            effect_efficient_control = pm.Deterministic(
+                "effect_efficient_control", diff_means_efficient_control / np.sqrt((control_sigma ** 2 + efficient_sigma ** 2) / 2)
             )
-            effect_over_control = pm.Deterministic(
-                "effect_over_control", diff_means_over_control / np.sqrt((control_sigma ** 2 + over_sigma ** 2) / 2)
+            effect_inefficient_control = pm.Deterministic(
+                "effect_inefficient_control", diff_means_inefficient_control / np.sqrt((control_sigma ** 2 + inefficient_sigma ** 2) / 2)
             )
-            effect_under_over = pm.Deterministic(
-                "effect_under_over", diff_means_under_over / np.sqrt((over_sigma ** 2 + under_sigma ** 2) / 2)
+            effect_efficient_inefficient = pm.Deterministic(
+                "effect_efficient_inefficient", diff_means_efficient_inefficient / np.sqrt((inefficient_sigma ** 2 + efficient_sigma ** 2) / 2)
             )
 
             # check the model
@@ -199,11 +200,11 @@ if __name__ == '__main__':
         # control
         ax1.plot(x, ((prior["control_mean"] + (prior["beta_control"] * x)).stack(sample=("chain", "draw"))), c="k",
                  alpha=0.4)
-        # under
-        ax2.plot(x, ((prior["under_mean"] + (prior["beta_control"] * x)).stack(sample=("chain", "draw"))), c="k",
+        # efficient
+        ax2.plot(x, ((prior["efficient_mean"] + (prior["beta_control"] * x)).stack(sample=("chain", "draw"))), c="k",
                  alpha=0.4)
-        # over
-        ax3.plot(x, ((prior["over_mean"] + (prior["beta_control"] * x)).stack(sample=("chain", "draw"))), c="k",
+        # inefficient
+        ax3.plot(x, ((prior["inefficient_mean"] + (prior["beta_control"] * x)).stack(sample=("chain", "draw"))), c="k",
                  alpha=0.4)
 
         ax1.set_xlabel("Predictor (stdz)")
@@ -221,7 +222,7 @@ if __name__ == '__main__':
             )
             idata_m3.extend(pm.sample_posterior_predictive(idata_m3))
 
-        az.plot_forest(idata_m3, var_names=["control_mean", "over_mean", "under_mean"])
+        az.plot_forest(idata_m3, var_names=["control_mean", "inefficient_mean", "efficient_mean"])
         plt.xlabel(analyzed_features)
         figure = plt.gcf()  # get current figure
         figure.set_size_inches(12, 10)

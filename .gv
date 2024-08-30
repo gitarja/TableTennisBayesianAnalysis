@@ -1,118 +1,76 @@
 digraph {
-	control_mean [label="control_mean
+	subgraph "clusterobs (8982)" {
+		controlled_skill [label="controlled_skill
 ~
-Normal" shape=ellipse]
-	diff_means_over_control [label="diff_means_over_control
+Data" shape=box style="rounded, filled"]
+		growth_model [label="growth_model
 ~
-Deterministic" shape=box]
-	diff_stds_over_control [label="diff_stds_over_control
+Normal" shape=ellipse style=filled]
+		observed [label="observed
 ~
-Deterministic" shape=box]
-	beta_over_skill [label="beta_over_skill
+Data" shape=box style="rounded, filled"]
+		th_segments [label="th_segments
 ~
-Normal" shape=ellipse]
-	under_sigma [label="under_sigma
-~
-Uniform" shape=ellipse]
-	diff_means_under_control [label="diff_means_under_control
-~
-Deterministic" shape=box]
-	diff_means_under_over [label="diff_means_under_over
-~
-Deterministic" shape=box]
-	effect_under_over [label="effect_under_over
-~
-Deterministic" shape=box]
-	diff_stds_under_over [label="diff_stds_under_over
-~
-Deterministic" shape=box]
-	effect_under_control [label="effect_under_control
-~
-Deterministic" shape=box]
-	under_mean [label="under_mean
-~
-Normal" shape=ellipse]
-	control_sigma [label="control_sigma
-~
-Uniform" shape=ellipse]
-	nu_minus_one [label="nu_minus_one
-~
-Exponential" shape=ellipse]
-	beta_under_skill [label="beta_under_skill
-~
-Normal" shape=ellipse]
-	beta_control_skill [label="beta_control_skill
-~
-Normal" shape=ellipse]
-	effect_over_control [label="effect_over_control
-~
-Deterministic" shape=box]
-	over_mean [label="over_mean
-~
-Normal" shape=ellipse]
-	nu [label="nu
-~
-Deterministic" shape=box]
-	nu_log10 [label="nu_log10
-~
-Deterministic" shape=box]
-	over_sigma [label="over_sigma
-~
-Uniform" shape=ellipse]
-	diff_stds_under_control [label="diff_stds_under_control
-~
-Deterministic" shape=box]
-	subgraph cluster38 {
-		control [label="control
-~
-StudentT" shape=ellipse style=filled]
-		label=38 labeljust=r labelloc=b style=rounded
+Data" shape=box style="rounded, filled"]
+		label="obs (8982)" labeljust=r labelloc=b style=rounded
 	}
-	subgraph cluster12 {
-		under [label="under
+	subgraph "clusterobs (8982) x group (3)" {
+		groups [label="groups
 ~
-StudentT" shape=ellipse style=filled]
-		label=12 labeljust=r labelloc=b style=rounded
+Data" shape=box style="rounded, filled"]
+		label="obs (8982) x group (3)" labeljust=r labelloc=b style=rounded
 	}
-	subgraph cluster14 {
-		over [label="over
+	global_th_segment [label="global_th_segment
 ~
-StudentT" shape=ellipse style=filled]
-		label=14 labeljust=r labelloc=b style=rounded
+Normal" shape=ellipse]
+	global_sigma [label="global_sigma
+~
+HalfNormal" shape=ellipse]
+	global_skill_slope [label="global_skill_slope
+~
+Normal" shape=ellipse]
+	global_intercept [label="global_intercept
+~
+Normal" shape=ellipse]
+	subgraph "clustergroup (3)" {
+		global_group_seg [label="global_group_seg
+~
+Normal" shape=ellipse]
+		global_group [label="global_group
+~
+Normal" shape=ellipse]
+		label="group (3)" labeljust=r labelloc=b style=rounded
 	}
-	nu_minus_one -> nu
-	nu -> nu_log10
-	control_sigma -> control
-	control_mean -> control
-	nu -> control
-	beta_control_skill -> control
-	under_mean -> under
-	beta_under_skill -> under
-	nu -> under
-	under_sigma -> under
-	over_sigma -> over
-	over_mean -> over
-	nu -> over
-	beta_over_skill -> over
-	under_mean -> diff_means_under_control
-	control_mean -> diff_means_under_control
-	control_mean -> diff_means_over_control
-	over_mean -> diff_means_over_control
-	under_mean -> diff_means_under_over
-	over_mean -> diff_means_under_over
-	control_sigma -> diff_stds_under_control
-	under_sigma -> diff_stds_under_control
-	control_sigma -> diff_stds_over_control
-	over_sigma -> diff_stds_over_control
-	over_sigma -> diff_stds_under_over
-	under_sigma -> diff_stds_under_over
-	control_sigma -> effect_under_control
-	diff_means_under_control -> effect_under_control
-	under_sigma -> effect_under_control
-	over_sigma -> effect_over_control
-	diff_means_over_control -> effect_over_control
-	control_sigma -> effect_over_control
-	over_sigma -> effect_under_over
-	diff_means_under_over -> effect_under_over
-	under_sigma -> effect_under_over
+	subgraph "clustersubject_idx (74)" {
+		subjects_intercept_seg [label="subjects_intercept_seg
+~
+Normal" shape=ellipse]
+		subjects_intercept [label="subjects_intercept
+~
+Normal" shape=ellipse]
+		label="subject_idx (74)" labeljust=r labelloc=b style=rounded
+	}
+	subgraph cluster8982 {
+		mu [label="mu
+~
+Deterministic" shape=box]
+		control_skilled_variable [label="control_skilled_variable
+~
+Deterministic" shape=box]
+		label=8982 labeljust=r labelloc=b style=rounded
+	}
+	growth_model -> observed
+	controlled_skill -> control_skilled_variable
+	global_skill_slope -> control_skilled_variable
+	global_th_segment -> mu
+	subjects_intercept -> mu
+	global_group_seg -> mu
+	global_group -> mu
+	groups -> mu
+	global_intercept -> mu
+	th_segments -> mu
+	control_skilled_variable -> mu
+	subjects_intercept_seg -> mu
+	mu -> growth_model
+	global_sigma -> growth_model
 }

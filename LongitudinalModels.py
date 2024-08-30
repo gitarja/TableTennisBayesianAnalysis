@@ -42,7 +42,6 @@ def CenteredModelSim(coords, df, BINOMINAL, session_id_idx, analyzed_features, n
 
         # level 2
 
-
         # group_intercept_sigma = pm.HalfStudentT("group_intercept_sigma", 1, 3)
         # group_th_segments_sigma = pm.HalfStudentT("group_th_segments_sigma", 1, 3)
 
@@ -53,25 +52,25 @@ def CenteredModelSim(coords, df, BINOMINAL, session_id_idx, analyzed_features, n
         growth_model = pm.Deterministic(
             "growth_model",
 
-                (global_intercept + group_intercept[session_id_idx])
+            (global_intercept + group_intercept[session_id_idx])
 
-                + global_control_sim * control_sim
-                + global_under_sim * under_sim
-                + global_over_sim * over_sim
+            + global_control_sim * control_sim
+            + global_under_sim * under_sim
+            + global_over_sim * over_sim
 
-                + global_control_dis * control_dis
-                + global_under_dis * under_dis
-                + global_over_dis * over_dis
+            + global_control_dis * control_dis
+            + global_under_dis * under_dis
+            + global_over_dis * over_dis
 
-                + global_control_sim_seg * (control_sim * th_segments)
-                + global_under_sim_seg * (under_sim * th_segments)
-                + global_over_sim_seg * (over_sim * th_segments)
+            + global_control_sim_seg * (control_sim * th_segments)
+            + global_under_sim_seg * (under_sim * th_segments)
+            + global_over_sim_seg * (over_sim * th_segments)
 
-                + global_control_dis_seg * (control_dis * th_segments)
-                + global_under_dis_seg * (under_dis * th_segments)
-                + global_over_dis_seg * (over_dis * th_segments)
+            + global_control_dis_seg * (control_dis * th_segments)
+            + global_under_dis_seg * (under_dis * th_segments)
+            + global_over_dis_seg * (over_dis * th_segments)
 
-                + (global_th_segment + group_th_segments[session_id_idx]) * th_segments
+            + (global_th_segment + group_th_segments[session_id_idx]) * th_segments
 
             , dims="obs"
         )
@@ -83,69 +82,173 @@ def CenteredModelSim(coords, df, BINOMINAL, session_id_idx, analyzed_features, n
 
         else:
             # global_sigma = pm.HalfStudentT("global_sigma", 1, 3)
-            outcome = pm.Normal("y", mu=pm.math.invlogit(growth_model), sigma=0.5, observed=df[analyzed_features].values, dims="obs")
-
+            outcome = pm.Normal("y", mu=pm.math.invlogit(growth_model), sigma=0.5,
+                                observed=df[analyzed_features].values, dims="obs")
 
         return model
 
 
-def CenteredModel(coords, df, BINOMINAL, session_id_idx, analyzed_features, n):
+def CenteredModel(coords, df, BINOMINAL, subject_idx, analyzed_features, n):
+    mu = df[analyzed_features].mean()
     with pm.Model(coords=coords) as model:
-        th_segments = pm.Data("th_segments", df["th_segments"].values, mutable=True)
+        th_segments = pm.Data("th_segments", df["th_segments"].values, mutable=True,
+                              dims=("obs"))
 
-        control = pm.Data("control", df["control"].values.astype(float), mutable=True)
-        over = pm.Data("over", df["over"].values.astype(float), mutable=True)
-        under = pm.Data("under", df["under"].values.astype(float), mutable=True)
+        groups = pm.Data("groups", df[["control", "inefficient", "efficient"]].values.astype(float), mutable=True,
+                         dims=("obs", "group"))
 
+        # skilled
+        controlled_skill = pm.Data("controlled_skill",
+                                   df["subject_skill"].values.astype(float),
+                                   mutable=True, dims=("obs"))
+
+        observed = pm.Data("observed", df[analyzed_features].values, mutable=True, dims="obs")
+
+        # Define priors
         # level 1
+        global_intercept = pm.Normal("global_intercept", 0, 0.5)
+        global_th_segment = pm.Normal("global_th_segment", 0, 0.5)
 
-        global_intercept = pm.Normal("global_intercept", 0, 0.75)
-        global_th_segment = pm.Normal("global_th_segment", 0, 0.75)
 
-        global_control = pm.Normal("global_control", 0, 0.5)
-        global_under = pm.Normal("global_under", 0, 0.5)
-        global_over = pm.Normal("global_over", 0, 0.5)
+        global_group = pm.Normal("global_group", mu, 1, dims="group")
+        global_group_seg = pm.Normal("global_group_seg", 0, 0.5, dims="group")
 
-        global_control_seg = pm.Normal("global_control_seg", 0, 0.75)
-        global_under_seg = pm.Normal("global_under_seg", 0, 0.75)
-        global_over_seg = pm.Normal("global_over_seg", 0, 0.75)
+
 
         # level 2
+        # fixed effect params
+        global_skill_slope = pm.Normal('global_skill_slope', mu=0, sigma=0.1)
+        subjects_intercept = pm.Normal('subjects_intercept', mu=0, sigma=0.1, dims=("subject_idx"))
+        subjects_intercept_seg = pm.Normal('subjects_intercept_seg', mu=0, sigma=0.1, dims=("subject_idx"))
 
-        # group_intercept_sigma = pm.HalfNormal("group_intercept_sigma", 5)
-        # group_th_segments_sigma = pm.HalfNormal("group_th_segments_sigma", 5)
+        control_skilled_variable = pm.Deterministic("control_skilled_variable",
+                                                    pm.math.dot(controlled_skill, global_skill_slope))
 
-        # group_intercept_sigma = pm.HalfStudentT("group_intercept_sigma", 1, 3)
-        # group_th_segments_sigma = pm.HalfStudentT("group_th_segments_sigma", 1, 3)
+        mu = pm.Deterministic("mu", (global_intercept + subjects_intercept[subject_idx])
+                              #  control
+                              + (global_group_seg[0] * th_segments * groups[:, 0])
+                              + (global_group[0] * groups[:, 0])
+                              #  inefficient
+                              + (global_group_seg[1] * th_segments * groups[:, 1])
+                              + (global_group[1] * groups[:, 1])
+                              #  efficient
+                              + (global_group_seg[2] * th_segments * groups[:, 2])
+                              + (global_group[2] * groups[:, 2])
 
-        group_intercept = pm.Normal("group_intercept", 0, 1, dims="ids")
-        group_th_segments = pm.Normal("group_th_segments", 0, 0.15, dims="ids")
+                              + ((global_th_segment + subjects_intercept_seg[subject_idx]) * th_segments)
+                              + (control_skilled_variable))
 
-        # likelihood
-        growth_model = pm.Deterministic(
-            "growth_model",
-
-                (global_intercept + group_intercept[session_id_idx])
-                + global_control * control
-                + global_under * under
-                + global_over * over
-                + global_control_seg * (control * th_segments)
-                + global_under_seg * (under * th_segments)
-                + global_over_seg * (over * th_segments)
-                + (global_th_segment + group_th_segments[session_id_idx]) * th_segments
-
-            , dims="obs"
-        )
         if BINOMINAL:
 
-            outcome = pm.Binomial("y", n=n, p=pm.math.invlogit(growth_model), observed=df[analyzed_features].values,
-                                  dims="obs")
 
+            growth_model = pm.Binomial(
+                "growth_model",
+                n=n,
+                p=pm.math.invlogit(mu),
+                observed=observed,
+                dims="obs"
+            )
+            # alpha = pm.Exponential("alpha", 0.1)
+            # growth_model = pm.NegativeBinomial("growth_model", mu=pm.math.invlogit(mu), alpha=alpha, observed=observed, dims="obs")
         else:
-            # global_sigma = pm.HalfStudentT("global_sigma", 1, 3)
-            outcome = pm.Normal("y", pm.math.invlogit(growth_model), 5, observed=df[analyzed_features].values, dims="obs")
+
+            # likelihood
+            global_sigma = pm.HalfNormal("global_sigma", 0.5)
+            growth_model = pm.Normal(
+                "growth_model",
+                mu=mu,
+                sigma=global_sigma,
+                observed=observed,
+                dims="obs"
+            )
 
     return model
+
+#
+# def CenteredPolyModel(coords, df, BINOMINAL, subject_idx, analyzed_features, n):
+#     mu = df[analyzed_features].mean()
+#     sigma = df[analyzed_features].std() * 2
+#     with pm.Model(coords=coords) as model:
+#         th_segments = pm.Data("th_segments", df[["th_segments", "th_segments", "th_segments"]].values, mutable=True,
+#                               dims=("obs", "group"))
+#
+#         th_segments2  = pm.Data("th_segments", df[["th_segments", "th_segments", "th_segments"]].values ** 2, mutable=True,
+#                               dims=("obs", "group"))
+#
+#         groups = pm.Data("groups", df[["control", "inefficient", "efficient"]].values.astype(float), mutable=True,
+#                          dims=("obs", "group"))
+#
+#         # skilled
+#         controlled_skill = pm.Data("controlled_skill",
+#                                    df[["subject_skill", "subject_skill", "subject_skill"]].values.astype(float),
+#                                    mutable=True, dims=("obs", "group"))
+#
+#         observed = pm.Data("observed", df[analyzed_features].values, mutable=True, dims="obs")
+#
+#         # Define priors
+#         # level 1
+#         global_intercept = pm.Normal("global_intercept", 0, 0.1, dims="group")
+#         global_th_segment = pm.Normal("global_th_segment", 0, 0.1, dims="group")
+#         global_th_segment2 = pm.Normal("global_th_segment2", 0, 0.1, dims="group")
+#
+#         global_group = pm.Normal("global_group", mu, 0.1, dims="group")
+#         global_group_seg = pm.Normal("global_group_seg", 0, 0.1, dims="group")
+#         global_group_seg2 = pm.Normal("global_group_seg2", 0, 0.1, dims="group")
+#
+#         global_skill_slope = pm.Normal('global_skill_slope', mu=0, sigma=0.1)
+#
+#         # level 2
+#         # fixed effect params
+#         subjects_intercept = pm.Normal('subjects_intercept', mu=0, sigma=0.1, dims=("subject_idx", "group"))
+#         subjects_intercept_seg = pm.Normal('subjects_intercept_seg', mu=0, sigma=0.1, dims=("subject_idx", "group"))
+#         subjects_intercept_seg2 = pm.Normal('subjects_intercept_seg2', mu=0, sigma=0.1, dims=("subject_idx", "group"))
+#
+#         control_skilled_variable = pm.Deterministic("control_skilled_variable",
+#                                                     pm.math.dot(controlled_skill, global_skill_slope))
+#
+#         if BINOMINAL:
+#             mu = pm.Deterministic("mu", (global_intercept + subjects_intercept[subject_idx])
+#                                   + global_group * groups
+#                                   + (global_group_seg * th_segments * groups)
+#                                   + (global_group_seg2 * th_segments2 * groups) # poly
+#                                   + ((global_th_segment + subjects_intercept_seg[subject_idx]) * th_segments)
+#                                   + ((global_th_segment2 + subjects_intercept_seg2[subject_idx]) * th_segments2) # poly
+#                                   + (control_skilled_variable))
+#
+#             components = [
+#                 pm.Binomial.dist(n=n, p=pm.math.invlogit(mu[:, 0])),
+#                 pm.Binomial.dist(n=n, p=pm.math.invlogit(mu[:, 1])),
+#                 pm.Binomial.dist(n=n, p=pm.math.invlogit(mu[:, 2])),
+#             ]
+#
+#             weights = pm.Dirichlet("w", np.ones(3), dims="group")
+#             growth_model = pm.Mixture(
+#                 "growth_model",
+#                 comp_dists=components,
+#                 w=weights,
+#                 observed=observed,
+#                 dims="obs"
+#             )
+#         else:
+#             mu = pm.Deterministic("mu", (global_intercept + subjects_intercept[subject_idx])
+#                                   + global_group * groups
+#                                   + (global_group_seg * th_segments * groups)
+#                                   + ((global_th_segment + subjects_intercept_seg[subject_idx]) * th_segments)
+#                                   + (control_skilled_variable))
+#
+#             # likelihood
+#             global_sigma = pm.HalfNormal("global_sigma", 0.1)
+#             weights = pm.Dirichlet("w", np.ones(3), dims="group")
+#             growth_model = pm.NormalMixture(
+#                 "growth_model",
+#                 mu=mu,
+#                 w=weights,
+#                 sigma=global_sigma,
+#                 observed=observed,
+#                 dims="obs"
+#             )
+#
+#     return model
 
 
 def NonCenteredModel(coords, df, BINOMINAL, session_id_idx, analyzed_features, n):
@@ -216,14 +319,14 @@ def NonCenteredModel(coords, df, BINOMINAL, session_id_idx, analyzed_features, n
         growth_model = pm.Deterministic(
             "growth_model",
 
-                (global_intercept + group_intercept[session_id_idx])
-                + global_control * control
-                + global_under * under
-                + global_over * over
-                + global_control_seg * (control * th_segments)
-                + global_under_seg * (under * th_segments)
-                + global_over_seg * (over * th_segments)
-                + (global_th_segment + group_th_segments[session_id_idx]) * th_segments
+            (global_intercept + group_intercept[session_id_idx])
+            + global_control * control
+            + global_under * under
+            + global_over * over
+            + global_control_seg * (control * th_segments)
+            + global_under_seg * (under * th_segments)
+            + global_over_seg * (over * th_segments)
+            + (global_th_segment + group_th_segments[session_id_idx]) * th_segments
 
             , dims="obs"
         )
