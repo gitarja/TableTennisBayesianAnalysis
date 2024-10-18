@@ -3,8 +3,8 @@ from Utils.Conf import DOUBLE_RESULTS_PATH_ANOVA
 import matplotlib.pyplot as plt
 import pickle
 
-analyzed_features = "recover_movement_sim"
-with open(DOUBLE_RESULTS_PATH_ANOVA + "model\\" + "idata_m3_transition" + analyzed_features + ".pkl", 'rb') as handle:
+analyzed_features = "unstable_duration"
+with open(DOUBLE_RESULTS_PATH_ANOVA + "model\\" + "idata_m3_" + analyzed_features + ".pkl", 'rb') as handle:
     idata = pickle.load(handle)
 
 # plot r-hat
@@ -32,16 +32,16 @@ with open(DOUBLE_RESULTS_PATH_ANOVA + "model\\" + "idata_m3_transition" + analyz
 # results_path = "F:\\users\\prasetia\\data\\TableTennis\\Experiment_1_cooperation\\cleaned\\summary\\double\\Bayesian-anova\\posterior\\transition\\"
 # plt.savefig(results_path + analyzed_features + "_detail.eps", format="eps")
 
-# az.plot_posterior(
-#     idata,
-#     var_names=["diff_means_efficient_inefficient", "effect_efficient_inefficient"],
-#     ref_val=0,
-#     color="#87ceeb",
-#     hdi_prob=0.95,
-#     grid=(1, 2)
-#
-#
-# )
+az.plot_posterior(
+    idata,
+    var_names=["diff_means_efficient_control", "diff_means_inefficient_control", "diff_means_efficient_inefficient"],
+    ref_val=0,
+    color="#87ceeb",
+    hdi_prob=0.95,
+    grid=(1, 3)
+
+
+)
 plt.show()
 
 # poseterior predictive check

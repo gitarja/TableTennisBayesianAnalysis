@@ -29,16 +29,12 @@ def outliersDetection(X, y):
     post = az.extract(idata.posterior)
     preds = post["intercept"] + post["slope"] * xr.DataArray(X)
 
-    std = np.std(preds, axis=0) * 5 # ref https://doi.org/10.1109/TIP.2008.926150
+    std = np.std(preds, axis=0) * 3 # ref https://doi.org/10.1109/TIP.2008.926150
     mean = np.average(preds, axis=0)
     # min_pred = np.min(preds, axis=0)
     # max_pred = np.max(preds, axis=0)
     min_pred = mean - std
     max_pred = mean + std
-
-
-
-
 
     outlier_idx =  ~((y >  min_pred) & (y < max_pred))
     labels[(outlier_idx) & (y > mean)] = 3 # efficient
@@ -57,6 +53,61 @@ def outliersDetection(X, y):
     # # plt.legend(loc=0)
     # plt.show()
     return labels
+
+
+
+def outliersLabeling(X, y):
+    labels = np.ones_like(y) * 3
+    with pm.Model() as model:  # model specifications in PyMC are wrapped in a with-statement
+        # Define priors
+        sigma = pm.HalfCauchy("sigma", beta=10)
+        intercept = pm.Normal("intercept", 0, sigma=5)
+        slope = pm.Normal("slope", 0, sigma=5)
+
+        # Define likelihood
+        mu = pm.Deterministic("mu", intercept + slope * X)
+        likelihood = pm.StudentT("y", nu=3, mu=mu, sigma=sigma, observed=y)
+        # likelihood = pm.Normal("y", mu=mu, sigma=sigma, observed=y)
+
+        # Inference!
+        # draw 3000 posterior samples using NUTS sampling
+        idata = pm.sample(tune=500, chains=4, cores=4, random_seed=100, draws=1000, target_accept=0.95, idata_kwargs={"log_likelihood": True})
+
+    hierarchical_loo = az.loo(idata)
+
+    print(hierarchical_loo)
+    post = az.extract(idata.posterior)
+    preds = post["intercept"] + post["slope"] * xr.DataArray(X)
+
+    std = np.std(preds, axis=0) * 3 # ref https://doi.org/10.1109/TIP.2008.926150
+    mean = np.average(preds, axis=0)
+
+
+    min_pred = mean - std
+    max_pred = mean + std
+
+    outlier_idx =  ~((y >  min_pred) & (y < max_pred))
+    labels[(outlier_idx) & (y > mean)] = 1 # efficient
+    labels[(outlier_idx) & (y < mean)] = 0 #  inefficient
+
+    # labels[ (y > mean)] = 1 # upper
+    # labels[ (y < mean)] = 0 #  lower
+
+    # show the linear reg
+    plt.plot(X, mean, color="black")
+    sortedX_idx = np.argsort(X)
+    plt.fill_between(X[sortedX_idx], mean[sortedX_idx] - std[sortedX_idx], mean[sortedX_idx] + std[sortedX_idx], alpha=.1, color="#377eb8")
+
+
+    plt.scatter(X[labels == 0], y[labels == 0], label="overestimate", color="#e41a1c", s=30)
+    plt.scatter(X[labels == 1], y[labels == 1], label="underestimate", color="#4daf4a", s=30)
+
+    # plt.legend(loc=0)
+    plt.show()
+
+
+    return labels
+
 
 
 

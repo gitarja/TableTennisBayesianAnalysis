@@ -11,6 +11,7 @@ from Utils.Conf import N_CORE, N_TUNE, N_CHAINS, N_SAMPLES, DOUBLE_SUMMARY_FEATU
     DOUBLE_SUMMARY_FILE_PATH, TARGET_ACC
 import pickle
 from sklearn.preprocessing import StandardScaler
+from Utils.GroupClassification import groupClassifcation
 
 np.random.seed(1945)  # For Replicability
 
@@ -18,23 +19,7 @@ if __name__ == '__main__':
 
     rng = np.random.default_rng(seed=42)
 
-    # load single and double data
-    single_fr = SubjectCrossValidation()
-    double_fr = DoubleSubjectCrossValidation()
-    fr = GlobalFeaturesReader(single_fr.getSummary(), double_fr.getSummary())
-    X, y, group_label = fr.getSingleDoubleFeatures(col="skill", log_scale=False)
-
-    X = np.average(X, axis=-1, keepdims=False)
-
-    labels = outliersDetection(X, y)
-    inlier_idx = np.argwhere(labels == 1).flatten()
-    inefficient_idx = np.argwhere(labels == 2).flatten()
-    efficient_idx = np.argwhere(labels == 3).flatten()
-
-    inlier_group = group_label[inlier_idx]
-    inefficient_group = group_label[inefficient_idx]
-    efficient_group = group_label[efficient_idx]
-
+    avg_group, ineff_group, eff_group = groupClassifcation()
     # features = ["receiver_p1_al",
     #             "receiver_p2_al",
     #             "receiver_pursuit",
@@ -62,26 +47,26 @@ if __name__ == '__main__':
     #             "single_mov_sim",
     #             "stable_percentage", "bouncing_point_var_p1", "bouncing_point_var_p2"]
 
-    features = ["hitter_pursuit"]
+    features = ["stable_percentage"]
 
     # control group
     control_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_SUMMARY_FEATURES_PATH,
                                                 file_summary_path=DOUBLE_SUMMARY_FILE_PATH,
-                                                include_subjects=inlier_group, exclude_failure=True,
+                                                include_subjects=avg_group, exclude_failure=False,
                                                 exclude_no_pair=True, hmm_probs=True)
     control_features = control_reader.getGlobalFeatures(group_label="control")
 
     # inefficientestimated group
     inefficient_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_SUMMARY_FEATURES_PATH,
                                                     file_summary_path=DOUBLE_SUMMARY_FILE_PATH,
-                                                    include_subjects=inefficient_group, exclude_failure=True,
+                                                    include_subjects=ineff_group, exclude_failure=False,
                                                     exclude_no_pair=True, hmm_probs=True)
     inefficient_features = inefficient_reader.getGlobalFeatures(group_label="inefficient")
 
     # efficientestimated group
     efficient_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_SUMMARY_FEATURES_PATH,
                                                   file_summary_path=DOUBLE_SUMMARY_FILE_PATH,
-                                                  include_subjects=efficient_group, exclude_failure=True,
+                                                  include_subjects=eff_group, exclude_failure=False,
                                                   exclude_no_pair=True, hmm_probs=True)
     efficient_features = efficient_reader.getGlobalFeatures(group_label="efficient")
 
@@ -269,14 +254,15 @@ if __name__ == '__main__':
             # plot shaded kde
             shade = np.linspace(low, high, 101)
             plt.fill_between(shade, kde(shade), alpha=0.3, color=color, label="{0} 95% HPD Score".format(group))
-        # plt.legend()
-        # plt.xlabel(analyzed_features)
-        #
-        # plt.savefig(DOUBLE_RESULTS_PATH_ANOVA + "posterior\\" + analyzed_features + ".eps", format="eps")
-        # plt.savefig(DOUBLE_RESULTS_PATH_ANOVA + "posterior\\" + analyzed_features + ".png", format="png")
-        # plt.close()
-        #
-        # # save the model
-        # with open(DOUBLE_RESULTS_PATH_ANOVA + "model\\" + "idata_m3_" + analyzed_features + ".pkl", 'wb') as handle:
-        #     print("write data into: " + "idata_m3_" + analyzed_features + ".pkl")
-        #     pickle.dump(idata_m3, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        plt.legend()
+        plt.xlabel(analyzed_features)
+
+        # plt.show()
+        plt.savefig(DOUBLE_RESULTS_PATH_ANOVA + "posterior\\" + analyzed_features + ".eps", format="eps")
+        plt.savefig(DOUBLE_RESULTS_PATH_ANOVA + "posterior\\" + analyzed_features + ".png", format="png")
+        plt.close()
+
+        # save the model
+        with open(DOUBLE_RESULTS_PATH_ANOVA + "model\\" + "idata_m3_" + analyzed_features + ".pkl", 'wb') as handle:
+            print("write data into: " + "idata_m3_" + analyzed_features + ".pkl")
+            pickle.dump(idata_m3, handle, protocol=pickle.HIGHEST_PROTOCOL)

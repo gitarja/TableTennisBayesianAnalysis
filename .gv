@@ -1,12 +1,12 @@
 digraph {
 	subgraph "clusterobs (8982)" {
-		controlled_skill [label="controlled_skill
+		observed [label="observed
 ~
 Data" shape=box style="rounded, filled"]
 		growth_model [label="growth_model
 ~
-Normal" shape=ellipse style=filled]
-		observed [label="observed
+Poisson" shape=ellipse style=filled]
+		controlled_skill [label="controlled_skill
 ~
 Data" shape=box style="rounded, filled"]
 		th_segments [label="th_segments
@@ -20,23 +20,32 @@ Data" shape=box style="rounded, filled"]
 Data" shape=box style="rounded, filled"]
 		label="obs (8982) x group (3)" labeljust=r labelloc=b style=rounded
 	}
-	global_th_segment [label="global_th_segment
+	global_intercept [label="global_intercept
 ~
 Normal" shape=ellipse]
-	global_sigma [label="global_sigma
+	global_group_sigma [label="global_group_sigma
 ~
 HalfNormal" shape=ellipse]
 	global_skill_slope [label="global_skill_slope
 ~
 Normal" shape=ellipse]
-	global_intercept [label="global_intercept
+	global_intercept_sigma [label="global_intercept_sigma
+~
+HalfNormal" shape=ellipse]
+	global_group_seg_sigma [label="global_group_seg_sigma
+~
+HalfNormal" shape=ellipse]
+	global_th_segment [label="global_th_segment
 ~
 Normal" shape=ellipse]
+	global_th_segment_sigma [label="global_th_segment_sigma
+~
+HalfNormal" shape=ellipse]
 	subgraph "clustergroup (3)" {
-		global_group_seg [label="global_group_seg
+		global_group [label="global_group
 ~
 Normal" shape=ellipse]
-		global_group [label="global_group
+		global_group_seg [label="global_group_seg
 ~
 Normal" shape=ellipse]
 		label="group (3)" labeljust=r labelloc=b style=rounded
@@ -51,26 +60,29 @@ Normal" shape=ellipse]
 		label="subject_idx (74)" labeljust=r labelloc=b style=rounded
 	}
 	subgraph cluster8982 {
-		mu [label="mu
+		control_skilled_variable [label="control_skilled_variable
 ~
 Deterministic" shape=box]
-		control_skilled_variable [label="control_skilled_variable
+		mu [label="mu
 ~
 Deterministic" shape=box]
 		label=8982 labeljust=r labelloc=b style=rounded
 	}
 	growth_model -> observed
+	global_intercept_sigma -> global_intercept
+	global_th_segment_sigma -> global_th_segment
+	global_group_sigma -> global_group
+	global_group_seg_sigma -> global_group_seg
 	controlled_skill -> control_skilled_variable
 	global_skill_slope -> control_skilled_variable
-	global_th_segment -> mu
-	subjects_intercept -> mu
-	global_group_seg -> mu
-	global_group -> mu
-	groups -> mu
-	global_intercept -> mu
 	th_segments -> mu
-	control_skilled_variable -> mu
 	subjects_intercept_seg -> mu
+	control_skilled_variable -> mu
+	subjects_intercept -> mu
+	groups -> mu
+	global_group_seg -> mu
+	global_th_segment -> mu
+	global_group -> mu
+	global_intercept -> mu
 	mu -> growth_model
-	global_sigma -> growth_model
 }
