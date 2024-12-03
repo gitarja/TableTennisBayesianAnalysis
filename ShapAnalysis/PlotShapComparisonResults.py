@@ -10,8 +10,8 @@ from SHAPPlots import plotShapComparison
 # summarize SHAP and order them
 
 def summarizeSHAP(label="eff_us"):
-    shap_results = np.load("Results\\2024-10-09-after-hit-with-collar\\US\\" + label + "_shap.npy")
-    xval_results = pd.read_pickle("Results\\2024-10-09-after-hit-with-collar\\US\\" + label + "_xval.pkl")
+    shap_results = np.load("Results\\2024-10-18\\" + label + "_shap.npy")
+    xval_results = pd.read_pickle("Results\\2024-10-18\\" + label + "_xval.pkl")
 
     data_columns = xval_results.columns
 
@@ -24,7 +24,7 @@ def summarizeSHAP(label="eff_us"):
     return shap_results, data_columns.tolist(), np.concatenate(a).flatten()
 
 
-labels = ["avg_us", "eff_us", "ineff_us"]
+labels = ["avg_usuf", "eff_usuf", "ineff_usuf"]
 columns_list = []
 oder_idx_list = []
 label_list = []

@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.special import logit, expit
 import pandas as pd
@@ -286,41 +287,37 @@ class GlobalDoubleFeaturesReader:
         receiver_p1_al_onset = []
         receiver_p1_al_mag = []
         receiver_p2_al_prec = []
+        receiver_p2_al_mag = []
         receiver_p2_al_onset = []
         receiver_p1_cs = []
         receiver_p2_cs = []
         receiver_pursuit = []
+        receiver_pursuit_onset = []
         receiver_pursuit_duration = []
 
-        receiver_start_fs_std = []
-        receiver_start_fs_mean = []
-        receiver_racket_to_root_std = []
-        receiver_racket_ball_force_std = []
-        receiver_fs_ball_racket_dir_std = []
-        receiver_ec_fs_ball_rball_dist = []
+        receiver_start_fs = []
 
         # hitter
         hitter_p1_al = []
         hitter_p2_al = []
         hitter_p1_al_prec = []
+        hitter_p1_al_mag = []
         hitter_p1_al_onset = []
         hitter_p2_al_prec = []
+        hitter_p2_al_mag = []
         hitter_p2_al_onset = []
         hitter_p1_cs = []
         hitter_p2_cs = []
         hitter_pursuit = []
+        hitter_pursuit_onset = []
         hitter_pursuit_duration = []
 
-        racket_movement_sim = []
-        single_movement_sim = []
-
-        bouncing_point_var_p1 = []
-        bouncing_point_var_p2 = []
-
-        stable_state = []
-        unstable_duration = []
-        UF_list = []
-        SF_list = []
+        hand_movement_sim = []
+        receiver_fixation_racket_latency = []
+        receiver_distance_eye_hand = []
+        hitter_at_and_after_hit = []
+        receiver_im_racket_dir = []
+        receiver_im_ball_updown = []
 
         group_skill = []
         subject_skill = []
@@ -353,112 +350,110 @@ class GlobalDoubleFeaturesReader:
 
             # receiver
             for i in range(2):
-                receiver_idx = group["receiver"] == i
-                hitter_idx = group["hitter"] == i
+                receiver_idx = np.argwhere(group["receiver"] == i).flatten()
+                hitter_idx = np.argwhere(group["hitter"] == i).flatten()
 
-                unstable_duration.append(np.mean(durations_list))
-                UF_list.append(np.average(UF))
-                SF_list.append(np.average(SF))
+                # normalize length
+                if len(receiver_idx) < len(hitter_idx):
+                    n = len(receiver_idx)
 
-                receiver_p1_al.append(group[receiver_idx]["receiver_pr_p1_al"].mean())
-                receiver_p2_al.append(group[receiver_idx]["receiver_pr_p2_al"].mean())
-                receiver_pursuit.append(group[receiver_idx]["receiver_pr_p3_fx"].mean())
-                receiver_pursuit_duration.append(group[receiver_idx]["receiver_pr_p3_fx_duration"].mean())
-                receiver_p1_al_prec.append(group[receiver_idx]["receiver_pr_p1_al_prec"].mean())
-                receiver_p1_al_onset.append(group[receiver_idx]["receiver_pr_p1_al_onset"].mean())
-                receiver_p1_al_mag.append(group[receiver_idx]["receiver_pr_p1_al_mag"].mean())
-                receiver_p2_al_prec.append(group[receiver_idx]["receiver_pr_p2_al_prec"].mean())
-                receiver_p2_al_onset.append(group[receiver_idx]["receiver_pr_p2_al_onset"].mean())
-                receiver_p1_cs.append(group[receiver_idx]["receiver_pr_p1_cs"].mean())
-                receiver_p2_cs.append(group[receiver_idx]["receiver_pr_p2_cs"].mean())
+                else:
+                    n = len(hitter_idx)
+                receiver_idx = receiver_idx[:n]
+                hitter_idx = hitter_idx[:n]
 
-                # AL in P1 precision
+                receiver_p1_al.append(group["receiver_pr_p1_al"].values[receiver_idx])
+                receiver_p2_al.append(group["receiver_pr_p2_al"].values[receiver_idx])
+                receiver_pursuit.append(group["receiver_pr_p3_fx"].values[receiver_idx])
+                receiver_pursuit_onset.append(group["receiver_pr_p3_fx_onset"].values[receiver_idx])
+                receiver_pursuit_duration.append(group["receiver_pr_p3_fx_duration"].values[receiver_idx])
+                receiver_p1_al_prec.append(group["receiver_pr_p1_al_prec"].values[receiver_idx])
+                receiver_p1_al_onset.append(group["receiver_pr_p1_al_onset"].values[receiver_idx])
+                receiver_p1_al_mag.append(group["receiver_pr_p1_al_mag"].values[receiver_idx])
+                receiver_p2_al_prec.append(group["receiver_pr_p2_al_prec"].values[receiver_idx])
+                receiver_p2_al_onset.append(group["receiver_pr_p2_al_onset"].values[receiver_idx])
+                receiver_p2_al_mag.append(group["receiver_pr_p2_al_mag"].values[receiver_idx])
+                receiver_p1_cs.append(group["receiver_pr_p1_cs"].values[receiver_idx])
+                receiver_p2_cs.append(group["receiver_pr_p2_cs"].values[receiver_idx])
 
-                # hitter
-                hitter_p1_al.append(group[hitter_idx]["hitter_pr_p1_al"].mean())
-                hitter_p2_al.append(group[hitter_idx]["hitter_pr_p2_al"].mean())
-                hitter_pursuit.append(group[hitter_idx]["hitter_pr_p3_fx"].mean())
-                hitter_pursuit_duration.append(group[hitter_idx]["hitter_pr_p3_fx_duration"].mean())
-                hitter_p1_al_prec.append(group[hitter_idx]["hitter_pr_p1_al_prec"].mean())
-                hitter_p1_al_onset.append(group[hitter_idx]["hitter_pr_p1_al_onset"].mean())
-                hitter_p2_al_prec.append(group[hitter_idx]["hitter_pr_p2_al_prec"].mean())
-                hitter_p2_al_onset.append(group[hitter_idx]["hitter_pr_p2_al_onset"].mean())
-                hitter_p1_cs.append(group[hitter_idx]["hitter_pr_p1_cs"].mean())
-                hitter_p2_cs.append(group[hitter_idx]["hitter_pr_p2_cs"].mean())
-
-                # stable state
-                stable_idx = np.argwhere(group[hitter_idx]["stable_probs"] > -1).flatten()
-                stable_state.append(np.average(group[hitter_idx]["unstable_preds"].values[stable_idx] == 0))
+                # # AL in P1 precision
+                #
+                # # hitter
+                hitter_p1_al.append(group["hitter_pr_p1_al"].values[hitter_idx])
+                hitter_p2_al.append(group["hitter_pr_p2_al"].values[hitter_idx])
+                hitter_pursuit.append(group["hitter_pr_p3_fx"].values[hitter_idx])
+                hitter_pursuit_onset.append(group["hitter_pr_p3_fx_onset"].values[hitter_idx])
+                hitter_pursuit_duration.append(group["hitter_pr_p3_fx_duration"].values[hitter_idx])
+                hitter_p1_al_prec.append(group["hitter_pr_p1_al_prec"].values[hitter_idx])
+                hitter_p1_al_mag.append(group["hitter_pr_p1_al_mag"].values[hitter_idx])
+                hitter_p1_al_onset.append(group["hitter_pr_p1_al_onset"].values[hitter_idx])
+                hitter_p2_al_prec.append(group["hitter_pr_p2_al_prec"].values[hitter_idx])
+                hitter_p2_al_mag.append(group["hitter_pr_p2_al_mag"].values[hitter_idx])
+                hitter_p2_al_onset.append(group["hitter_pr_p2_al_onset"].values[hitter_idx])
+                hitter_p1_cs.append(group["hitter_pr_p1_cs"].values[hitter_idx])
+                hitter_p2_cs.append(group["hitter_pr_p2_cs"].values[hitter_idx])
 
                 # subject
                 if i == 0:
-                    subject.append(group["id_subject1"].values[0])
-                    subject_skill.append(group["skill_subject1"].values[0])
-                    bouncing_point_var_p1.append(group[hitter_idx]["s1_bouncing_point_dist_p1"].mean())
-                    bouncing_point_var_p2.append(group[hitter_idx]["s1_bouncing_point_dist_p2"].mean())
+                    subject.extend(group["id_subject1"].values[0] for _ in range(n))
+                    subject_skill.extend(group["skill_subject1"].values[0] for _ in range(n))
+
                 else:
-                    subject.append(group["id_subject2"].values[0])
-                    subject_skill.append(group["skill_subject2"].values[0])
-                    bouncing_point_var_p1.append(group[hitter_idx]["s2_bouncing_point_dist_p1"].mean())
-                    bouncing_point_var_p2.append(group[hitter_idx]["s2_bouncing_point_dist_p2"].mean())
+                    subject.extend(group["id_subject2"].values[0] for _ in range(n))
+                    subject_skill.extend(group["skill_subject2"].values[0] for _ in range(n))
 
-                subject_1_sample = single_df.loc[single_df["id_subject"] == group["id_subject1"].values[0]]
-                subject_2_sample = single_df.loc[single_df["id_subject"] == group["id_subject2"].values[0]]
-
-                sim_score = stats.ks_2samp(subject_1_sample["ec_fs_ball_racket_ratio"].values,
-                                           subject_2_sample["ec_fs_ball_racket_ratio"].values)
-
-                single_movement_sim.append(sim_score.statistic)
-
-                receiver_start_fs_std.append(group[receiver_idx]["receiver_ec_start_fs"].std())
-                receiver_start_fs_mean.append(group[receiver_idx]["receiver_ec_start_fs"].mean())
-                receiver_racket_to_root_std.append(group[receiver_idx]["receiver_im_racket_to_root"].std())
-                # receiver_fs_ball_racket_dir_std.append(group[receiver_idx]["receiver_ec_fs_ball_racket_dir"].std())
-
-                racket_movement_sim.append(group[receiver_idx]["hand_movement_sim_dtw"].mean())
+                receiver_start_fs.append(group["receiver_ec_start_fs"].values[receiver_idx])
+                hand_movement_sim.append(group["hand_movement_sim_dtw"].values[receiver_idx])
+                receiver_fixation_racket_latency.append(group["receiver_fixation_racket_latency"].values[receiver_idx])
+                receiver_distance_eye_hand.append(group["receiver_distance_eye_hand"].values[receiver_idx])
+                hitter_at_and_after_hit.append(group["hitter_at_and_after_hit"].values[hitter_idx])
+                receiver_im_racket_dir.append(group["receiver_im_racket_dir"].values[receiver_idx])
+                receiver_im_ball_updown.append(group["receiver_im_ball_updown"].values[receiver_idx])
 
                 # fixed effect
-                group_skill.append(self.df_summary[self.df_summary["file_name"] == name[0]]["skill"].values[0])
+                group_skill.extend(
+                    self.df_summary[self.df_summary["file_name"] == name[0]]["skill"].values[0] for _ in range(n))
 
         fetures_summary = {
-            "receiver_p1_al": np.asarray(receiver_p1_al),
-            "receiver_p2_al": np.asarray(receiver_p2_al),
-            "receiver_pursuit": np.asarray(receiver_pursuit),
-            "receiver_pursuit_duration": np.asarray(receiver_pursuit_duration),
-            "receiver_p1_al_prec": np.asarray(receiver_p1_al_prec),
-            "receiver_p1_al_onset": np.asarray(receiver_p1_al_onset),
-            "receiver_p1_al_mag": np.asarray(receiver_p1_al_mag),
-            "receiver_p2_al_prec": np.asarray(receiver_p2_al_prec),
-            "receiver_p2_al_onset": np.asarray(receiver_p2_al_onset),
-            "receiver_p1_cs": np.asarray(receiver_p1_cs),
-            "receiver_p2_cs": np.asarray(receiver_p2_cs),
 
-            "hitter_p1_al": np.asarray(hitter_p1_al),
-            "hitter_p2_al": np.asarray(hitter_p2_al),
-            "hitter_pursuit": np.asarray(hitter_pursuit),
-            "hitter_pursuit_duration": np.asarray(hitter_pursuit_duration),
-            "hitter_p1_al_prec": np.asarray(hitter_p1_al_prec),
-            "hitter_p1_al_onset": np.asarray(hitter_p1_al_onset),
-            "hitter_p2_al_prec": np.asarray(hitter_p2_al_prec),
-            "hitter_p2_al_onset": np.asarray(hitter_p2_al_onset),
-            "hitter_p1_cs": np.asarray(hitter_p1_cs),
-            "hitter_p2_cs": np.asarray(hitter_p2_cs),
+            # receiver
+            "receiver_p1_al": np.concatenate(receiver_p1_al),
+            "receiver_p2_al": np.concatenate(receiver_p2_al),
+            "receiver_p1_al_prec": np.concatenate(receiver_p1_al_prec),
+            "receiver_p1_al_onset": np.concatenate(receiver_p1_al_onset),
+            "receiver_p1_al_mag": np.concatenate(receiver_p1_al_mag),
+            "receiver_p2_al_prec": np.concatenate(receiver_p2_al_prec),
+            "receiver_p2_al_onset": np.concatenate(receiver_p2_al_onset),
+            "receiver_p2_al_mag": np.concatenate(receiver_p2_al_mag),
+            "receiver_p1_cs": np.concatenate(receiver_p1_cs),
+            "receiver_p2_cs": np.concatenate(receiver_p2_cs),
+            "receiver_pursuit": np.concatenate(receiver_pursuit),
+            "receiver_pursuit_onset": np.concatenate(receiver_pursuit_onset),
+            "receiver_pursuit_duration": np.concatenate(receiver_pursuit_duration),
 
-            "receiver_start_fs_std": np.asarray(receiver_start_fs_std),
-            "receiver_start_fs_mean": np.asarray(receiver_start_fs_mean),
-            "receiver_racket_to_root_std": np.asarray(receiver_racket_to_root_std),
-            # "receiver_fs_ball_racket_dir_std": np.asarray(receiver_fs_ball_racket_dir_std),
+            "receiver_start_fs": np.concatenate(receiver_start_fs),
 
-            "hand_mov_sim": np.asarray(racket_movement_sim),
-            "single_mov_sim": np.asarray(single_movement_sim),
+            # hitter
+            "hitter_p1_al": np.concatenate(hitter_p1_al),
+            "hitter_p2_al": np.concatenate(hitter_p2_al),
+            "hitter_p1_al_prec": np.concatenate(hitter_p1_al_prec),
+            "hitter_p1_al_onset": np.concatenate(hitter_p1_al_onset),
+            "hitter_p1_al_mag": np.concatenate(hitter_p1_al_mag),
+            "hitter_p2_al_prec": np.concatenate(hitter_p2_al_prec),
+            "hitter_p2_al_onset": np.concatenate(hitter_p2_al_onset),
+            "hitter_p2_al_mag": np.concatenate(hitter_p2_al_mag),
+            "hitter_p1_cs": np.concatenate(hitter_p1_cs),
+            "hitter_p2_cs": np.concatenate(hitter_p2_cs),
+            "hitter_pursuit": np.concatenate(hitter_pursuit),
+            "hitter_pursuit_onset": np.concatenate(hitter_pursuit_onset),
+            "hitter_pursuit_duration": np.concatenate(hitter_pursuit_duration),
 
-            "bouncing_point_var_p1": np.asarray(bouncing_point_var_p1),
-            "bouncing_point_var_p2": np.asarray(bouncing_point_var_p2),
-
-            "stable_percentage": np.asarray(stable_state),
-            "unstable_duration": np.asarray(unstable_duration),
-            "uf": np.asarray(UF_list),
-            "sf": np.asarray(SF_list),
+            "hand_movement_sim": np.concatenate(hand_movement_sim),
+            "receiver_fixation_racket_latency": np.concatenate(receiver_fixation_racket_latency),
+            "receiver_distance_eye_hand": np.concatenate(receiver_distance_eye_hand),
+            "hitter_at_and_after_hit": np.concatenate(hitter_at_and_after_hit),
+            "receiver_im_racket_dir": np.concatenate(receiver_im_racket_dir),
+            "receiver_im_ball_updown": np.concatenate(receiver_im_ball_updown),
 
             "group_skill": np.asarray(group_skill),
             "subject": np.asarray(subject),
@@ -587,7 +582,8 @@ class GlobalDoubleFeaturesReader:
 
         return pd.DataFrame(fetures_summary)
 
-    def getStableUnstableFailureFeatures(self, group_name="test", success_failure=False):
+    def getStableUnstableFailureFeatures(self, group_name="test", success_failure=False, mod="skill",
+                                         with_control=False, timepoint=False):
         '''
         a function that gives the features of current and previous feature to predict the next states: stable, unstable, and failure
         :param group_name:
@@ -631,22 +627,6 @@ class GlobalDoubleFeaturesReader:
         receiver_fixation_racket_latency_list = []
         receiver_distance_eye_hand_list = []
 
-        hitter_rev_p1_al_list = []
-        hitter_rev_p1_al_onset_list = []
-        hitter_rev_p1_al_prec_list = []
-        hitter_rev_p1_al_mag_list = []
-
-        hitter_rev_p2_al_list = []
-        hitter_rev_p2_al_onset_list = []
-        hitter_rev_p2_al_prec_list = []
-        hitter_rev_p2_al_mag_list = []
-
-        hitter_rev_p1_cs_list = []
-        hitter_rev_p2_cs_list = []
-
-        hitter_rev_fx_list = []
-        hitter_rev_fx_duration_list = []
-
         hitter_at_and_after_hit_list = []
 
         hitter_p1_al_list = []
@@ -661,15 +641,21 @@ class GlobalDoubleFeaturesReader:
         hitter_p2_al_mag_list = []
         hitter_p2_cs_list = []
         hitter_fx_list = []
+        hitter_fx_onset_list = []
         hitter_fx_duration_list = []
         hitter_position_to_bouncing_point_list = []
 
         team_spatial_position_list = []
 
         receiver_list = []
+        hitter_list = []
         receiver_skill_list = []
 
+        receiver_timepoint_list = []
+        hitter_timepoint_list = []
+
         label_list = []
+        session_list = []
 
         for name, group in group_df:
             # n_data = len(group["hitter_pr_p2_al"]) - (n_segment - 1)
@@ -683,6 +669,7 @@ class GlobalDoubleFeaturesReader:
 
             if len(group) > 3:
                 group.sort_values(by=['observation_label'])
+
                 stable_probs = group["stable_probs"].values
                 unstable_states = group["unstable_preds"].values
                 unstable_diff = np.pad(np.diff(unstable_states), (0, 1), "edge")
@@ -693,6 +680,8 @@ class GlobalDoubleFeaturesReader:
                 # us_us = np.argwhere((stable_diff == 1)  & (unstable_states == 1)).flatten()
                 us_us = np.argwhere(
                     (unstable_diff == 0) & (unstable_states == 1)).flatten()  # from unstable to unstable
+                s_s = np.argwhere(
+                    (unstable_diff == 0) & (unstable_states == 0)).flatten()  # from stable to unstable
 
                 us_f = np.argwhere((unstable_states == 1) & (group["success"] == 0) & (stable_probs < 0.1)).flatten()
 
@@ -701,10 +690,14 @@ class GlobalDoubleFeaturesReader:
                     us_us = np.argwhere(group["success"].values == 0).flatten()
 
                 else:
-                    us_s = us_s[us_s > 0]
+                    # us_s = us_s[us_s > 0]
+                    # us_us = us_us[us_us > 0]
+
+                    s_s = s_s[s_s > 0]
                     us_us = us_us[us_us > 0]
 
                 # concatenate index and create labels
+                s_s_label = [1 for i in range(len(s_s))]
                 us_s_label = [1 for i in range(len(us_s))]
                 us_us_label = [0 for i in range(len(us_us))]
                 us_f_label = [0 for i in range(len(us_f))]
@@ -757,31 +750,33 @@ class GlobalDoubleFeaturesReader:
                     receiver_fixation_racket_latency = group["receiver_fixation_racket_latency"].values[receiver_idx]
                     receiver_distance_eye_hand = group["receiver_distance_eye_hand"].values[receiver_idx]
 
-                    hand_movement_sim = computeDeviations(group["hand_movement_sim_dtw"], hand_movement_sim_dtw_mean,
-                                                          receiver_idx)
-                    # hand_movement_sim = group["hand_movement_sim_dtw"].values[receiver_idx]
+                    # hand_movement_sim = computeDeviations(group["hand_movement_sim_dtw"], hand_movement_sim_dtw_mean,
+                    #                                        receiver_idx)
+                    hand_movement_sim = group["hand_movement_sim_dtw"].values[receiver_idx]
 
-                    receiver = subjects[group["receiver"].values[receiver_idx].astype(int)]
+                    receiver = subjects[group["receiver"].values[receiver_idx].astype(int)] + group_name
+                    hitter = subjects[group["hitter"].values[hitter_idx].astype(int)]+ group_name
+                    session = group["session_id"].values[receiver_idx]
                     receiver_skill = skill_subjects[group["receiver"].values[receiver_idx].astype(int)]
 
                     # get hitter features from the previous event
-                    hitter_rev_p1_al = group["hitter_pr_p1_al"].values[hitter_idx]
-                    hitter_rev_p1_al_onset = group["hitter_pr_p1_al_onset"].values[hitter_idx]
-                    hitter_rev_p1_al_prec = group["hitter_pr_p1_al_prec"].values[hitter_idx]
-                    hitter_rev_p1_al_mag = group["hitter_pr_p1_al_mag"].values[hitter_idx]
-
-                    hitter_rev_p2_al = group["hitter_pr_p2_al"].values[hitter_idx]
-                    hitter_rev_p2_al_onset = group["hitter_pr_p2_al_onset"].values[hitter_idx]
-                    hitter_rev_p2_al_prec = group["hitter_pr_p2_al_prec"].values[hitter_idx]
-                    hitter_rev_p2_al_mag = group["hitter_pr_p2_al_mag"].values[hitter_idx]
-
-                    hitter_rev_p1_cs = group["hitter_pr_p1_cs"].values[hitter_idx]
-                    hitter_rev_p2_cs = group["hitter_pr_p2_cs"].values[hitter_idx]
-
-                    hitter_rev_fx = group["hitter_pr_p3_fx"].values[
-                        hitter_idx]  # what the hitter does before being receiver
-                    hitter_rev_fx_duration = group["hitter_pr_p3_fx_duration"].values[
-                        hitter_idx]  # what the hitter does before being receiver
+                    # hitter_rev_p1_al = group["hitter_pr_p1_al"].values[hitter_idx]
+                    # hitter_rev_p1_al_onset = group["hitter_pr_p1_al_onset"].values[hitter_idx]
+                    # hitter_rev_p1_al_prec = group["hitter_pr_p1_al_prec"].values[hitter_idx]
+                    # hitter_rev_p1_al_mag = group["hitter_pr_p1_al_mag"].values[hitter_idx]
+                    #
+                    # hitter_rev_p2_al = group["hitter_pr_p2_al"].values[hitter_idx]
+                    # hitter_rev_p2_al_onset = group["hitter_pr_p2_al_onset"].values[hitter_idx]
+                    # hitter_rev_p2_al_prec = group["hitter_pr_p2_al_prec"].values[hitter_idx]
+                    # hitter_rev_p2_al_mag = group["hitter_pr_p2_al_mag"].values[hitter_idx]
+                    #
+                    # hitter_rev_p1_cs = group["hitter_pr_p1_cs"].values[hitter_idx]
+                    # hitter_rev_p2_cs = group["hitter_pr_p2_cs"].values[hitter_idx]
+                    #
+                    # hitter_rev_fx = group["hitter_pr_p3_fx"].values[
+                    #     hitter_idx]  # what the hitter does before being receiver
+                    # hitter_rev_fx_duration = group["hitter_pr_p3_fx_duration"].values[
+                    #     hitter_idx]  # what the hitter does before being receiver
 
                     # team spatial position
                     team_spatial_position = group["team_spatial_position"].values[receiver_idx]
@@ -799,12 +794,17 @@ class GlobalDoubleFeaturesReader:
                     hitter_p2_al_mag = group["hitter_pr_p2_al_mag"].values[receiver_idx]
                     hitter_p2_cs = group["hitter_pr_p2_cs"].values[receiver_idx]
                     hitter_fx = group["hitter_pr_p3_fx"].values[receiver_idx]
+                    hitter_fx_onset = group["hitter_pr_p3_fx_onset"].values[receiver_idx]
                     hitter_fx_duration = group["hitter_pr_p3_fx_duration"].values[receiver_idx]
 
                     hitter_position_to_bouncing_point = group["hitter_position_to_bouncing_point"].values[
                         receiver_idx]
                     hitter_at_and_after_hit = group["hitter_at_and_after_hit"].values[
                         receiver_idx]  # what the hitter does when the reciever takes an action
+
+                    # time point
+                    receiver_timepoint = group["observation_label"].values[receiver_idx]
+                    hitter_timepoint = group["observation_label"].values[hitter_idx]
 
                     # append all features to list
                     receiver_p1_al_list.append(receiver_p1_al)
@@ -840,24 +840,29 @@ class GlobalDoubleFeaturesReader:
                     hand_movement_sim_list.append(hand_movement_sim)
 
                     receiver_list.append(receiver)
+                    hitter_list.append(hitter)
+                    session_list.append(session)
                     receiver_skill_list.append(receiver_skill)
 
+                    receiver_timepoint_list.append(receiver_timepoint)
+                    hitter_timepoint_list.append(hitter_timepoint)
+
                     # hitter from previous episode
-                    hitter_rev_p1_al_list.append(hitter_rev_p1_al)
-                    hitter_rev_p1_al_onset_list.append(hitter_rev_p1_al_onset)
-                    hitter_rev_p1_al_prec_list.append(hitter_rev_p1_al_prec)
-                    hitter_rev_p1_al_mag_list.append(hitter_rev_p1_al_mag)
-
-                    hitter_rev_p2_al_list.append(hitter_rev_p2_al)
-                    hitter_rev_p2_al_onset_list.append(hitter_rev_p2_al_onset)
-                    hitter_rev_p2_al_prec_list.append(hitter_rev_p2_al_prec)
-                    hitter_rev_p2_al_mag_list.append(hitter_rev_p2_al_mag)
-
-                    hitter_rev_p1_cs_list.append(hitter_rev_p1_cs)
-                    hitter_rev_p2_cs_list.append(hitter_rev_p2_cs)
-
-                    hitter_rev_fx_list.append(hitter_rev_fx)
-                    hitter_rev_fx_duration_list.append(hitter_rev_fx_duration)
+                    # hitter_rev_p1_al_list.append(hitter_rev_p1_al)
+                    # hitter_rev_p1_al_onset_list.append(hitter_rev_p1_al_onset)
+                    # hitter_rev_p1_al_prec_list.append(hitter_rev_p1_al_prec)
+                    # hitter_rev_p1_al_mag_list.append(hitter_rev_p1_al_mag)
+                    #
+                    # hitter_rev_p2_al_list.append(hitter_rev_p2_al)
+                    # hitter_rev_p2_al_onset_list.append(hitter_rev_p2_al_onset)
+                    # hitter_rev_p2_al_prec_list.append(hitter_rev_p2_al_prec)
+                    # hitter_rev_p2_al_mag_list.append(hitter_rev_p2_al_mag)
+                    #
+                    # hitter_rev_p1_cs_list.append(hitter_rev_p1_cs)
+                    # hitter_rev_p2_cs_list.append(hitter_rev_p2_cs)
+                    #
+                    # hitter_rev_fx_list.append(hitter_rev_fx)
+                    # hitter_rev_fx_duration_list.append(hitter_rev_fx_duration)
 
                     # hitter from current episode
                     hitter_p1_al_list.append(hitter_p1_al)
@@ -871,6 +876,7 @@ class GlobalDoubleFeaturesReader:
                     hitter_p2_al_mag_list.append(hitter_p2_al_mag)
                     hitter_p2_cs_list.append(hitter_p2_cs)
                     hitter_fx_list.append(hitter_fx)
+                    hitter_fx_onset_list.append(hitter_fx_onset)
                     hitter_fx_duration_list.append(hitter_fx_duration)
                     hitter_position_to_bouncing_point_list.append(hitter_position_to_bouncing_point)
 
@@ -881,83 +887,126 @@ class GlobalDoubleFeaturesReader:
                     label_list.append(labels)
 
         fetures_summary = {
-            "receiver_p1_al": np.concatenate(receiver_p1_al_list),
-            "receiver_p2_al": np.concatenate(receiver_p2_al_list),
-            "receiver_p3_fx": np.concatenate(receiver_p3_fx_list),
-            "receiver_p1_cs": np.concatenate(receiver_p1_cs_list),
-            "receiver_p2_cs": np.concatenate(receiver_p2_cs_list),
-
-            "receiver_p1_al_onset": np.concatenate(receiver_p1_al_onset_list),
-            "receiver_p1_al_prec": np.concatenate(receiver_p1_al_prec_list),
-            "receiver_p1_al_mag": np.concatenate(receiver_p1_al_mag_list),
-
-            "receiver_p2_al_mag": np.concatenate(receiver_p2_al_mag_list),
-            "receiver_p2_al_onset": np.concatenate(receiver_p2_al_onset_list),
-            "receiver_p2_al_prec": np.concatenate(receiver_p2_al_prec_list),
-
-            "receiver_p3_fx_onset": np.concatenate(receiver_p3_fx_onset_list),
-            "receiver_p3_fx_duration": np.concatenate(receiver_p3_fx_duration_list),
-
-            # "receiver_racket_to_ball": np.concatenate(receiver_racket_to_ball_list),
-            "receiver_im_racket_effect": np.concatenate(receiver_im_racket_effect_list),
-            # "receiver_im_racket_to_root": np.concatenate(receiver_racket_to_root_list),
-            "receiver_im_racket_dir": np.concatenate(receiver_im_racket_dir_list),
-
-            "receiver_im_ball_updown": np.concatenate(receiver_im_ball_updown_list),
-            # "receiver_ec_fs_racket_angle_vel": np.concatenate(receiver_ec_fs_racket_angle_vel_list),
-
-            "receiver_im_racket_ball_angle": np.concatenate(receiver_im_racket_ball_angle_list),
-            "receiver_im_racket_ball_wrist": np.concatenate(receiver_im_racket_ball_wrist_list),
-            "receiver_im_ball_wrist": np.concatenate(receiver_im_ball_wrist_list),
-
-            "receiver_start_fs": np.concatenate(receiver_start_fs_list),
-            "hand_movement_sim": np.concatenate(hand_movement_sim_list),
-
-            "receiver_fixation_racket_latency": np.concatenate(receiver_fixation_racket_latency_list),
-            "receiver_distance_eye_hand": np.concatenate(receiver_distance_eye_hand_list),
-
-            # hitter from previous
-            "hitter_rev_fx": np.concatenate(hitter_rev_fx_list),
-            "hitter_rev_fx_duration": np.concatenate(hitter_rev_fx_duration_list),
-
-            #
-            # "hitter_rev_p1_al": np.concatenate(hitter_rev_p1_al_list),
-            # "hitter_rev_p1_al_onset": np.concatenate(hitter_rev_p1_al_onset_list),
-            # "hitter_rev_p1_al_prec": np.concatenate(hitter_rev_p1_al_prec_list),
-            # "hitter_rev_p1_al_mag": np.concatenate(hitter_rev_p1_al_mag_list),
-            #
-            # "hitter_rev_p2_al": np.concatenate(hitter_rev_p2_al_list),
-            # "hitter_rev_p2_al_onset": np.concatenate(hitter_rev_p2_al_onset_list),
-            # "hitter_rev_p2_al_prec": np.concatenate(hitter_rev_p2_al_prec_list),
-            # "hitter_rev_p2_al_mag": np.concatenate(hitter_rev_p2_al_mag_list),
-            #
-            # "hitter_rev_p1_cs": np.concatenate(hitter_rev_p1_cs_list),
-            # "hitter_rev_p2_cs": np.concatenate(hitter_rev_p2_cs_list),
-
-            # hitter from current
-            # "team_spatial_position": np.concatenate(team_spatial_position_list),
-
-            "hitter_p1_al": np.concatenate(hitter_p1_al_list),
-            "hitter_p1_al_onset": np.concatenate(hitter_p1_al_onset_list),
-            "hitter_p1_al_prec": np.concatenate(hitter_p1_al_prec_list),
-            "hitter_p1_al_mag": np.concatenate(hitter_p1_al_mag_list),
-            "hitter_p1_cs": np.concatenate(hitter_p1_cs_list),
-
-            "hitter_p2_al": np.concatenate(hitter_p2_al_list),
-            "hitter_p2_al_onset": np.concatenate(hitter_p2_al_onset_list),
-            "hitter_p2_al_prec": np.concatenate(hitter_p2_al_prec_list),
-            "hitter_p2_al_mag": np.concatenate(hitter_p2_al_mag_list),
-            "hitter_p2_cs": np.concatenate(hitter_p2_cs_list),
-            "hitter_fx": np.concatenate(hitter_fx_list),
-            "hitter_fx_duration": np.concatenate(hitter_fx_duration_list),
-            # "hitter_position_to_bouncing_point": np.concatenate(hitter_position_to_bouncing_point_list),
-
-            "hitter_at_and_after_hit": np.concatenate(hitter_at_and_after_hit_list),
-
-            "receiver_skill": np.concatenate(receiver_skill_list),
-
             "labels": np.concatenate(label_list),
         }
+        if "skill" in mod:
+            fetures_summary.update({
+                "receiver_skill": np.concatenate(receiver_skill_list),
+            })
+        if "perception" in mod:
+            fetures_summary.update({
+                "receiver_p1_al": np.concatenate(receiver_p1_al_list),
+                "receiver_p2_al": np.concatenate(receiver_p2_al_list),
+                "receiver_p3_fx": np.concatenate(receiver_p3_fx_list),
+                "receiver_p1_cs": np.concatenate(receiver_p1_cs_list),
+                "receiver_p2_cs": np.concatenate(receiver_p2_cs_list),
+
+                "receiver_p1_al_onset": np.concatenate(receiver_p1_al_onset_list),
+                "receiver_p1_al_prec": np.concatenate(receiver_p1_al_prec_list),
+                "receiver_p1_al_mag": np.concatenate(receiver_p1_al_mag_list),
+
+                "receiver_p2_al_mag": np.concatenate(receiver_p2_al_mag_list),
+                "receiver_p2_al_onset": np.concatenate(receiver_p2_al_onset_list),
+                "receiver_p2_al_prec": np.concatenate(receiver_p2_al_prec_list),
+
+                "receiver_p3_fx_onset": np.concatenate(receiver_p3_fx_onset_list),
+                "receiver_p3_fx_duration": np.concatenate(receiver_p3_fx_duration_list),
+
+                "hitter_p1_al": np.concatenate(hitter_p1_al_list),
+                "hitter_p2_al": np.concatenate(hitter_p2_al_list),
+                "hitter_fx": np.concatenate(hitter_fx_list),
+                "hitter_p1_cs": np.concatenate(hitter_p1_cs_list),
+                "hitter_p2_cs": np.concatenate(hitter_p2_cs_list),
+
+                "hitter_p1_al_onset": np.concatenate(hitter_p1_al_onset_list),
+                "hitter_p1_al_prec": np.concatenate(hitter_p1_al_prec_list),
+                "hitter_p1_al_mag": np.concatenate(hitter_p1_al_mag_list),
+
+                "hitter_p2_al_onset": np.concatenate(hitter_p2_al_onset_list),
+                "hitter_p2_al_prec": np.concatenate(hitter_p2_al_prec_list),
+                "hitter_p2_al_mag": np.concatenate(hitter_p2_al_mag_list),
+
+                "hitter_fx_onset": np.concatenate(hitter_fx_onset_list),
+                "hitter_fx_duration": np.concatenate(hitter_fx_duration_list),
+
+            })
+        if "action" in mod:
+            fetures_summary.update({
+
+                # action
+                "receiver_im_racket_dir": np.concatenate(receiver_im_racket_dir_list),
+                "receiver_im_ball_updown": np.concatenate(receiver_im_ball_updown_list),
+                "receiver_start_fs": np.concatenate(receiver_start_fs_list),
+                "hand_movement_sim": np.concatenate(hand_movement_sim_list),
+                "receiver_fixation_racket_latency": np.concatenate(receiver_fixation_racket_latency_list),
+                "receiver_distance_eye_hand": np.concatenate(receiver_distance_eye_hand_list),
+                "hitter_at_and_after_hit": np.concatenate(hitter_at_and_after_hit_list),
+
+            })
+        if mod == "full_mode":
+            fetures_summary.update({
+                # perception
+                "receiver_p1_al": np.concatenate(receiver_p1_al_list),
+                "receiver_p2_al": np.concatenate(receiver_p2_al_list),
+                "receiver_p3_fx": np.concatenate(receiver_p3_fx_list),
+                "receiver_p1_cs": np.concatenate(receiver_p1_cs_list),
+                "receiver_p2_cs": np.concatenate(receiver_p2_cs_list),
+
+                "receiver_p1_al_onset": np.concatenate(receiver_p1_al_onset_list),
+                "receiver_p1_al_prec": np.concatenate(receiver_p1_al_prec_list),
+                "receiver_p1_al_mag": np.concatenate(receiver_p1_al_mag_list),
+
+                "receiver_p2_al_mag": np.concatenate(receiver_p2_al_mag_list),
+                "receiver_p2_al_onset": np.concatenate(receiver_p2_al_onset_list),
+                "receiver_p2_al_prec": np.concatenate(receiver_p2_al_prec_list),
+
+                "receiver_p3_fx_onset": np.concatenate(receiver_p3_fx_onset_list),
+                "receiver_p3_fx_duration": np.concatenate(receiver_p3_fx_duration_list),
+
+                "hitter_p1_al": np.concatenate(hitter_p1_al_list),
+                "hitter_p2_al": np.concatenate(hitter_p2_al_list),
+                "hitter_fx": np.concatenate(hitter_fx_list),
+                "hitter_p1_cs": np.concatenate(hitter_p1_cs_list),
+                "hitter_p2_cs": np.concatenate(hitter_p2_cs_list),
+
+                "hitter_p1_al_onset": np.concatenate(hitter_p1_al_onset_list),
+                "hitter_p1_al_prec": np.concatenate(hitter_p1_al_prec_list),
+                "hitter_p1_al_mag": np.concatenate(hitter_p1_al_mag_list),
+
+                "hitter_p2_al_onset": np.concatenate(hitter_p2_al_onset_list),
+                "hitter_p2_al_prec": np.concatenate(hitter_p2_al_prec_list),
+                "hitter_p2_al_mag": np.concatenate(hitter_p2_al_mag_list),
+
+                "hitter_fx_onset": np.concatenate(hitter_fx_onset_list),
+                "hitter_fx_duration": np.concatenate(hitter_fx_duration_list),
+
+                # action
+                "receiver_im_racket_dir": np.concatenate(receiver_im_racket_dir_list),
+                "receiver_im_ball_updown": np.concatenate(receiver_im_ball_updown_list),
+                "receiver_start_fs": np.concatenate(receiver_start_fs_list),
+                "hand_movement_sim": np.concatenate(hand_movement_sim_list),
+                "receiver_fixation_racket_latency": np.concatenate(receiver_fixation_racket_latency_list),
+                "receiver_distance_eye_hand": np.concatenate(receiver_distance_eye_hand_list),
+                "hitter_at_and_after_hit": np.concatenate(hitter_at_and_after_hit_list),
+                # contact
+                "receiver_im_racket_ball_angle": np.concatenate(receiver_im_racket_ball_angle_list),
+                "receiver_im_racket_ball_wrist": np.concatenate(receiver_im_racket_ball_wrist_list),
+                "receiver_im_ball_wrist": np.concatenate(receiver_im_ball_wrist_list),
+
+                "receiver_skill": np.concatenate(receiver_skill_list),
+                "labels": np.concatenate(label_list),
+
+            })
+
+        if with_control:
+            fetures_summary.update({"receiver": np.concatenate(receiver_list), "session": np.concatenate(session_list)})
+
+        if timepoint:
+            fetures_summary.update({"receiver_timepoint": np.concatenate(receiver_timepoint_list),
+                                    "hitter_timepoint": np.concatenate(hitter_timepoint_list),
+                                    "receiver": np.concatenate(receiver_list),
+                                    "hitter": np.concatenate(hitter_list)
+                                    })
 
         return pd.DataFrame(fetures_summary)
 
@@ -1110,47 +1159,47 @@ class GlobalDoubleFeaturesReader:
         self.df["stable_probs"] = -1.
         self.df["unstable_preds"] = -1.
         # load HMM model
-        model = torch.load(HMM_MODEL_PATH)
-        for i, g in grouped_episodes:
-            # if i[0] == "2022-12-07_M_T03":
-            #     print("error here")
-            g = g.sort_values(by=['observation_label'])
-            # g = g.loc[g["receiver"].values==1]
-            signal1 = g["ball_speed_after_hit"].values
-            # signal2 = g["ball_dir_after_hit"].values
-            signal3 = g["bouncing_point_dist_p1"].values
-            signal4 = g["bouncing_point_dist_p2"].values
-            # signal5 = g["hitter_position_to_bouncing_point"].values
-
-            unstable_prior_state = np.expand_dims(np.asarray([
-                np.quantile(signal1, 0.85),
-                np.quantile(signal3, 0.75),
-                np.quantile(signal4, 0.75),
-
-            ]), 0)
-
-            if len(signal1) > 0:
-                X = np.vstack([unstable_prior_state, np.vstack([signal1, signal3, signal4]).T])
-                X = np.expand_dims(X, axis=0)
-                probs = model.predict_proba(X).numpy()[0][1:, 0]  # 0: stable 1: unstable
-                preds = model.predict(X).numpy()[0][1:]
-
-                # X = np.vstack([signal1, signal3, signal4]).T
-                # X = np.expand_dims(X, axis=0)
-                # probs = model.predict_proba(X).numpy()[0][:, 0] # 0: stable 1: unstable
-                # preds = model.predict(X).numpy()[0]
-
-                conditions = np.argwhere(
-                    (self.df["session_id"] == g["session_id"].values[0]) & self.df["observation_label"].isin(
-                        g["observation_label"].values)).flatten()
-                self.df.loc[conditions, "stable_probs"] = probs
-                self.df.loc[conditions, "unstable_preds"] = preds
+        # model = torch.load(HMM_MODEL_PATH)
+        # for i, g in grouped_episodes:
+        #     # if i[0] == "2022-12-07_M_T03":
+        #     #     print("error here")
+        #     g = g.sort_values(by=['observation_label'])
+        #     # g = g.loc[g["receiver"].values==1]
+        #     signal1 = g["ball_speed_after_hit"].values
+        #     # signal2 = g["ball_dir_after_hit"].values
+        #     signal3 = g["bouncing_point_dist_p1"].values
+        #     signal4 = g["bouncing_point_dist_p2"].values
+        #     # signal5 = g["hitter_position_to_bouncing_point"].values
+        #
+        #     unstable_prior_state = np.expand_dims(np.asarray([
+        #         np.quantile(signal1, 0.85),
+        #         np.quantile(signal3, 0.75),
+        #         np.quantile(signal4, 0.75),
+        #
+        #     ]), 0)
+        #
+        #     if len(signal1) > 0:
+        #         X = np.vstack([unstable_prior_state, np.vstack([signal1, signal3, signal4]).T])
+        #         X = np.expand_dims(X, axis=0)
+        #         probs = model.predict_proba(X).numpy()[0][1:, 0]  # 0: stable 1: unstable
+        #         preds = model.predict(X).numpy()[0][1:]
+        #
+        #         # X = np.vstack([signal1, signal3, signal4]).T
+        #         # X = np.expand_dims(X, axis=0)
+        #         # probs = model.predict_proba(X).numpy()[0][:, 0] # 0: stable 1: unstable
+        #         # preds = model.predict(X).numpy()[0]
+        #
+        #         conditions = np.argwhere(
+        #             (self.df["session_id"] == g["session_id"].values[0]) & self.df["observation_label"].isin(
+        #                 g["observation_label"].values)).flatten()
+        #         self.df.loc[conditions, "stable_probs"] = probs
+        #         self.df.loc[conditions, "unstable_preds"] = preds
 
         # set stable score for each group
-        group_df = self.df.groupby(['session_id'])
-        for name, group in group_df:
-            self.df.loc[self.df.session_id == name[0], "team_stable_rate"] = np.average(
-                group["unstable_preds"].values == 0)
+        # group_df = self.df.groupby(['session_id'])
+        # for name, group in group_df:
+        #     self.df.loc[self.df.session_id == name[0], "team_stable_rate"] = np.average(
+        #         group["unstable_preds"].values == 0)
 
         return self.df
 
@@ -1173,6 +1222,8 @@ class ImpressionFeatures:
 
         self.df = pd.read_pickle(file_path)
 
+        self.single_df = pd.read_pickle(SINGLE_FEATURES_FILE_PATH)
+
         if filter_out:
             df_summary = self.df_summary[
                 (self.df_summary["norm_score"] > 0.55) & (self.df_summary["Tobii_percentage"] > 65)]
@@ -1184,26 +1235,31 @@ class ImpressionFeatures:
             self.df = self.df.loc[self.df["session_id"].isin(include_subjects), :]
             self.df_summary = self.df_summary.loc[self.df_summary["file_name"].isin(include_subjects), :]
 
+            # import arviz as az
+            #
+            # az.plot_dist(self.df_summary["n_success"].values, rug=True, kind="kde")
+            # plt.show()
+
         if exclude_failure:
             # 0: failure
             # -1: stop
-            self.df = self.df.loc[(self.df["success"] != 0) | (self.df["success"] != -1)]
+            self.df = self.df.loc[self.df["success"] == 1]
+            self.single_df = self.single_df.loc[self.single_df["success"] == 1]
         else:
             self.df = self.df.loc[self.df["success"] != -1]
 
         if exclude_no_pair:
             self.df = self.df.loc[self.df["pair_idx"] != -1]
 
-        self.single_df = pd.read_pickle(SINGLE_FEATURES_FILE_PATH)
         # self.single_df = self.single_df.loc[(self.single_df["success"] != 0) | (self.single_df["success"] != -1)]
 
-    def getImpressionFeatures(self, n_index=10, group="control"):
+    def getImpressionFeatures(self, n_index=10, group="control", mod="skill"):
         if group == "lower":
             y = 0
         else:
             y = 1
 
-        def computeStyleSim(features_name, s1, s2):
+        def computeStyleSim(features_name, s1, s2, bins=7, is_int=False):
             # a = stats.ks_2samp(self.single_df[self.single_df["id_subject"] == s1][features_name].values,
             #                self.single_df[self.single_df["id_subject"] == s2][features_name].values, )
             #
@@ -1213,19 +1269,30 @@ class ImpressionFeatures:
 
             x1 = x1[~np.isnan(x1)]
             x2 = x2[~np.isnan(x2)]
+            n_min = len(x2) if len(x1) > len(x2) else len(x1)
+            x1 = x1[:n_min]
+            x2 = x2[:n_min]
             x = np.concatenate([x1, x2])
-            data1 = np.histogram(x1, bins=5, range=(np.min(x), np.max(x)), density=True)[0]
-            data2 = np.histogram(x2, bins=5,  range=(np.min(x), np.max(x)),density=True)[0]
+            if is_int:
+                max_x = np.max(x) + 1
+                data1 = np.histogram(x1, bins=np.arange(max_x), density=True)[0]
+                data2 = np.histogram(x2, bins=np.arange(max_x), density=True)[0]
+            else:
+                data1 = np.histogram(x1, bins=bins, range=(np.min(x), np.max(x)), density=True)[0]
+                data2 = np.histogram(x2, bins=bins, range=(np.min(x), np.max(x)), density=True)[0]
 
             bc_coeff = np.sum(np.sqrt(data1 * data2))
             bhattacharyya_distance = -np.log(bc_coeff)
 
             return bhattacharyya_distance
 
-
-
-        def computeMeanFeatures(df, features_name):
-            return np.nanmean(df[features_name].values)
+        def computeMeanFeatures(features_name, s1, s2):
+            single_df = self.single_df
+            df1 = single_df[single_df["id_subject"] == s1][features_name].values
+            df2 = single_df[single_df["id_subject"] == s2][features_name].values
+            # n_min = len(df2) if len(df1) > len(df2) else len(df1)
+            return 0.5 * (np.nanmean(df1) + np.nanmean(df2))
+            # return np.nanmean(np.concatenate([df1, df2]))
 
         p1_al_on_sim_list = []
         p1_al_prec_sim_list = []
@@ -1242,11 +1309,325 @@ class ImpressionFeatures:
         p3_fx_on_sim_list = []
         p3_fx_du_sim_list = []
 
-        # fs and impact
+        # action
         ec_start_fs_sim_list = []
-        rb_ang_collision_sim_list = []
-        rb_dist_sim_list = []
-        rack_wrist_dist_sim_list = []
+        fixation_racket_latency_sim_list = []
+        distance_eye_hand_sim_list = []
+        im_ball_updown_sim_list = []
+
+        # impact
+        im_racket_ball_angle_sim_list = []
+        im_racket_ball_wrist_sim_list = []
+        im_ball_wrist_sim_list = []
+
+        # mean
+        p1_al_on_mean_list = []
+        p1_al_prec_mean_list = []
+        p1_al_gM_mean_list = []
+        p1_cs_mean_list = []
+
+        # p2
+        p2_al_on_mean_list = []
+        p2_al_prec_mean_list = []
+        p2_al_gM_mean_list = []
+        p2_cs_mean_list = []
+
+        # p3
+        p3_fx_on_mean_list = []
+        p3_fx_du_mean_list = []
+
+        # action
+        ec_start_fs_mean_list = []
+        im_ball_updown_mean_list = []
+        fixation_racket_latency_mean_list = []
+        distance_eye_hand_mean_list = []
+
+        # impact
+        im_racket_ball_angle_mean_list = []
+        im_racket_ball_wrist_mean_list = []
+        im_ball_wrist_mean_list = []
+
+        # skills
+        subject_skill_list = []
+        for _, g in self.df_summary.iterrows():
+            s1 = g["Subject1"]
+            s2 = g["Subject2"]
+
+            # similarity
+            # p1
+            p1_al_on_sim = computeStyleSim("pr_p1_al_on", s1, s2)
+            p1_al_prec_sim = computeStyleSim("pr_p1_al_prec", s1, s2)
+            p1_al_gM_sim = computeStyleSim("pr_p1_al_gM", s1, s2)
+            p1_cs_sim = computeStyleSim("pr_p1_sf", s1, s2, is_int=True)
+
+            # p2
+            p2_al_on_sim = computeStyleSim("pr_p2_al_on", s1, s2)
+            p2_al_prec_sim = computeStyleSim("pr_p2_al_prec", s1, s2)
+            p2_al_gM_sim = computeStyleSim("pr_p2_al_gM", s1, s2)
+            p2_cs_sim = computeStyleSim("pr_p2_sf", s1, s2, is_int=True)
+
+            # p3
+            p3_fx_on_sim = computeStyleSim("pr_p3_fx_on", s1, s2)
+            p3_fx_du_sim = computeStyleSim("pr_p3_fx_du", s1, s2)
+
+            # action
+            ec_start_fs_sim = computeStyleSim("ec_start_fs", s1, s2, bins=3)
+            fixation_racket_latency_sim = computeStyleSim("fixation_racket_latency", s1, s2, bins=5)
+            distance_eye_hand_sim = computeStyleSim("distance_eye_hand", s1, s2, bins=5)
+            im_ball_updown_sim = computeStyleSim("im_ball_updown", s1, s2, bins=5)
+
+            # impact
+            im_racket_ball_angle_sim = computeStyleSim("im_racket_ball_angle", s1, s2, bins=5)
+            im_racket_ball_wrist_sim = computeStyleSim("im_racket_ball_wrist", s1, s2, bins=5)
+            im_ball_wrist_sim = computeStyleSim("im_ball_wrist", s1, s2, bins=5)
+
+            # means
+            p1_al_on_mean = computeMeanFeatures("pr_p1_al_on", s1, s2)
+            p1_al_prec_mean = computeMeanFeatures("pr_p1_al_prec", s1, s2)
+            p1_al_gM_mean = computeMeanFeatures("pr_p1_al_gM", s1, s2)
+            p1_cs_mean = computeMeanFeatures("pr_p1_sf", s1, s2)
+
+            p2_al_on_mean = computeMeanFeatures("pr_p2_al_on", s1, s2)
+            p2_al_prec_mean = computeMeanFeatures("pr_p2_al_prec", s1, s2)
+            p2_al_gM_mean = computeMeanFeatures("pr_p2_al_gM", s1, s2)
+            p2_cs_mean = computeMeanFeatures("pr_p2_sf", s1, s2)
+
+            p3_fx_on_mean = computeMeanFeatures("pr_p3_fx_on", s1, s2)
+            p3_fx_du_mean = computeMeanFeatures("pr_p3_fx_du", s1, s2)
+
+            # action
+            ec_start_fs_mean = computeMeanFeatures("ec_start_fs", s1, s2)
+            fixation_racket_latency_mean = computeMeanFeatures("fixation_racket_latency", s1, s2)
+            distance_eye_hand_mean = computeMeanFeatures("distance_eye_hand", s1, s2)
+            im_ball_updown_mean = computeMeanFeatures("im_ball_updown", s1, s2)
+
+            # impact
+            im_racket_ball_angle_mean = computeMeanFeatures("im_racket_ball_angle", s1, s2)
+            im_racket_ball_wrist_mean = computeMeanFeatures("im_racket_ball_wrist", s1, s2)
+            im_ball_wrist_mean = computeMeanFeatures("im_ball_wrist", s1, s2)
+
+            # skills
+            subject_1_skill = self.single_df[self.single_df["id_subject"] == s1]["skill_subject"].values[0]
+            subject_2_skill = self.single_df[self.single_df["id_subject"] == s2]["skill_subject"].values[0]
+
+            # append features to list
+            p1_al_on_sim_list.append(p1_al_on_sim)
+            p1_al_prec_sim_list.append(p1_al_prec_sim)
+            p1_al_gM_sim_list.append(p1_al_gM_sim)
+            p1_cs_sim_list.append(p1_cs_sim)
+
+            # p2
+            p2_al_on_sim_list.append(p2_al_on_sim)
+            p2_al_prec_sim_list.append(p2_al_prec_sim)
+            p2_al_gM_sim_list.append(p2_al_gM_sim)
+            p2_cs_sim_list.append(p2_cs_sim)
+
+            # p3
+            p3_fx_on_sim_list.append(p3_fx_on_sim)
+            p3_fx_du_sim_list.append(p3_fx_du_sim)
+
+            # action
+            ec_start_fs_sim_list.append(ec_start_fs_sim)
+            fixation_racket_latency_sim_list.append(fixation_racket_latency_sim)
+            distance_eye_hand_sim_list.append(distance_eye_hand_sim)
+            im_ball_updown_sim_list.append(im_ball_updown_sim)
+
+            # impact
+            im_racket_ball_angle_sim_list.append(im_racket_ball_angle_sim)
+            im_racket_ball_wrist_sim_list.append(im_racket_ball_wrist_sim)
+            im_ball_wrist_sim_list.append(im_ball_wrist_sim)
+
+            # skill
+            subject_skill_list.append(0.5 * (subject_1_skill + subject_2_skill))
+
+            p1_al_on_mean_list.append(p1_al_on_mean)
+            p1_al_prec_mean_list.append(p1_al_prec_mean)
+            p1_al_gM_mean_list.append(p1_al_gM_mean)
+            p1_cs_mean_list.append(p1_cs_mean)
+
+            # p2
+            p2_al_on_mean_list.append(p2_al_on_mean)
+            p2_al_prec_mean_list.append(p2_al_prec_mean)
+            p2_al_gM_mean_list.append(p2_al_gM_mean)
+            p2_cs_mean_list.append(p2_cs_mean)
+
+            # p3
+            p3_fx_on_mean_list.append(p3_fx_on_mean)
+            p3_fx_du_mean_list.append(p3_fx_du_mean)
+
+            # action
+            ec_start_fs_mean_list.append(ec_start_fs_mean)
+            fixation_racket_latency_mean_list.append(fixation_racket_latency_mean)
+            distance_eye_hand_mean_list.append(distance_eye_hand_mean)
+            im_ball_updown_mean_list.append(im_ball_updown_mean)
+
+            # impact
+            im_racket_ball_angle_mean_list.append(im_racket_ball_angle_mean)
+            im_racket_ball_wrist_mean_list.append(im_racket_ball_wrist_mean)
+            im_ball_wrist_mean_list.append(im_ball_wrist_mean)
+
+        if mod == "skill":
+            fetures_summary = {
+                "subject_skill": subject_skill_list,
+
+                "labels": y,
+            }
+
+        elif mod == "skill_perception":
+            fetures_summary = {
+                "p1_al_onset_sim": p1_al_on_sim_list,
+                "p1_al_prec_sim": p1_al_prec_sim_list,
+                "p1_al_mag_sim": p1_al_gM_sim_list,
+
+                "p2_al_onset_sim": p2_al_on_sim_list,
+                "p2_al_prec_sim": p2_al_prec_sim_list,
+                "p2_al_mag_sim": p2_al_gM_sim_list,
+
+                "p3_fx_onset_sim": p3_fx_on_sim_list,
+                "p3_fx_du_sim": p3_fx_du_sim_list,
+
+                "p1_cs_sim": p1_cs_sim_list,
+                "p2_cs_sim": p2_cs_sim_list,
+
+                # mean
+                "p1_al_onset_mean": p1_al_on_mean_list,
+                "p1_al_prec_mean": p1_al_prec_mean_list,
+                "p1_al_mag_mean": p1_al_gM_mean_list,
+                "p1_cs_mean": p1_cs_mean_list,
+
+                # p2
+                "p2_al_onset_mean": p2_al_on_mean_list,
+                "p2_al_prec_mean": p2_al_prec_mean_list,
+                "p2_al_mag_mean": p2_al_gM_mean_list,
+                "p2_cs_mean": p2_cs_mean_list,
+
+                # p3
+                "p3_fx_onset_mean": p3_fx_on_mean_list,
+                "p3_fx_du_mean": p3_fx_du_mean_list,
+
+                "subject_skill": subject_skill_list,
+
+                "labels": y,
+            }
+        elif mod == "skill_perception_action":
+            fetures_summary = {
+                "p1_al_onset_sim": p1_al_on_sim_list,
+                "p1_al_prec_sim": p1_al_prec_sim_list,
+                "p1_al_mag_sim": p1_al_gM_sim_list,
+
+                "p2_al_onset_sim": p2_al_on_sim_list,
+                "p2_al_prec_sim": p2_al_prec_sim_list,
+                "p2_al_mag_sim": p2_al_gM_sim_list,
+
+                "p3_fx_onset_sim": p3_fx_on_sim_list,
+                "p3_fx_du_sim": p3_fx_du_sim_list,
+
+                "p1_cs_sim": p1_cs_sim_list,
+                "p2_cs_sim": p2_cs_sim_list,
+
+                # mean
+                "p1_al_onset_mean": p1_al_on_mean_list,
+                "p1_al_prec_mean": p1_al_prec_mean_list,
+                "p1_al_mag_mean": p1_al_gM_mean_list,
+                "p1_cs_mean": p1_cs_mean_list,
+
+                # p2
+                "p2_al_onset_mean": p2_al_on_mean_list,
+                "p2_al_prec_mean": p2_al_prec_mean_list,
+                "p2_al_mag_mean": p2_al_gM_mean_list,
+                "p2_cs_mean": p2_cs_mean_list,
+
+                # p3
+                "p3_fx_onset_mean": p3_fx_on_mean_list,
+                "p3_fx_du_mean": p3_fx_du_mean_list,
+
+                # action
+                "ec_start_fs_sim": ec_start_fs_sim_list,
+                "fixation_racket_latency_sim": fixation_racket_latency_sim_list,
+                "distance_eye_hand_sim": distance_eye_hand_sim_list,
+                "im_ball_updown_sim": im_ball_updown_sim_list,
+
+                "ec_start_fs_mean": ec_start_fs_mean_list,
+                "fixation_racket_latency_mean": fixation_racket_latency_mean_list,
+                "distance_eye_hand_mean": distance_eye_hand_mean_list,
+                "im_ball_updown_mean": im_ball_updown_mean_list,
+
+                "subject_skill": subject_skill_list,
+
+                "labels": y,
+            }
+        else:
+            fetures_summary = {
+                "p1_al_onset_sim": p1_al_on_sim_list,
+                "p1_al_prec_sim": p1_al_prec_sim_list,
+                "p1_al_mag_sim": p1_al_gM_sim_list,
+
+                "p2_al_onset_sim": p2_al_on_sim_list,
+                "p2_al_prec_sim": p2_al_prec_sim_list,
+                "p2_al_mag_sim": p2_al_gM_sim_list,
+
+                "p3_fx_onset_sim": p3_fx_on_sim_list,
+                "p3_fx_du_sim": p3_fx_du_sim_list,
+
+                "p1_cs_sim": p1_cs_sim_list,
+                "p2_cs_sim": p2_cs_sim_list,
+
+                # mean
+                "p1_al_onset_mean": p1_al_on_mean_list,
+                "p1_al_prec_mean": p1_al_prec_mean_list,
+                "p1_al_mag_mean": p1_al_gM_mean_list,
+                "p1_cs_mean": p1_cs_mean_list,
+
+                # p2
+                "p2_al_onset_mean": p2_al_on_mean_list,
+                "p2_al_prec_mean": p2_al_prec_mean_list,
+                "p2_al_mag_mean": p2_al_gM_mean_list,
+                "p2_cs_mean": p2_cs_mean_list,
+
+                # p3
+                "p3_fx_onset_mean": p3_fx_on_mean_list,
+                "p3_fx_du_mean": p3_fx_du_mean_list,
+
+                # action
+                "ec_start_fs_sim": ec_start_fs_sim_list,
+                "fixation_racket_latency_sim": fixation_racket_latency_sim_list,
+                "distance_eye_hand_sim": distance_eye_hand_sim_list,
+                "im_ball_updown_sim": im_ball_updown_sim_list,
+
+                "ec_start_fs_mean": ec_start_fs_mean_list,
+                "fixation_racket_latency_mean": fixation_racket_latency_mean_list,
+                "distance_eye_hand_mean": distance_eye_hand_mean_list,
+                "im_ball_updown_mean": im_ball_updown_mean_list,
+
+                # impact
+                "im_racket_ball_angle_sim": im_racket_ball_angle_sim_list,
+                "im_racket_ball_wrist_sim": im_racket_ball_wrist_sim_list,
+                "im_ball_wrist_sim": im_ball_wrist_sim_list,
+
+                "im_racket_ball_angle_mean": im_racket_ball_angle_mean_list,
+                "im_racket_ball_wrist_mean": im_racket_ball_wrist_mean_list,
+                "im_ball_wrist_mean": im_ball_wrist_mean_list,
+
+                "subject_skill": subject_skill_list,
+
+                "labels": y,
+            }
+
+        return pd.DataFrame(fetures_summary)
+
+    def getSnippetFeatures(self, n_index=10, group="lower"):
+        if group == "lower":
+            y = 0
+        else:
+            y = 1
+
+        def computeMeanFeatures(df, features_name):
+            time_series = df[features_name].values
+            # from scipy.stats import linregress
+            #
+            # x = np.arange(len(time_series))
+            # slope, intercept, r_value, p_value, std_err = linregress(x, time_series)
+            return np.nanmean(time_series), np.nanstd(time_series)
 
         # p1
         receiver_pr_p1_al_onset_list = []
@@ -1287,38 +1668,65 @@ class ImpressionFeatures:
         receiver_im_racket_ball_angle_list = []
         receiver_im_racket_ball_wrist_list = []
         receiver_im_ball_wrist_list = []
+        receiver_distance_eye_hand_list = []
+
+        # std
+        # p1
+        receiver_pr_p1_al_onset_std_list = []
+        receiver_pr_p1_al_prec_std_list = []
+        receiver_pr_p1_al_mag_std_list = []
+        receiver_pr_p1_cs_std_list = []
+
+        hitter_pr_p1_al_onset_std_list = []
+        hitter_pr_p1_al_prec_std_list = []
+        hitter_pr_p1_al_mag_std_list = []
+        hitter_pr_p1_cs_std_list = []
+
+        # p2
+        receiver_pr_p2_al_onset_std_list = []
+        receiver_pr_p2_al_prec_std_list = []
+        receiver_pr_p2_al_mag_std_list = []
+        receiver_pr_p2_cs_std_list = []
+
+        hitter_pr_p2_al_onset_std_list = []
+        hitter_pr_p2_al_prec_std_list = []
+        hitter_pr_p2_al_mag_std_list = []
+        hitter_pr_p2_cs_std_list = []
+
+        # p3
+        receiver_pr_p3_fx_onset_std_list = []
+        receiver_pr_p3_fx_duration_std_list = []
+
+        hitter_pr_p3_fx_onset_std_list = []
+        hitter_pr_p3_fx_duration_std_list = []
+
+        # impact
+        receiver_ec_start_fs_std_list = []
+        receiver_im_racket_dir_std_list = []
+        receiver_im_racket_effect_std_list = []
+        receiver_im_ball_updown_std_list = []
+        hand_movement_sim_dtw_std_list = []
+        receiver_fixation_racket_latency_std_list = []
+        receiver_im_racket_ball_angle_std_list = []
+        receiver_im_racket_ball_wrist_std_list = []
+        receiver_im_ball_wrist_std_list = []
+        receiver_distance_eye_hand_std_list = []
+
+        # plot le
 
         # skills
-        subject_1_skill_list = []
-        subject_2_skill_list = []
+        subject_skill_list = []
         for _, g in self.df_summary.iterrows():
             s1 = g["Subject1"]
             s2 = g["Subject2"]
 
-            # p1
-            p1_al_on_sim = computeStyleSim("pr_p1_al_on", s1, s2)
-            p1_al_prec_sim = computeStyleSim("pr_p1_al_prec", s1, s2)
-            p1_al_gM_sim = computeStyleSim("pr_p1_al_gM", s1, s2)
-            # p1_cs_sim = computeStyleSim("pr_p1_sf", s1, s2)
-
-            # p2
-            p2_al_on_sim = computeStyleSim("pr_p2_al_on", s1, s2)
-            p2_al_prec_sim = computeStyleSim("pr_p2_al_prec", s1, s2)
-            p2_al_gM_sim = computeStyleSim("pr_p2_al_gM", s1, s2)
-            # p2_cs_sim = computeStyleSim("pr_p2_sf", s1, s2)
-
-            # p3
-            p3_fx_on_sim = computeStyleSim("pr_p3_fx_on", s1, s2)
-            p3_fx_du_sim = computeStyleSim("pr_p3_fx_du", s1, s2)
-
-            # fs and impact
-            ec_start_fs_sim = computeStyleSim("ec_start_fs", s1, s2)
-            rb_ang_collision_sim = computeStyleSim("im_rb_ang_collision", s1, s2)
-            rb_dist_sim = computeStyleSim("im_rb_dist", s1, s2)
-            rack_wrist_dist_sim = computeStyleSim("im_rack_wrist_dist", s1, s2)
-
             # snipset of double summary
-            double_df = self.df[self.df["session_id"] == g["file_name"]][:n_index]
+            # double_df = self.df[self.df["session_id"] == g["file_name"]][:n_index] #first
+            double_df = self.df[self.df["session_id"] == g["file_name"]][-n_index:]  # last
+            # n_data = len(self.df[self.df["session_id"] == g["file_name"]])
+            # mid_data = n_data // 2
+            # n_index_half = (n_index //2)
+            # double_df = self.df[self.df["session_id"] == g["file_name"]][mid_data:mid_data+n_index] # mid
             # p1
             receiver_pr_p1_al_onset = computeMeanFeatures(double_df, "receiver_pr_p1_al_onset")
             receiver_pr_p1_al_prec = computeMeanFeatures(double_df, "receiver_pr_p1_al_prec")
@@ -1360,123 +1768,239 @@ class ImpressionFeatures:
 
             hand_movement_sim_dtw = computeMeanFeatures(double_df, "hand_movement_sim_dtw")
             receiver_fixation_racket_latency = computeMeanFeatures(double_df, "receiver_fixation_racket_latency")
+            receiver_distance_eye_hand = computeMeanFeatures(double_df, "receiver_distance_eye_hand")
 
             # skills
             subject_1_skill = self.single_df[self.single_df["id_subject"] == s1]["skill_subject"].values[0]
             subject_2_skill = self.single_df[self.single_df["id_subject"] == s2]["skill_subject"].values[0]
 
-            # append features to list
-            p1_al_on_sim_list.append(p1_al_on_sim)
-            p1_al_prec_sim_list.append(p1_al_prec_sim)
-            p1_al_gM_sim_list.append(p1_al_gM_sim)
-            # p1_cs_sim_list.append(p1_cs_sim)
-
-            # p2
-            p2_al_on_sim_list.append(p2_al_on_sim)
-            p2_al_prec_sim_list.append(p2_al_prec_sim)
-            p2_al_gM_sim_list.append(p2_al_gM_sim)
-            # p2_cs_sim_list.append(p2_cs_sim)
-
-            # p3
-            p3_fx_on_sim_list.append(p3_fx_on_sim)
-            p3_fx_du_sim_list.append(p3_fx_du_sim)
-
-            # fs and impact
-            ec_start_fs_sim_list.append(ec_start_fs_sim)
-            rb_ang_collision_sim_list.append(rb_ang_collision_sim)
-            rb_dist_sim_list.append(rb_dist_sim)
-            rack_wrist_dist_sim_list.append(rack_wrist_dist_sim)
-
+            # mean
             # p1
-            receiver_pr_p1_al_onset_list.append(receiver_pr_p1_al_onset)
-            receiver_pr_p1_al_prec_list.append(receiver_pr_p1_al_prec)
-            receiver_pr_p1_al_mag_list.append(receiver_pr_p1_al_mag)
-            receiver_pr_p1_cs_list.append(receiver_pr_p1_cs)
+            receiver_pr_p1_al_onset_list.append(receiver_pr_p1_al_onset[0])
+            receiver_pr_p1_al_prec_list.append(receiver_pr_p1_al_prec[0])
+            receiver_pr_p1_al_mag_list.append(receiver_pr_p1_al_mag[0])
+            receiver_pr_p1_cs_list.append(receiver_pr_p1_cs[0])
 
-            hitter_pr_p1_al_onset_list.append(hitter_pr_p1_al_onset)
-            hitter_pr_p1_al_prec_list.append(hitter_pr_p1_al_prec)
-            hitter_pr_p1_al_mag_list.append(hitter_pr_p1_al_mag)
-            hitter_pr_p1_cs_list.append(hitter_pr_p1_cs)
+            hitter_pr_p1_al_onset_list.append(hitter_pr_p1_al_onset[0])
+            hitter_pr_p1_al_prec_list.append(hitter_pr_p1_al_prec[0])
+            hitter_pr_p1_al_mag_list.append(hitter_pr_p1_al_mag[0])
+            hitter_pr_p1_cs_list.append(hitter_pr_p1_cs[0])
 
             # p2
-            receiver_pr_p2_al_onset_list.append(receiver_pr_p2_al_onset)
-            receiver_pr_p2_al_prec_list.append(receiver_pr_p2_al_prec)
-            receiver_pr_p2_al_mag_list.append(receiver_pr_p2_al_mag)
-            receiver_pr_p2_cs_list.append(receiver_pr_p2_cs)
+            receiver_pr_p2_al_onset_list.append(receiver_pr_p2_al_onset[0])
+            receiver_pr_p2_al_prec_list.append(receiver_pr_p2_al_prec[0])
+            receiver_pr_p2_al_mag_list.append(receiver_pr_p2_al_mag[0])
+            receiver_pr_p2_cs_list.append(receiver_pr_p2_cs[0])
 
-            hitter_pr_p2_al_onset_list.append(hitter_pr_p2_al_onset)
-            hitter_pr_p2_al_prec_list.append(hitter_pr_p2_al_prec)
-            hitter_pr_p2_al_mag_list.append(hitter_pr_p2_al_mag)
-            hitter_pr_p2_cs_list.append(hitter_pr_p2_cs)
+            hitter_pr_p2_al_onset_list.append(hitter_pr_p2_al_onset[0])
+            hitter_pr_p2_al_prec_list.append(hitter_pr_p2_al_prec[0])
+            hitter_pr_p2_al_mag_list.append(hitter_pr_p2_al_mag[0])
+            hitter_pr_p2_cs_list.append(hitter_pr_p2_cs[0])
 
             # p3
-            receiver_pr_p3_fx_onset_list.append(receiver_pr_p3_fx_onset)
-            receiver_pr_p3_fx_duration_list.append(receiver_pr_p3_fx_duration)
+            receiver_pr_p3_fx_onset_list.append(receiver_pr_p3_fx_onset[0])
+            receiver_pr_p3_fx_duration_list.append(receiver_pr_p3_fx_duration[0])
 
-            hitter_pr_p3_fx_onset_list.append(hitter_pr_p3_fx_onset)
-            hitter_pr_p3_fx_duration_list.append(hitter_pr_p3_fx_duration)
+            hitter_pr_p3_fx_onset_list.append(hitter_pr_p3_fx_onset[0])
+            hitter_pr_p3_fx_duration_list.append(hitter_pr_p3_fx_duration[0])
 
             # impact
-            receiver_ec_start_fs_list.append(receiver_ec_start_fs)
-            receiver_im_racket_dir_list.append(receiver_im_racket_dir)
-            receiver_im_racket_effect_list.append(receiver_im_racket_effect)
-            receiver_im_ball_updown_list.append(receiver_im_ball_updown)
-            hand_movement_sim_dtw_list.append(hand_movement_sim_dtw)
-            receiver_fixation_racket_latency_list.append(receiver_fixation_racket_latency)
-            receiver_im_racket_ball_angle_list.append(receiver_im_racket_ball_angle)
-            receiver_im_racket_ball_wrist_list.append(receiver_im_racket_ball_wrist)
-            receiver_im_ball_wrist_list.append(receiver_im_ball_wrist)
+            receiver_ec_start_fs_list.append(receiver_ec_start_fs[0])
+            receiver_im_racket_dir_list.append(receiver_im_racket_dir[0])
+            receiver_im_racket_effect_list.append(receiver_im_racket_effect[0])
+            receiver_im_ball_updown_list.append(receiver_im_ball_updown[0])
+            hand_movement_sim_dtw_list.append(hand_movement_sim_dtw[0])
+            receiver_fixation_racket_latency_list.append(receiver_fixation_racket_latency[0])
+            receiver_im_racket_ball_angle_list.append(receiver_im_racket_ball_angle[0])
+            receiver_im_racket_ball_wrist_list.append(receiver_im_racket_ball_wrist[0])
+            receiver_im_ball_wrist_list.append(receiver_im_ball_wrist[0])
+            receiver_distance_eye_hand_list.append(receiver_distance_eye_hand[0])
+
+            # std
+            # p1
+            receiver_pr_p1_al_onset_std_list.append(receiver_pr_p1_al_onset[1])
+            receiver_pr_p1_al_prec_std_list.append(receiver_pr_p1_al_prec[1])
+            receiver_pr_p1_al_mag_std_list.append(receiver_pr_p1_al_mag[1])
+            receiver_pr_p1_cs_std_list.append(receiver_pr_p1_cs[1])
+
+            hitter_pr_p1_al_onset_std_list.append(hitter_pr_p1_al_onset[1])
+            hitter_pr_p1_al_prec_std_list.append(hitter_pr_p1_al_prec[1])
+            hitter_pr_p1_al_mag_std_list.append(hitter_pr_p1_al_mag[1])
+            hitter_pr_p1_cs_std_list.append(hitter_pr_p1_cs[1])
+
+            # p2
+            receiver_pr_p2_al_onset_std_list.append(receiver_pr_p2_al_onset[1])
+            receiver_pr_p2_al_prec_std_list.append(receiver_pr_p2_al_prec[1])
+            receiver_pr_p2_al_mag_std_list.append(receiver_pr_p2_al_mag[1])
+            receiver_pr_p2_cs_std_list.append(receiver_pr_p2_cs[1])
+
+            hitter_pr_p2_al_onset_std_list.append(hitter_pr_p2_al_onset[1])
+            hitter_pr_p2_al_prec_std_list.append(hitter_pr_p2_al_prec[1])
+            hitter_pr_p2_al_mag_std_list.append(hitter_pr_p2_al_mag[1])
+            hitter_pr_p2_cs_std_list.append(hitter_pr_p2_cs[1])
+
+            # p3
+            receiver_pr_p3_fx_onset_std_list.append(receiver_pr_p3_fx_onset[1])
+            receiver_pr_p3_fx_duration_std_list.append(receiver_pr_p3_fx_duration[1])
+
+            hitter_pr_p3_fx_onset_std_list.append(hitter_pr_p3_fx_onset[1])
+            hitter_pr_p3_fx_duration_std_list.append(hitter_pr_p3_fx_duration[1])
+
+            # impact
+            receiver_ec_start_fs_std_list.append(receiver_ec_start_fs[1])
+            receiver_im_racket_dir_std_list.append(receiver_im_racket_dir[1])
+            receiver_im_racket_effect_std_list.append(receiver_im_racket_effect[1])
+            receiver_im_ball_updown_std_list.append(receiver_im_ball_updown[1])
+            hand_movement_sim_dtw_std_list.append(hand_movement_sim_dtw[1])
+            receiver_fixation_racket_latency_std_list.append(receiver_fixation_racket_latency[1])
+            receiver_im_racket_ball_angle_std_list.append(receiver_im_racket_ball_angle[1])
+            receiver_im_racket_ball_wrist_std_list.append(receiver_im_racket_ball_wrist[1])
+            receiver_im_ball_wrist_std_list.append(receiver_im_ball_wrist[1])
+            receiver_distance_eye_hand_std_list.append(receiver_distance_eye_hand[1])
 
             # skill
-            subject_1_skill_list.append(subject_1_skill)
-            subject_2_skill_list.append(subject_2_skill)
+            subject_skill_list.append(0.5 * (subject_1_skill + subject_2_skill))
 
         fetures_summary = {
-            "p1_al_on_sim": p1_al_on_sim_list,
-            "p1_al_prec_sim": p1_al_prec_sim_list,
-            "p1_al_gM_sim": p1_al_gM_sim_list,
-            # "p1_cs_sim": p1_cs_sim_list,
-            "p2_al_on_sim": p2_al_on_sim_list,
-            "p2_al_prec_sim": p2_al_prec_sim_list,
-            "p2_al_gM_sim": p2_al_gM_sim_list,
-            # "p2_cs_sim": p2_cs_sim_list,
-            "p3_fx_on_sim": p3_fx_on_sim_list,
-            "p3_fx_du_sim": p3_fx_du_sim_list,
 
-            "ec_start_fs_sim": ec_start_fs_sim_list,
+            # snippet features (mean)
 
+            "hitter_pr_p1_al_onset": hitter_pr_p1_al_onset_list,
+            "hitter_pr_p1_al_prec": hitter_pr_p1_al_prec_list,
+            "hitter_pr_p1_al_mag": hitter_pr_p1_al_mag_list,
+            "hitter_pr_p1_cs": hitter_pr_p1_cs_list,
+            "hitter_pr_p2_al_onset": hitter_pr_p2_al_onset_list,
+            "hitter_pr_p2_al_prec": hitter_pr_p2_al_prec_list,
+            "hitter_pr_p2_al_mag": hitter_pr_p2_al_mag_list,
 
-            # "receiver_pr_p1_al_onset": receiver_pr_p1_al_onset_list,
-            # "receiver_pr_p1_al_prec": receiver_pr_p1_al_prec_list,
-            # "receiver_pr_p1_al_mag": receiver_pr_p1_al_mag_list,
-            # "hitter_pr_p1_al_onset": hitter_pr_p1_al_onset_list,
-            # "hitter_pr_p1_al_prec": hitter_pr_p1_al_prec_list,
-            # "hitter_pr_p1_al_mag": hitter_pr_p1_al_mag_list,
+            "receiver_pr_p1_al_onset": receiver_pr_p1_al_onset_list,
+            "receiver_pr_p1_al_prec": receiver_pr_p1_al_prec_list,
+            "receiver_pr_p1_al_mag": receiver_pr_p1_al_mag_list,
+            "receiver_pr_p1_cs": receiver_pr_p1_cs_list,
+            "receiver_pr_p2_al_onset": receiver_pr_p2_al_onset_list,
+            "receiver_pr_p2_al_prec": receiver_pr_p2_al_prec_list,
+            "receiver_pr_p2_al_mag": receiver_pr_p2_al_mag_list,
+
+            "receiver_pr_p3_fx_onset": receiver_pr_p3_fx_onset_list,
+            "receiver_pr_p3_fx_duration": receiver_pr_p3_fx_duration_list,
+            "hitter_pr_p3_fx_onset": hitter_pr_p3_fx_onset_list,
+            "hitter_pr_p3_fx_duration": hitter_pr_p3_fx_duration_list,
+
+            "receiver_ec_start_fs": receiver_ec_start_fs_list,
+            "receiver_im_racket_dir": receiver_im_racket_dir_list,
+            "receiver_im_racket_effect": receiver_im_racket_effect_list,
+            "receiver_im_ball_updown": receiver_im_ball_updown_list,
+            "hand_movement_sim_dtw": hand_movement_sim_dtw_list,
+            "receiver_fixation_racket_latency": receiver_fixation_racket_latency_list,
+            "receiver_distance_eye_hand": receiver_distance_eye_hand_list,
+
+            # snippet features (std)
             #
-            # "receiver_pr_p2_al_onset": receiver_pr_p2_al_onset_list,
-            # "receiver_pr_p2_al_prec": receiver_pr_p2_al_prec_list,
-            # "receiver_pr_p2_al_mag": receiver_pr_p2_al_mag_list,
-            # "receiver_pr_p1_cs": receiver_pr_p1_cs_list,
-            # "hitter_pr_p2_al_onset": hitter_pr_p2_al_onset_list,
-            # "hitter_pr_p2_al_prec": hitter_pr_p2_al_prec_list,
-            # "hitter_pr_p2_al_mag": hitter_pr_p2_al_mag_list,
-            # "receiver_pr_p3_fx_onset": receiver_pr_p3_fx_onset_list,
-            # "receiver_pr_p3_fx_duration": receiver_pr_p3_fx_duration_list,
-            # "hitter_pr_p3_fx_onset": hitter_pr_p3_fx_onset_list,
-            # "hitter_pr_p3_fx_duration": hitter_pr_p3_fx_duration_list,
+            # "hitter_pr_p1_al_onset_std": hitter_pr_p1_al_onset_std_list,
+            # "hitter_pr_p1_al_prec_std": hitter_pr_p1_al_prec_std_list,
+            # "hitter_pr_p1_al_mag_std": hitter_pr_p1_al_mag_std_list,
+            # "hitter_pr_p1_cs_std": hitter_pr_p1_cs_std_list,
+            # "hitter_pr_p2_al_onset_std": hitter_pr_p2_al_onset_std_list,
+            # "hitter_pr_p2_al_prec_std": hitter_pr_p2_al_prec_std_list,
+            # "hitter_pr_p2_al_mag_std": hitter_pr_p2_al_mag_std_list,
             #
-            # "receiver_ec_start_fs": receiver_ec_start_fs_list,
-            # "receiver_im_racket_dir": receiver_im_racket_dir_list,
-            # "receiver_im_racket_effect": receiver_im_racket_effect_list,
-            # "receiver_im_ball_updown": receiver_im_ball_updown_list,
-            # "hand_movement_sim_dtw": hand_movement_sim_dtw_list,
-            # "receiver_fixation_racket_latency": receiver_fixation_racket_latency_list,
+            # "receiver_pr_p1_al_onset_std": receiver_pr_p1_al_onset_std_list,
+            # "receiver_pr_p1_al_prec_std": receiver_pr_p1_al_prec_std_list,
+            # "receiver_pr_p1_al_mag_std": receiver_pr_p1_al_mag_std_list,
+            # "receiver_pr_p1_cs_std": receiver_pr_p1_cs_std_list,
+            # "receiver_pr_p2_al_onset_std": receiver_pr_p2_al_onset_std_list,
+            # "receiver_pr_p2_al_prec_std": receiver_pr_p2_al_prec_std_list,
+            # "receiver_pr_p2_al_mag_std": receiver_pr_p2_al_mag_std_list,
+            #
+            # "receiver_pr_p3_fx_onset_std": receiver_pr_p3_fx_onset_std_list,
+            # "receiver_pr_p3_fx_duration_std": receiver_pr_p3_fx_duration_std_list,
+            # "hitter_pr_p3_fx_onset_std": hitter_pr_p3_fx_onset_std_list,
+            # "hitter_pr_p3_fx_duration_std": hitter_pr_p3_fx_duration_std_list,
+            #
+            # "receiver_ec_start_fs_std": receiver_ec_start_fs_std_list,
+            # "receiver_im_racket_dir_std": receiver_im_racket_dir_std_list,
+            # "receiver_im_racket_effect_std": receiver_im_racket_effect_std_list,
+            # "receiver_im_ball_updown_std": receiver_im_ball_updown_std_list,
+            # "hand_movement_sim_dtw_std": hand_movement_sim_dtw_std_list,
+            # "receiver_fixation_racket_latency_std": receiver_fixation_racket_latency_std_list,
+            # "receiver_distance_eye_hand_std": receiver_distance_eye_hand_std_list,
 
+            "subject_skill": subject_skill_list,
 
+            "labels": y,
+        }
 
+        return pd.DataFrame(fetures_summary)
 
-            # "subject_1_skill": subject_1_skill_list,
-            # "subject_2_skill": subject_2_skill_list,
+    def getSnippetFeaturesPCA(self, n_index=10, group="lower"):
+        if group == "lower":
+            y = 0
+        else:
+            y = 1
+
+        included_feautures = [
+            "receiver_pr_p1_al_onset",
+            "receiver_pr_p1_al_prec",
+            "receiver_pr_p1_al_mag",
+            "receiver_pr_p1_cs",
+            "hitter_pr_p1_al_onset",
+            "hitter_pr_p1_al_prec",
+            "hitter_pr_p1_al_mag",
+            "hitter_pr_p1_cs",
+            "receiver_pr_p2_al_onset",
+            "receiver_pr_p2_al_prec",
+            "receiver_pr_p2_al_mag",
+            "receiver_pr_p2_cs",
+            "hitter_pr_p2_al_onset",
+            "hitter_pr_p2_al_prec",
+            "hitter_pr_p2_al_mag",
+            "hitter_pr_p2_cs",
+            "receiver_pr_p3_fx_onset",
+            "receiver_pr_p3_fx_duration",
+            "hitter_pr_p3_fx_onset",
+            "hitter_pr_p3_fx_duration",
+            "receiver_ec_start_fs",
+            "receiver_im_racket_dir",
+            "receiver_im_racket_effect",
+            "receiver_im_ball_updown",
+            "receiver_im_racket_ball_angle",
+            "receiver_im_racket_ball_wrist",
+            "receiver_im_ball_wrist",
+            "hand_movement_sim_dtw",
+            "receiver_fixation_racket_latency",
+            "receiver_distance_eye_hand"
+        ]
+
+        features_list = []
+        # skills
+        subject_skill_list = []
+        for _, g in self.df_summary.iterrows():
+            s1 = g["Subject1"]
+            s2 = g["Subject2"]
+
+            df = self.df[self.df["session_id"] == g["file_name"]]
+            # snipset of double summary
+            # double_df =df[:n_index] #first
+            double_df = df[-n_index:]  # last
+            # middle
+            # n_data = len(df)
+            # mid_data = n_data // 2
+            # n_index_half = (n_index //2)
+            # double_df = df[mid_data:mid_data+n_index] # mid
+
+            if len(double_df) < n_index:
+                print(len(double_df))
+            features = double_df.loc[:, included_feautures].values
+            features_list.append(features.flatten())
+            # skills
+            subject_1_skill = self.single_df[self.single_df["id_subject"] == s1]["skill_subject"].values[0]
+            subject_2_skill = self.single_df[self.single_df["id_subject"] == s2]["skill_subject"].values[0]
+
+            subject_skill_list.append(0.5 * (subject_1_skill + subject_2_skill))
+
+        fetures_summary = {
+            "features": features_list,
+            "subject_skill": subject_skill_list,
 
             "labels": y,
         }

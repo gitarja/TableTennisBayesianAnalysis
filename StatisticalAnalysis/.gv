@@ -1,0 +1,40 @@
+digraph {
+	subgraph cluster2 {
+		chol_stds [label="chol_stds
+~
+Deterministic" shape=box]
+		mu [label="mu
+~
+Normal" shape=ellipse]
+		label=2 labeljust=r labelloc=b style=rounded
+	}
+	subgraph cluster3 {
+		chol [label="chol
+~
+_LKJCholeskyCov" shape=ellipse]
+		label=3 labeljust=r labelloc=b style=rounded
+	}
+	subgraph "cluster2 x 2" {
+		chol_corr [label="chol_corr
+~
+Deterministic" shape=box]
+		label="2 x 2" labeljust=r labelloc=b style=rounded
+	}
+	subgraph "clusteraxis (2) x axis_bis (2)" {
+		cov [label="cov
+~
+Deterministic" shape=box]
+		label="axis (2) x axis_bis (2)" labeljust=r labelloc=b style=rounded
+	}
+	subgraph "clusterobs_id (4901) x axis (2)" {
+		mvn [label="mvn
+~
+MvNormal" shape=ellipse style=filled]
+		label="obs_id (4901) x axis (2)" labeljust=r labelloc=b style=rounded
+	}
+	chol -> chol_corr
+	chol -> chol_stds
+	chol -> cov
+	chol -> mvn
+	mu -> mvn
+}

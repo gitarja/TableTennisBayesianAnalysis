@@ -1,0 +1,102 @@
+digraph {
+	subgraph "clusterobs (9690) x group (3)" {
+		average_skill [label="average_skill
+~
+MutableData" shape=box style="rounded, filled"]
+		groups [label="groups
+~
+MutableData" shape=box style="rounded, filled"]
+		label="obs (9690) x group (3)" labeljust=r labelloc=b style=rounded
+	}
+	subgraph "clusterobs (9690)" {
+		observed [label="observed
+~
+MutableData" shape=box style="rounded, filled"]
+		likelihood [label="likelihood
+~
+MarginalMixture" shape=ellipse style=filled]
+		label="obs (9690)" labeljust=r labelloc=b style=rounded
+	}
+	subgraph cluster9690 {
+		subject_idx [label="subject_idx
+~
+MutableData" shape=box style="rounded, filled"]
+		label=9690 labeljust=r labelloc=b style=rounded
+	}
+	subgraph "clustergroup (3)" {
+		global_mean [label="global_mean
+~
+Normal" shape=ellipse]
+		global_sigma [label="global_sigma
+~
+HalfCauchy" shape=ellipse]
+		label="group (3)" labeljust=r labelloc=b style=rounded
+	}
+	subgraph "clustersubject_idx (74) x group (3)" {
+		subjects_intercept [label="subjects_intercept
+~
+Normal" shape=ellipse]
+		label="subject_idx (74) x group (3)" labeljust=r labelloc=b style=rounded
+	}
+	diff_means_efficient_average [label="diff_means_efficient_average
+~
+Deterministic" shape=box]
+	diff_sigma_inefficient_average [label="diff_sigma_inefficient_average
+~
+Deterministic" shape=box]
+	diff_sigma_efficient_inefficient [label="diff_sigma_efficient_inefficient
+~
+Deterministic" shape=box]
+	effect_efficient_inefficient [label="effect_efficient_inefficient
+~
+Deterministic" shape=box]
+	diff_means_inefficient_average [label="diff_means_inefficient_average
+~
+Deterministic" shape=box]
+	effect_efficient_average [label="effect_efficient_average
+~
+Deterministic" shape=box]
+	diff_sigma_efficient_average [label="diff_sigma_efficient_average
+~
+Deterministic" shape=box]
+	diff_means_efficient_inefficient [label="diff_means_efficient_inefficient
+~
+Deterministic" shape=box]
+	skill_slope [label="skill_slope
+~
+Normal" shape=ellipse]
+	effect_inefficient_average [label="effect_inefficient_average
+~
+Deterministic" shape=box]
+	subgraph "cluster9690 x 3" {
+		average_variable [label="average_variable
+~
+Deterministic" shape=box]
+		mu [label="mu
+~
+Deterministic" shape=box]
+		label="9690 x 3" labeljust=r labelloc=b style=rounded
+	}
+	likelihood -> observed
+	average_skill -> average_variable
+	skill_slope -> average_variable
+	subject_idx -> average_variable
+	subjects_intercept -> average_variable
+	average_variable -> mu
+	global_mean -> mu
+	mu -> likelihood
+	groups -> likelihood
+	global_sigma -> likelihood
+	global_mean -> diff_means_efficient_average
+	global_mean -> diff_means_inefficient_average
+	global_mean -> diff_means_efficient_inefficient
+	global_sigma -> diff_sigma_efficient_average
+	global_sigma -> diff_sigma_inefficient_average
+	global_sigma -> diff_sigma_efficient_inefficient
+	diff_means_efficient_average -> effect_efficient_average
+	global_sigma -> effect_efficient_average
+	diff_means_efficient_inefficient -> effect_efficient_inefficient
+	global_sigma -> effect_efficient_inefficient
+	diff_means_inefficient_average -> effect_inefficient_average
+	global_sigma -> effect_inefficient_average
+}

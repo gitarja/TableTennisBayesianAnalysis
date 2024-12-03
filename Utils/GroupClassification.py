@@ -2,7 +2,7 @@ import os
 
 from Validation.CrossValidation import SubjectCrossValidation, DoubleSubjectCrossValidation
 from Double.GlobalFeaturesReader import GlobalFeaturesReader
-from GroupClassification import outliersDetection, outliersLabeling
+from BayesianAnalysis.GroupClassification import outliersDetection, outliersLabeling
 import numpy as np
 from Utils.Conf import DOUBLE_GROUPS_FILE_PATH
 import os
@@ -51,4 +51,6 @@ def groupLabeling():
     lower_group = np.load(os.path.join(DOUBLE_GROUPS_FILE_PATH, "lower_group_5std.npy"))
     upper_group = np.load(os.path.join(DOUBLE_GROUPS_FILE_PATH, "upper_group_5std.npy"))
 
+    print(len(lower_group))
+    print(len(upper_group))
     return lower_group, upper_group
