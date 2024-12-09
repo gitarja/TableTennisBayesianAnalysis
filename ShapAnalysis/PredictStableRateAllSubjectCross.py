@@ -60,20 +60,20 @@ def trainXGB(X, y, search_params=False):
 
 
         # train more for 0 class
-        # failure_idx = np.argwhere(y == 0).flatten()
-        # success_idx = np.argwhere(y == 1).flatten()
-        #
-        # resample_success_idx = np.random.choice(range(len(success_idx)), size=int(len(success_idx) * .45),
-        #                                         replace=True)
-        #
-        # X_success = X.iloc[resample_success_idx]
-        # y_success = y[resample_success_idx]
-        #
-        # X_failure = X.iloc[failure_idx]
-        # y_failure = y[failure_idx]
-        #
-        # X = pd.concat([X_success, X_failure])
-        # y = np.concatenate([y_success, y_failure])
+        failure_idx = np.argwhere(y == 0).flatten()
+        success_idx = np.argwhere(y == 1).flatten()
+
+        resample_success_idx = np.random.choice(range(len(success_idx)), size=int(len(success_idx) * .45),
+                                                replace=True)
+
+        X_success = X.iloc[resample_success_idx]
+        y_success = y[resample_success_idx]
+
+        X_failure = X.iloc[failure_idx]
+        y_failure = y[failure_idx]
+
+        X = pd.concat([X_success, X_failure])
+        y = np.concatenate([y_success, y_failure])
 
         skf = StratifiedKFold(n_splits=3, shuffle=True, random_state=1945)
 
@@ -114,13 +114,13 @@ def trainXGB(X, y, search_params=False):
 
         params = {
             "device": "cuda:0",
-            "learning_rate": 0.1,
+            "learning_rate": 0.05,
             "objective": "binary:logistic",
             "subsample": 1.,
             "max_depth": 10,
             "eval_metric": "aucpr",
-            "alpha": .05,
-            "scale_pos_weight": .5,
+            "alpha": .25,
+            "scale_pos_weight": .15,
             "min_child_weight": 5,
         }
         model = xgboost.train(
@@ -187,7 +187,7 @@ for i, (train_index, test_index) in enumerate(kf.split(all_groups)):
                                               include_subjects=train_subjects)
 
     train_features = train_reader.getStableUnstableFailureFeatures(group_name="train_subjects", success_failure=True,
-                                                                   mod="skill_perception_action")
+                                                                   mod="full_mode")
 
     test_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_FEATURES_FILE_PATH,
                                              file_summary_path=DOUBLE_SUMMARY_FILE_PATH,
@@ -196,7 +196,7 @@ for i, (train_index, test_index) in enumerate(kf.split(all_groups)):
 
     test_features = test_reader.getStableUnstableFailureFeatures(group_name="test_subjects",
                                                                  success_failure=True,
-                                                                 mod="skill_perception_action")
+                                                                 mod="full_mode")
 
     X_train = train_features.loc[:, train_features.columns != 'labels']
     X_test = test_features.loc[:, test_features.columns != 'labels']
@@ -220,25 +220,25 @@ for i, (train_index, test_index) in enumerate(kf.split(all_groups)):
     acc_list.append(acc)
     cm_list.append(np.expand_dims(cm, 0))
 
-#     all_X = pd.concat([X_train, X_test])
-#     X_background = shap.kmeans(all_X, k=15)
-#     # model.set_param({"device": "cuda:0"})
-#     explainer = CorrExplainer(model.inplace_predict, X_background.data, sampling="gauss+empirical", link=LogitLink())
-#     shap_values = explainer.shap_values(X_test)
-#
-#     # shap.summary_plot(shap_values, X_test, max_display=40)
-#     # plt.show()
-#
-#     shap_values_list.append(shap_values)
-#     X_test_list.append(X_test)
-#
-# all_shap_values = normalizeShap(np.concatenate(shap_values_list))
-# all_x_test = pd.concat(X_test_list)
-#
-# np.save("Results\\"+label+"_shap.npy", all_shap_values)
-# all_x_test.to_pickle("Results\\"+label+"_xval.pkl")
-# shap.summary_plot(all_shap_values, all_x_test, max_display=40)
-# plt.show()
+
+    X_background = shap.kmeans(X_test, k=15)
+    # model.set_param({"device": "cuda:0"})
+    explainer = CorrExplainer(model.inplace_predict, X_background.data, sampling="gauss+empirical", link=LogitLink())
+    shap_values = explainer.shap_values(X_test)
+
+    # shap.summary_plot(shap_values, X_test, max_display=40)
+    # plt.show()
+
+    shap_values_list.append(shap_values)
+    X_test_list.append(X_test)
+
+all_shap_values = normalizeShap(np.concatenate(shap_values_list))
+all_x_test = pd.concat(X_test_list)
+
+np.save("Results\\"+label+"_shap.npy", all_shap_values)
+all_x_test.to_pickle("Results\\"+label+"_xval.pkl")
+shap.summary_plot(all_shap_values, all_x_test, max_display=40)
+plt.show()
 
 print("%f, %f, %f, %f, %f, %f" % (
     np.average(auc_list), np.std(auc_list), np.average(mcc_list), np.std(mcc_list), np.average(acc_list),

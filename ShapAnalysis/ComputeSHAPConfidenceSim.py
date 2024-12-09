@@ -75,9 +75,9 @@ upper_reader = ImpressionFeatures(file_path=DOUBLE_SUMMARY_FEATURES_PATH,
                                   exclude_no_pair=True)
 
 label = "all_lower_upper"
-lower_features = lower_reader.getImpressionFeatures(group="lower", mod="full_mode")
+lower_features = lower_reader.getImpressionFeatures(group="lower", mod="skill_action_perception_impact_personal")
 
-upper_features = upper_reader.getImpressionFeatures(group="upper", mod="full_mode")
+upper_features = upper_reader.getImpressionFeatures(group="upper", mod="skill_action_perception_impact_personal")
 
 X_lower = lower_features.loc[:, lower_features.columns != 'labels']
 y_lower = lower_features["labels"].values

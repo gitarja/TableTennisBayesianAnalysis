@@ -16,7 +16,7 @@ plt.rcParams["font.family"] = "Arial"
 plt.rcParams['font.size'] = 30
 
 
-def plotSHAP(shap_values, x, columns, results_path="", prefix="", alpha=0.15):
+def plotSHAP(shap_values, x, columns, results_path="", prefix="", alpha=0.15, dot_size=10):
     # plt.rcParams["font.family"] = "Arial"
     # plt.rcParams["font.size"] = 2
     # combing shap and x
@@ -40,7 +40,7 @@ def plotSHAP(shap_values, x, columns, results_path="", prefix="", alpha=0.15):
             elif c == "receiver_p3_fx_onset":
                 xmin = 0
 
-            shap.plots.scatter(ref_value, show=False, alpha=alpha, xmin=xmin, xmax=xmax, dot_size=10)
+            shap.plots.scatter(ref_value, show=False, alpha=alpha, xmin=xmin, xmax=xmax, dot_size=dot_size)
             snipset_summary = summary_df.loc[(summary_df[c] >= xmin) & (summary_df[c] <= xmax)]
             if (c != "receiver_p1_al") & (c != "receiver_p2_al") & (c != "receiver_p3_fx") & (c != "hitter_p1_al") & (
                     c != "hitter_p2_al") & (c != "hitter_fx") & (c != "hitter_p1_cs") & (c != "hitter_p2_cs") & (

@@ -46,18 +46,37 @@ if __name__ == '__main__':
 
         X_train, X_val, y_train, y_val = train_test_split(
             X, y, test_size=0.1, random_state=1945, stratify=y)
-        d_train = xgboost.DMatrix(X_train, label=y_train)
-        d_val = xgboost.DMatrix(X_val, label=y_val)
+
+        # train more for 0 class
+        failure_idx = np.argwhere(y_train == 0).flatten()
+        success_idx = np.argwhere(y_test == 1).flatten()
+
+        resample_success_idx = np.random.choice(range(len(success_idx)), size=int(len(success_idx) * .45),
+                                                replace=True)
+
+        X_success = X_train.iloc[resample_success_idx]
+        y_success = y_train[resample_success_idx]
+
+        X_failure = X_train.iloc[failure_idx]
+        y_failure = y_train[failure_idx]
+
+        X_train = pd.concat([X_success, X_failure])
+        y_train = np.concatenate([y_success, y_failure])
+
+        weights = [1 if y == 1 else 1 for y in y_train]
+        d_train = xgboost.DMatrix(X_train, label=y_train, weight=weights, enable_categorical=True)
+
+        d_val = xgboost.DMatrix(X_val, label=y_val, enable_categorical=True)
 
         params = {
             "device": "cuda:0",
-            "learning_rate": 0.1,
+            "learning_rate": 0.05,
             "objective": "binary:logistic",
             "subsample": 1.,
             "max_depth": 10,
             "eval_metric": "aucpr",
             "alpha": .25,
-            "scale_pos_weight": .2,
+            "scale_pos_weight": .15,
             "min_child_weight": 5,
         }
         model = xgboost.train(
@@ -116,7 +135,7 @@ for i, (train_index, test_index) in enumerate(kf.split(X, y)):
     y_train = y[train_index]
     y_test = y[test_index]
     model_perm = trainXGB(X_train, y_train)
-    X_background = shap.kmeans(all_X, k=10)
+    X_background = shap.kmeans(all_X, k=15)
     explainer = CorrExplainer(model_perm.inplace_predict, X_background.data, sampling="gauss+empirical",
                                    link=LogitLink())
     for j in range(n_booststrap):

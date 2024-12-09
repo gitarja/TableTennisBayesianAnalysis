@@ -70,7 +70,7 @@ def trainModel(X, y, search_params=False):
         failure_idx = np.argwhere(y == 0).flatten()
         success_idx = np.argwhere(y == 1).flatten()
 
-        resample_success_idx = np.random.choice(range(len(success_idx)), size=int(len(success_idx) * .9),
+        resample_success_idx = np.random.choice(range(len(success_idx)), size=int(len(success_idx) * .45),
                                                 replace=True)
 
         X_success = X[resample_success_idx]

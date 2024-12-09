@@ -4,7 +4,7 @@ from SHAPPlots import plotSHAP, plotShapSummary, plotShapInteraction, plotShapAb
 import numpy as np
 import pandas as pd
 
-label = "all_sf"
+label = "all_lower_upper"
 shap_results = np.load("Results\\Final2\\Full-model\\" + label + "_shap.npy")
 xval_results = pd.read_pickle("Results\\Final2\\Full-model\\" + label + "_xval.pkl")
 # yval_results = np.load("Results\\Final\\Action+Perception\\" + label + "_yval.npy")
@@ -17,4 +17,4 @@ show_column = ["receiver_p1_al_prec"]
 #                     results_path=results_path, ref="hitter_p1_al_prec", show_column=show_column)
 # plotShapAbsoulte(shap_values=shap_results, x=xval_results, y=yval_results, results_path=results_path, columns=xval_results.columns.values.tolist())
 # plotShapSummary(shap_values=shap_results, x=xval_results, results_path=results_path)
-plotSHAP(shap_values=shap_results, x=xval_results, columns=xval_results.columns.values.tolist(), results_path=results_path, alpha=0.15)
+plotSHAP(shap_values=shap_results, x=xval_results, columns=xval_results.columns.values.tolist(), results_path=results_path, alpha=0.5, dot_size=20)

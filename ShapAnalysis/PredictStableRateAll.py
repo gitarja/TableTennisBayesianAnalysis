@@ -59,7 +59,7 @@ if __name__ == '__main__':
 
             skf = StratifiedKFold(n_splits=3, shuffle=True, random_state=1945)
 
-            model = xgboost.XGBClassifier(objective= "binary:logistic", eval_metric="aucpr")
+            model = xgboost.XGBClassifier(objective= "binary:logistic", eval_metric="aucpr", enable_categorical=True)
             grid_search = GridSearchCV(model, param_grid=params, scoring=scoring, refit="MCC", n_jobs=4,
                                                cv=skf.split(X, y), verbose=3)
 
@@ -73,29 +73,29 @@ if __name__ == '__main__':
                 X, y, test_size=0.1, random_state=1945, stratify=y)
 
             # train more for 0 class
-            # failure_idx = np.argwhere(y_train == 0).flatten()
-            # success_idx = np.argwhere(y_test == 1).flatten()
-            #
-            # resample_success_idx = np.random.choice(range(len(success_idx)), size=int(len(success_idx) * .85),
-            #                                         replace=True)
-            #
-            # X_success = X_train.iloc[resample_success_idx]
-            # y_success = y_train[resample_success_idx]
-            #
-            # X_failure = X_train.iloc[failure_idx]
-            # y_failure = y_train[failure_idx]
-            #
-            # X_train = pd.concat([X_success, X_failure])
-            # y_train = np.concatenate([y_success, y_failure])
+            failure_idx = np.argwhere(y_train == 0).flatten()
+            success_idx = np.argwhere(y_test == 1).flatten()
+
+            resample_success_idx = np.random.choice(range(len(success_idx)), size=int(len(success_idx) * .85),
+                                                    replace=True)
+
+            X_success = X_train.iloc[resample_success_idx]
+            y_success = y_train[resample_success_idx]
+
+            X_failure = X_train.iloc[failure_idx]
+            y_failure = y_train[failure_idx]
+
+            X_train = pd.concat([X_success, X_failure])
+            y_train = np.concatenate([y_success, y_failure])
 
             weights = [1 if y == 1 else 1 for y in y_train]
-            d_train = xgboost.DMatrix(X_train, label=y_train, weight=weights)
+            d_train = xgboost.DMatrix(X_train, label=y_train, weight=weights, enable_categorical=True)
 
-            d_val = xgboost.DMatrix(X_val, label=y_val)
+            d_val = xgboost.DMatrix(X_val, label=y_val, enable_categorical=True)
 
-            params = {
+            params =  {
                 "device": "cuda:0",
-                "learning_rate": 0.1,
+                "learning_rate": 0.05,
                 "objective": "binary:logistic",
                 "subsample": 1.,
                 "max_depth": 10,
@@ -104,6 +104,9 @@ if __name__ == '__main__':
                 "scale_pos_weight": .2,
                 "min_child_weight": 5,
             }
+
+
+
             model = xgboost.train(
                 params,
                 d_train,
@@ -155,12 +158,12 @@ if __name__ == '__main__':
                                         exclude_failure=False, exclude_no_pair=True, hmm_probs=True,
                                         include_subjects=all_groups)
 
-    all_features = all_reader.getStableUnstableFailureFeatures(group_name="all", success_failure=True, mod="full_mode")
+    all_features = all_reader.getStableUnstableFailureFeatures(group_name="all", success_failure=True, mod="skill_personal_perception_action_impact")
 
     all_X = all_features.loc[:, all_features.columns != 'labels']
     all_y = all_features["labels"].values
 
-
+    all_X = all_X.apply(pd.to_numeric, errors='coerce')
     label = "all_sf"
 
 
@@ -176,6 +179,7 @@ if __name__ == '__main__':
     auc_list = []
     acc_list = []
     mcc_list = []
+    cm_list = []
     shap_values_list = []
     X_test_list = []
     kf = StratifiedKFold(n_splits=5, shuffle=True, random_state=1945)
@@ -194,34 +198,32 @@ if __name__ == '__main__':
         auc_list.append(auc_score)
         mcc_list.append(mcc)
         acc_list.append(acc)
+        cm_list.append(np.expand_dims(cm, 0))
 
-    #     X_background = shap.kmeans(all_X, k=10)
-    #     # model.set_param({"device": "cuda:0"})
-    #     explainer = CorrExplainer(model.inplace_predict, X_background.data, sampling="gauss+empirical", link=LogitLink())
-    #     shap_values = explainer.shap_values(X_test)
-    #
-    #     #shap.summary_plot(shap_values, X_test, max_display=40)
-    #     #plt.show()
-    #
-    #     shap_values_list.append(shap_values)
-    #     X_test_list.append(X_test)
-    #
-    # all_shap_values = normalizeShap(np.concatenate(shap_values_list))
-    # all_x_test = pd.concat(X_test_list)
-    #
-    # np.save("Results\\"+label+"_shap.npy", all_shap_values)
-    # all_x_test.to_pickle("Results\\"+label+"_xval.pkl")
-    # shap.summary_plot(all_shap_values, all_x_test, max_display=40)
-    # plt.show()
+        X_background = shap.kmeans(all_X, k=15)
+        # model.set_param({"device": "cuda:0"})
+        explainer = CorrExplainer(model.inplace_predict, X_background.data, sampling="gauss+empirical", link=LogitLink())
+        shap_values = explainer.shap_values(X_test)
+
+        #shap.summary_plot(shap_values, X_test, max_display=40)
+        #plt.show()
+
+        shap_values_list.append(shap_values)
+        X_test_list.append(X_test)
+
+    all_shap_values = normalizeShap(np.concatenate(shap_values_list))
+    all_x_test = pd.concat(X_test_list)
+
+    np.save("Results\\"+label+"_shap.npy", all_shap_values)
+    all_x_test.to_pickle("Results\\"+label+"_xval.pkl")
+    shap.summary_plot(all_shap_values, all_x_test, max_display=40)
+    plt.show()
 
     print("%f, %f, %f, %f, %f, %f" % (np.average(auc_list), np.std(auc_list), np.average(mcc_list), np.std(mcc_list), np.average(acc_list), np.std(acc_list)))
-    # print(np.average(auc_list))
-    # print(np.average(mcc_list))
-    # print(np.average(acc_list))
-    #
-    # print(np.std(auc_list))
-    # print(np.std(mcc_list))
-    # print(np.std(acc_list))
+
+    print(np.average(cm_list, axis=0))
+    print(np.std(cm_list, axis=0))
+
 
 
 
