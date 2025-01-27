@@ -3,7 +3,8 @@ import numpy as np
 from Utils.Conf import DOUBLE_SUMMARY_FEATURES_PATH, DOUBLE_SUMMARY_FILE_PATH
 from Double.GlobalFeaturesReader import ImpressionFeatures
 import xgboost
-from sklearn.metrics import matthews_corrcoef, confusion_matrix, f1_score, roc_curve, auc, balanced_accuracy_score, make_scorer
+from sklearn.metrics import matthews_corrcoef, confusion_matrix, f1_score, roc_curve, auc, balanced_accuracy_score, \
+    make_scorer
 from imblearn.metrics import geometric_mean_score
 from sklearn.model_selection import StratifiedKFold, train_test_split, GridSearchCV
 import pandas as pd
@@ -13,8 +14,6 @@ import matplotlib.pyplot as plt
 from shap.utils._legacy import LogitLink
 
 if __name__ == '__main__':
-
-
     def normalizeShap(arr):
         scaled_arr = arr / np.max(np.abs(arr))
         return scaled_arr
@@ -56,8 +55,6 @@ if __name__ == '__main__':
 
         return model
 
-
-
 np.random.seed(1945)  # For Replicability
 # control group
 
@@ -75,9 +72,9 @@ upper_reader = ImpressionFeatures(file_path=DOUBLE_SUMMARY_FEATURES_PATH,
                                   exclude_no_pair=True)
 
 label = "all_lower_upper"
-lower_features = lower_reader.getImpressionFeatures(group="lower", mod="skill_action_perception_impact_personal")
+lower_features = lower_reader.getImpressionFeatures(group="lower", mod="skill_personal_perception_action_impact")
 
-upper_features = upper_reader.getImpressionFeatures(group="upper", mod="skill_action_perception_impact_personal")
+upper_features = upper_reader.getImpressionFeatures(group="upper", mod="skill_personal_perception_action_impact")
 
 X_lower = lower_features.loc[:, lower_features.columns != 'labels']
 y_lower = lower_features["labels"].values
@@ -101,7 +98,6 @@ shap_values_norm_list = []
 bootstrap_results = np.zeros((n_booststrap, n_column))  # times 3 for KFold
 index = 0
 
-
 shap_values_list = []
 kf = StratifiedKFold(n_splits=3, shuffle=True, random_state=1945)
 for i, (train_index, test_index) in enumerate(kf.split(X, y)):
@@ -111,16 +107,14 @@ for i, (train_index, test_index) in enumerate(kf.split(X, y)):
     y_test = y[test_index]
     model_perm = trainXGB(X_train, y_train)
     explainer = CorrExplainer(model_perm.inplace_predict, X, sampling="gauss+empirical",
-                                   link=LogitLink())
+                              link=LogitLink())
     for j in range(n_booststrap):
         resample_idx = np.random.choice(range(X_test.shape[0]), size=X_test.shape[0], replace=True)
         X_resample = X_test.iloc[resample_idx]
         shap_values = explainer.shap_values(X_resample)
         shap_values_list.append(shap_values)
 
-
 # normalize SHAP
 all_shap_values = normalizeShap(np.concatenate(shap_values_list))
 
-
-np.save("Results\\"+label+"_bootstrap_shap.npy", all_shap_values)
+np.save("Results\\" + label + "_bootstrap_shap.npy", all_shap_values)

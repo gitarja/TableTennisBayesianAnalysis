@@ -6,7 +6,7 @@ import shap
 from Utils.Conf import features_explanation
 import statsmodels.api as sm
 from sklearn.preprocessing import PolynomialFeatures
-
+from matplotlib.ticker import FormatStrFormatter
 sns.set_theme()
 sns.set(font_scale=5)
 sns.set(font="Arial")
@@ -27,6 +27,7 @@ def plotSHAP(shap_values, x, columns, results_path="", prefix="", alpha=0.15, do
     for c in columns:
 
         try:
+            fig, ax = plt.subplots(figsize=(5.08, 4.33))
             ref_value = explanation[:, c]
 
             xmin = np.nanpercentile(ref_value.data, 0.5)
@@ -40,13 +41,13 @@ def plotSHAP(shap_values, x, columns, results_path="", prefix="", alpha=0.15, do
             elif c == "receiver_p3_fx_onset":
                 xmin = 0
 
-            shap.plots.scatter(ref_value, show=False, alpha=alpha, xmin=xmin, xmax=xmax, dot_size=dot_size)
+            shap.plots.scatter(ref_value, show=False, alpha=alpha, xmin=xmin, xmax=xmax, dot_size=dot_size, ax=ax)
             snipset_summary = summary_df.loc[(summary_df[c] >= xmin) & (summary_df[c] <= xmax)]
             if (c != "receiver_p1_al") & (c != "receiver_p2_al") & (c != "receiver_p3_fx") & (c != "hitter_p1_al") & (
                     c != "hitter_p2_al") & (c != "hitter_fx") & (c != "hitter_p1_cs") & (c != "hitter_p2_cs") & (
                     c != "receiver_p1_cs") & (c != "receiver_p2_cs"):
                 a = sns.regplot(data=snipset_summary, x=c, y="shap_" + c, order=2, color="#81b1d3",
-                                line_kws=dict(color="#252525"), scatter=False)
+                                line_kws=dict(color="#252525"), scatter=False, ax=ax)
                 # xp = polynomial_features.fit_transform(np.expand_dims(snipset_summary[c].values, -1))
                 # model = sm.OLS(np.expand_dims(snipset_summary["shap_" + c].values, -1), xp).fit()
                 # print(model.summary())
@@ -54,19 +55,32 @@ def plotSHAP(shap_values, x, columns, results_path="", prefix="", alpha=0.15, do
                 # fig, ax = plt.subplots()
 
                 # ax.set(xlim=(xmin, xmax))
-            plt.ylabel(r'Influence on'  "\n" 'success of coordination')
-            plt.xlabel("\n" + features_explanation[c])
-            plt.axhline(y=0., color="#525252", linestyle=":")
-            if c == "receiver_skill":
-                plt.xlim(0.5, 1.01)
-            plt.ylim(-1 * y_abs_max, y_abs_max)
+            ax.set_xlabel(features_explanation[c], fontsize=28)
+            # ax.set_xlabel("a")
+            ax.set_ylabel("")
+            ax.axhline(y=0., color="#525252", linestyle=":")
+            if c == "individual_skill":
+                ax.set_xlim(0.7, 1.01)
+            if c == "individual_skill_sim":
+                ax.set_xlim(0., 0.5)
 
-            sns.despine()
-            plt.tight_layout()
-            # plt.show()
+            ax.set_ylim(-1 * y_abs_max, y_abs_max)
+            # set ticks
+            xmin, xmax = ax.get_xaxis().get_view_interval()
+            # if xmax > 10:
+            #     x_ticks = np.arange(xmin, xmax, int((xmax - xmin) / 4)).astype(int)[1:]
+            # else:
+            #     x_ticks = np.arange(xmin, xmax, (xmax - xmin) / 4)[1:]
+            #     ax.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+            # ax.set_xticks(x_ticks)
 
-            # plt.savefig(results_path + "\\" + c +"_"+ prefix + ".png", format='png')
-            plt.savefig(results_path + "\\" + c + "_" + prefix + ".pdf", format='pdf')
+            ymin, ymax = ax.get_yaxis().get_view_interval()
+            ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+
+
+            ax.tick_params(axis='x', labelsize=25)
+            ax.tick_params(axis='y', labelsize=25)
+            plt.savefig(results_path + "\\" + c + "_" + prefix + ".pdf", format='pdf', transparent=True)
             plt.close()
         except:
             print(c)

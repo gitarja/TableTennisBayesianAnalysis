@@ -51,7 +51,7 @@ if __name__ == '__main__':
         failure_idx = np.argwhere(y_train == 0).flatten()
         success_idx = np.argwhere(y_test == 1).flatten()
 
-        resample_success_idx = np.random.choice(range(len(success_idx)), size=int(len(success_idx) * .45),
+        resample_success_idx = np.random.choice(range(len(success_idx)), size=int(len(success_idx) * .85),
                                                 replace=True)
 
         X_success = X_train.iloc[resample_success_idx]
@@ -69,16 +69,16 @@ if __name__ == '__main__':
         d_val = xgboost.DMatrix(X_val, label=y_val, enable_categorical=True)
 
         params = {
-            "device": "cuda:0",
-            "learning_rate": 0.05,
-            "objective": "binary:logistic",
-            "subsample": 1.,
-            "max_depth": 10,
-            "eval_metric": "aucpr",
-            "alpha": .25,
-            "scale_pos_weight": .15,
-            "min_child_weight": 5,
-        }
+                "device": "cuda:0",
+                "learning_rate": 0.05,
+                "objective": "binary:logistic",
+                "subsample": 1.,
+                "max_depth": 10,
+                "eval_metric": "aucpr",
+                "alpha": .25,
+                "scale_pos_weight": .2,
+                "min_child_weight": 5,
+            }
         model = xgboost.train(
             params,
             d_train,
@@ -104,7 +104,7 @@ all_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_FEATURES_FILE_PATH,
                                         exclude_failure=False, exclude_no_pair=True, hmm_probs=True,
                                         include_subjects=all_groups)
 
-all_features = all_reader.getStableUnstableFailureFeatures(group_name="all", success_failure=True, mod="full_mode")
+all_features = all_reader.getStableUnstableFailureFeatures(group_name="all", success_failure=True, mod="skill_personal_perception_action_impact")
 
 all_X = all_features.loc[:, all_features.columns != 'labels']
 

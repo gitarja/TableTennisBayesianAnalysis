@@ -98,7 +98,7 @@ if __name__ == '__main__':
 
             d_val = xgboost.DMatrix(X_val, label=y_val)
 
-            params = {
+            params =  {
                 "device": "cuda:0",
                 "learning_rate": 0.05,
                 "objective": "binary:logistic",
@@ -106,7 +106,7 @@ if __name__ == '__main__':
                 "max_depth": 10,
                 "eval_metric": "aucpr",
                 "alpha": .25,
-                "scale_pos_weight": .15,
+                "scale_pos_weight": .2,
                 "min_child_weight": 5,
             }
             model = xgboost.train(
@@ -128,7 +128,7 @@ if __name__ == '__main__':
 
     inefficient_group, efficient_group = groupLabeling()
     all_groups = np.concatenate([inefficient_group, efficient_group])
-    label = "all_af"
+    label = "all_sf"
     kf = KFold(n_splits=5, shuffle=True, random_state=1954)
     n_booststrap = 3
 
@@ -149,7 +149,7 @@ if __name__ == '__main__':
                                                 include_subjects=train_subjects)
 
         train_features = train_reader.getStableUnstableFailureFeatures(group_name="train_subjects", success_failure=True,
-                                                                   mod="full_mode")
+                                                                   mod="skill_personal_perception_action_impact")
 
         test_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_FEATURES_FILE_PATH,
                                                   file_summary_path=DOUBLE_SUMMARY_FILE_PATH,
@@ -158,7 +158,7 @@ if __name__ == '__main__':
 
         test_features = test_reader.getStableUnstableFailureFeatures(group_name="test_subjects",
                                                                        success_failure=True,
-                                                                       mod="full_mode")
+                                                                       mod="skill_personal_perception_action_impact")
 
         X_train = train_features.loc[:, train_features.columns != 'labels']
         X_test = test_features.loc[:, test_features.columns != 'labels']
@@ -166,6 +166,7 @@ if __name__ == '__main__':
         y_test = test_features["labels"].values
 
         all_X = pd.concat([X_train, X_test])
+
         model_perm = trainXGB(X_train, y_train)
         X_background = shap.kmeans(all_X, k=15)
         explainer = CorrExplainer(model_perm.inplace_predict, X_background.data, sampling="gauss+empirical",

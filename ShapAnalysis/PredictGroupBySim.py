@@ -42,7 +42,7 @@ def trainXGB(X, y, search_params=False):
             'subsample': [.25, .35, .5, .75, 1.],
             'learning_rate': [0.01, 0.05, 0.1],
             "min_child_weight": [1, 3, 4, 5],
-            "max_leaves": [5, 10, 15],
+            #"max_leaves": [3, 7, 5, 10, 15],
             # "scale_pos_weight": [.5,1 ],
 
         }
@@ -60,21 +60,24 @@ def trainXGB(X, y, search_params=False):
 
     else:
 
-        params = {
-"device": "cuda:0",
-            "learning_rate": 0.05,
+        params ={
+            "device": "cuda:0",
+            "learning_rate": 0.01,
             "objective": "binary:logistic",
             "subsample": .75,
-            "max_depth": 5,
+            "max_depth": 3,
             "eval_metric": "aucpr",
-            "alpha": .05,
+            "alpha": .25,
             "min_child_weight": 3,
-}
+
+
+        }
+
 
         model = xgboost.train(
             params,
             d_train,
-            5000,
+            1000,
             evals=[(d_val, "val")],
             verbose_eval=False,
             early_stopping_rounds=50,
@@ -88,6 +91,7 @@ def evaluateModel(model, X_test, y_test):
     d_test = xgboost.DMatrix(X_test, label=y_test, enable_categorical=True)
 
     y_pred = model.predict(d_test)
+    #predictions = [1 if value >= 0.45 else 0 for value in y_pred]
     predictions = [round(value) for value in y_pred]
     mcc = matthews_corrcoef(y_test, predictions)
     cm = confusion_matrix(y_test, predictions, normalize="true")
@@ -119,19 +123,20 @@ if __name__ == '__main__':
     lower_reader = ImpressionFeatures(file_path=DOUBLE_SUMMARY_FEATURES_PATH,
                                       file_summary_path=DOUBLE_SUMMARY_FILE_PATH,
                                       include_subjects=lower_group, exclude_failure=False,
-                                      exclude_no_pair=False)
+                                      exclude_no_pair=True)
     # upper group
     upper_reader = ImpressionFeatures(file_path=DOUBLE_SUMMARY_FEATURES_PATH,
                                       file_summary_path=DOUBLE_SUMMARY_FILE_PATH,
                                       include_subjects=upper_group, exclude_failure=False,
-                                      exclude_no_pair=False)
+                                      exclude_no_pair=True)
 
-    label = "all"
-    lower_features, skill_lower = lower_reader.getImpressionFeatures(group="lower", mod="skill_personal_perception_action_impact",
+    label = "all_lower_upper"
+    lower_features, skill_lower = lower_reader.getImpressionFeatures(group="lower", mod="skill_personal",
                                                                      return_group_skill=True)
 
-    upper_features, skill_upper = upper_reader.getImpressionFeatures(group="upper", mod="skill_personal_perception_action_impact",
+    upper_features, skill_upper = upper_reader.getImpressionFeatures(group="upper", mod="skill_personal",
                                                                      return_group_skill=True)
+
 
     X_lower = lower_features.loc[:, lower_features.columns != 'labels']
     y_lower = lower_features["labels"].values
@@ -141,8 +146,10 @@ if __name__ == '__main__':
 
     X = pd.concat([X_lower, X_upper])
     y = np.concatenate([y_lower, y_upper])
-    group_skill = np.concatenate([skill_lower, skill_upper])
-    individual_skill = X["subject_skill"].values
+
+    print(X.columns.__len__())
+    #group_skill = np.concatenate([skill_lower, skill_upper])
+    # individual_skill = X["subject_skill"].values
 
     # plt.scatter(individual_skill, group_skill)
     # plt.show()
@@ -150,7 +157,7 @@ if __name__ == '__main__':
     print(np.average(y == 0))
 
     # search params
-    # model = trainXGB(X, y, search_params=True)
+    #model = trainXGB(X, y, search_params=True)
 
     auc_list = []
     acc_list = []
@@ -171,7 +178,7 @@ if __name__ == '__main__':
 
         mcc, cm, acc, auc_score, f1, g_mean, pred_bin = evaluateModel(model, X_test, y_test)
 
-        correct_classification_idx[test_index[pred_bin == True]] = 1
+        # correct_classification_idx[test_index[pred_bin == True]] = 1
 
         auc_list.append(auc_score)
         mcc_list.append(mcc)
@@ -179,8 +186,8 @@ if __name__ == '__main__':
         cm_list.append(np.expand_dims(cm, 0))
 
         # compute SHAP
-    #     X_background = shap.kmeans(X, k=10)
-    #     model.set_param({"device": "cuda:0"})
+
+        #model.set_param({"device": "cuda:0"})
     #     explainer = CorrExplainer(model.inplace_predict, X, sampling="gauss+empirical",
     #                               link=LogitLink())
     #     shap_values = explainer.shap_values(X_test)
@@ -201,13 +208,9 @@ if __name__ == '__main__':
     #
     # shap.summary_plot(all_shap_values, all_x_test, max_display=50)
     # plt.show()
-    #
-    # plt.scatter(individual_skill[correct_classification_idx == 1], group_skill[correct_classification_idx == 1])
-    # plt.scatter(individual_skill[correct_classification_idx == 0], group_skill[correct_classification_idx == 0], marker="X", color="#000", s=20)
-    # plt.show()
 
-    print(np.average(cm_list, axis=0))
-    print(np.std(cm_list, axis=0))
+    # print(np.average(cm_list, axis=0))
+    # print(np.std(cm_list, axis=0))
     print("%f, %f, %f, %f, %f, %f" % (
     np.average(auc_list), np.std(auc_list), np.average(mcc_list), np.std(mcc_list), np.average(acc_list),
     np.std(acc_list)))

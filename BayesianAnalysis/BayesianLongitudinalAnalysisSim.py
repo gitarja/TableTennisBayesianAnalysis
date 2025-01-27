@@ -9,111 +9,22 @@ import pymc as pm
 from Utils.Conf import N_CORE, N_TUNE, N_CHAINS, N_SAMPLES, DOUBLE_SUMMARY_FEATURES_PATH, DOUBLE_RESULTS_PATH_ANOVA, \
     DOUBLE_SUMMARY_FILE_PATH, TARGET_ACC, DOUBLE_RESULTS_PATH_LONGITUDINAL
 from LongitudinalModels import CenteredModel
-from sklearn.preprocessing import StandardScaler
+
 import arviz as az
 import pickle
 
-# ANALYZED_FEATURES = [
-#
-#     # "receiver_start_fs",
-#     # "hitter_p1_al_mag",
-#     # "receiver_im_racket_dir",
-#     "receiver_fixation_racket_latency",
-#     "hitter_p2_al_prec",
-#     "hitter_p2_al_mag",
-#     "receiver_p2_al_mag",
-#     "hitter_at_and_after_hit",
-#     "hitter_p1_cs",
-#     "hitter_p2_al_onset",
-#     "hand_movement_sim",
-#     "receiver_p1_al_onset",
-#     "hitter_p1_al_prec",
-#     "receiver_p1_al_mag",
-#     "receiver_p2_al_prec",
-#     "receiver_p2_al_onset",
-#     "hitter_fx_onset",
-#     "receiver_distance_eye_hand",
-#     "hitter_p1_al_onset",
-#     "receiver_p1_al_prec",
-#     "hitter_fx_duration",
-#     "receiver_p3_fx_onset",
-#     "receiver_p1_cs",
-#     "receiver_p3_fx_duration"
-#
-# ]
-# HITTER_BOOL = [
-#     #
-#     # False,
-#     # True,
-#     # False,
-#     False,
-#     True,
-#     True,
-#     False,
-#     True,
-#     True,
-#     True,
-#     False,
-#     False,
-#     True,
-#     False,
-#     False,
-#     False,
-#     True,
-#     False,
-#     True,
-#     False,
-#     True,
-#     False,
-#     False,
-#     False
-# ]
-# # Binominal
-# BINOMINAL = [
-#
-#     # False,
-#     # False,
-#     # False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     True,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     True,
-#     False
-#
-# ]
+
 
 
 ANALYZED_FEATURES = [
-
-    "receiver_im_ball_updown",
-    # "receiver_p1_al_prec",
-
-
+    "hitter_receiver_p1_al_prec",
 ]
 HITTER_BOOL = [
     False,
-    # False,
 ]
 # Binominal
 BINOMINAL = [
     False,
-    # False,
 ]
 if __name__ == '__main__':
     n = 5
@@ -146,21 +57,25 @@ if __name__ == '__main__':
     df.loc[:, "lower"] = df.group == "lower"
     df.loc[:, "higher"] = df.group == "higher"
 
+    # compute similarity
+    f1 = df.loc[:, "receiver_p1_al_prec"]
+    f2 = df.loc[:, "hitter_p1_al_prec"]
+    # df.loc[:, "hitter_receiver_p1_al_prec"]  = (np.abs(f1 - f2) * np.min(np.vstack([f1, f2]).T, axis=-1))
+    df.loc[:, "hitter_receiver_p1_al_prec"]  =1- (np.min(np.vstack([f1, f2]).T, axis=-1) /np.max(np.vstack([f1, f2]).T, axis=-1))
+    # df.loc[:, "hitter_receiver_p1_al_prec"]  =  1 - (np.min(np.vstack([f1, f2]).T, axis=-1) /np.max(np.vstack([f1, f2]).T, axis=-1))
+
     for feature, hitter, bin in zip(ANALYZED_FEATURES, HITTER_BOOL, BINOMINAL):
         clean_df = df.dropna(subset=[feature])
 
-        # scaler = StandardScaler()
-        # average_scaled = scaler.fit_transform(clean_df[feature].values.reshape(-1, 1))
-        # clean_df[feature] = average_scaled.flatten()
-        az.plot_dist(clean_df[feature])
-        plt.show()
+        # az.plot_dist(clean_df[feature].values)
+        # plt.show()
 
         if hitter:
             subjects = clean_df["hitter"]
             clean_df.loc[:, "th_segments"] = clean_df["hitter_timepoint"] / 100
         else:
             subjects = clean_df["receiver"]
-            clean_df.loc[:, "th_segments"] =  clean_df["receiver_timepoint"]/ 100
+            clean_df.loc[:, "th_segments"] = clean_df["receiver_timepoint"]/ 100
 
         subjects_idx, subjects_unique = pd.factorize(subjects)
 
@@ -176,8 +91,8 @@ if __name__ == '__main__':
 
             idata.extend(
                 pm.sample(random_seed=100, target_accept=TARGET_ACC, idata_kwargs={"log_likelihood": True},
-                          draws=2000,
-                          chains=N_CHAINS, tune=3000, cores=N_CORE, compile_kwargs=dict(mode="NUMBA"))
+                          draws=200,
+                          chains=N_CHAINS, tune=300, cores=N_CORE, compile_kwargs=dict(mode="NUMBA"))
             )
             idata.extend(pm.sample_posterior_predictive(idata))
 

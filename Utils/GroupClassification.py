@@ -33,7 +33,7 @@ def groupClassifcation():
 
 
 def groupLabeling():
-    # # load single and double data
+    # load single and double data
     # single_fr = SubjectCrossValidation()
     # double_fr = DoubleSubjectCrossValidation()
     # fr = GlobalFeaturesReader(single_fr.getSummary(), double_fr.getSummary())

@@ -201,6 +201,7 @@ if __name__ == '__main__':
         cm_list.append(np.expand_dims(cm, 0))
 
         X_background = shap.kmeans(all_X, k=15)
+        # X_background = shap.sample(all_X, nsamples=20)
         # model.set_param({"device": "cuda:0"})
         explainer = CorrExplainer(model.inplace_predict, X_background.data, sampling="gauss+empirical", link=LogitLink())
         shap_values = explainer.shap_values(X_test)

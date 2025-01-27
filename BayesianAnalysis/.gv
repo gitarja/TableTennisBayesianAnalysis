@@ -1,102 +1,96 @@
 digraph {
-	subgraph "clusterobs (9690) x group (3)" {
-		average_skill [label="average_skill
+	subgraph "clusterineff_subject_idx (45)" {
+		ineff_subjects_intercept [label="ineff_subjects_intercept
 ~
-MutableData" shape=box style="rounded, filled"]
-		groups [label="groups
-~
-MutableData" shape=box style="rounded, filled"]
-		label="obs (9690) x group (3)" labeljust=r labelloc=b style=rounded
+Normal" shape=ellipse]
+		label="ineff_subject_idx (45)" labeljust=r labelloc=b style=rounded
 	}
-	subgraph "clusterobs (9690)" {
-		observed [label="observed
+	subgraph "clustereff_subject_idx (5324)" {
+		eff_subjects_intercept [label="eff_subjects_intercept
 ~
-MutableData" shape=box style="rounded, filled"]
-		likelihood [label="likelihood
+Normal" shape=ellipse]
+		label="eff_subject_idx (5324)" labeljust=r labelloc=b style=rounded
+	}
+	efficient_mean_1 [label="efficient_mean_1
+~
+Normal" shape=ellipse]
+	nu_minus_one [label="nu_minus_one
+~
+Exponential" shape=ellipse]
+	inefficient_mean_1 [label="inefficient_mean_1
+~
+Normal" shape=ellipse]
+	inefficient_std [label="inefficient_std
+~
+Uniform" shape=ellipse]
+	diff_of_means_0 [label="diff_of_means_0
+~
+Deterministic" shape=box]
+	diff_of_means_1 [label="diff_of_means_1
+~
+Deterministic" shape=box]
+	efficient_mean_0 [label="efficient_mean_0
+~
+Normal" shape=ellipse]
+	efficient_std [label="efficient_std
+~
+Uniform" shape=ellipse]
+	nu [label="nu
+~
+Deterministic" shape=box]
+	effect_size [label="effect_size
+~
+Deterministic" shape=box]
+	nu_log10 [label="nu_log10
+~
+Deterministic" shape=box]
+	difference_of_stds [label="difference_of_stds
+~
+Deterministic" shape=box]
+	inefficient_mean_0 [label="inefficient_mean_0
+~
+Normal" shape=ellipse]
+	subgraph cluster2 {
+		w_ineff [label="w_ineff
+~
+Dirichlet" shape=ellipse]
+		w_eff [label="w_eff
+~
+Dirichlet" shape=ellipse]
+		label=2 labeljust=r labelloc=b style=rounded
+	}
+	subgraph cluster3869 {
+		inefficient [label="inefficient
 ~
 MarginalMixture" shape=ellipse style=filled]
-		label="obs (9690)" labeljust=r labelloc=b style=rounded
+		label=3869 labeljust=r labelloc=b style=rounded
 	}
-	subgraph cluster9690 {
-		subject_idx [label="subject_idx
+	subgraph cluster5324 {
+		efficient [label="efficient
 ~
-MutableData" shape=box style="rounded, filled"]
-		label=9690 labeljust=r labelloc=b style=rounded
+MarginalMixture" shape=ellipse style=filled]
+		label=5324 labeljust=r labelloc=b style=rounded
 	}
-	subgraph "clustergroup (3)" {
-		global_mean [label="global_mean
-~
-Normal" shape=ellipse]
-		global_sigma [label="global_sigma
-~
-HalfCauchy" shape=ellipse]
-		label="group (3)" labeljust=r labelloc=b style=rounded
-	}
-	subgraph "clustersubject_idx (74) x group (3)" {
-		subjects_intercept [label="subjects_intercept
-~
-Normal" shape=ellipse]
-		label="subject_idx (74) x group (3)" labeljust=r labelloc=b style=rounded
-	}
-	diff_means_efficient_average [label="diff_means_efficient_average
-~
-Deterministic" shape=box]
-	diff_sigma_inefficient_average [label="diff_sigma_inefficient_average
-~
-Deterministic" shape=box]
-	diff_sigma_efficient_inefficient [label="diff_sigma_efficient_inefficient
-~
-Deterministic" shape=box]
-	effect_efficient_inefficient [label="effect_efficient_inefficient
-~
-Deterministic" shape=box]
-	diff_means_inefficient_average [label="diff_means_inefficient_average
-~
-Deterministic" shape=box]
-	effect_efficient_average [label="effect_efficient_average
-~
-Deterministic" shape=box]
-	diff_sigma_efficient_average [label="diff_sigma_efficient_average
-~
-Deterministic" shape=box]
-	diff_means_efficient_inefficient [label="diff_means_efficient_inefficient
-~
-Deterministic" shape=box]
-	skill_slope [label="skill_slope
-~
-Normal" shape=ellipse]
-	effect_inefficient_average [label="effect_inefficient_average
-~
-Deterministic" shape=box]
-	subgraph "cluster9690 x 3" {
-		average_variable [label="average_variable
-~
-Deterministic" shape=box]
-		mu [label="mu
-~
-Deterministic" shape=box]
-		label="9690 x 3" labeljust=r labelloc=b style=rounded
-	}
-	likelihood -> observed
-	average_skill -> average_variable
-	skill_slope -> average_variable
-	subject_idx -> average_variable
-	subjects_intercept -> average_variable
-	average_variable -> mu
-	global_mean -> mu
-	mu -> likelihood
-	groups -> likelihood
-	global_sigma -> likelihood
-	global_mean -> diff_means_efficient_average
-	global_mean -> diff_means_inefficient_average
-	global_mean -> diff_means_efficient_inefficient
-	global_sigma -> diff_sigma_efficient_average
-	global_sigma -> diff_sigma_inefficient_average
-	global_sigma -> diff_sigma_efficient_inefficient
-	diff_means_efficient_average -> effect_efficient_average
-	global_sigma -> effect_efficient_average
-	diff_means_efficient_inefficient -> effect_efficient_inefficient
-	global_sigma -> effect_efficient_inefficient
-	diff_means_inefficient_average -> effect_inefficient_average
-	global_sigma -> effect_inefficient_average
+	nu_minus_one -> nu
+	nu -> nu_log10
+	nu -> inefficient
+	inefficient_mean_1 -> inefficient
+	w_ineff -> inefficient
+	inefficient_mean_0 -> inefficient
+	inefficient_std -> inefficient
+	efficient_mean_0 -> efficient
+	efficient_mean_1 -> efficient
+	efficient_std -> efficient
+	nu -> efficient
+	w_eff -> efficient
+	efficient_mean_0 -> diff_of_means_0
+	inefficient_mean_0 -> diff_of_means_0
+	inefficient_mean_1 -> diff_of_means_1
+	efficient_mean_1 -> diff_of_means_1
+	efficient_std -> difference_of_stds
+	inefficient_std -> difference_of_stds
+	inefficient_std -> effect_size
+	efficient_std -> effect_size
+	diff_of_means_0 -> effect_size
+	diff_of_means_1 -> effect_size
 }

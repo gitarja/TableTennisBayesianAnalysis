@@ -4,7 +4,7 @@ import os
 from scipy.stats import t
 from Utils.Conf import DOUBLE_RESULTS_PATH_SHAP
 # label = "all_sf"
-label = "all_lower_upper"
+label = "all_sf"
 shap_results = np.load("Results\\Final2\\Full-model\\" + label + "_shap.npy")
 xval_results = pd.read_pickle("Results\\Final2\\Full-model\\" + label + "_xval.pkl")
 confidence_results =  np.load("Results\\Final2\\Full-model\\" + label + "_bootstrap_shap.npy")

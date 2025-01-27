@@ -93,17 +93,21 @@ def outliersLabeling(X, y):
     # labels[ (y > mean)] = 1 # upper
     # labels[ (y < mean)] = 0 #  lower
 
-    # # show the linear reg
-    # plt.plot(X, mean, color="black")
-    # sortedX_idx = np.argsort(X)
-    # plt.fill_between(X[sortedX_idx], mean[sortedX_idx] - std[sortedX_idx], mean[sortedX_idx] + std[sortedX_idx], alpha=.1, color="#377eb8")
-    #
-    #
-    # plt.scatter(X[labels == 0], y[labels == 0], label="overestimate", color="#e41a1c", s=20)
-    # plt.scatter(X[labels == 1], y[labels == 1], label="underestimate", color="#4daf4a", s=20)
-    #
-    # # plt.legend(loc=0)
-    # plt.show()
+    # show the linear reg
+    plt.rcParams["text.usetex"] = True
+    plt.rcParams["font.family"] = "Arial"
+    plt.rcParams['font.size'] = 20
+
+    plt.plot(X, mean, color="#636363")
+    sortedX_idx = np.argsort(X)
+    plt.fill_between(X[sortedX_idx], mean[sortedX_idx] - std[sortedX_idx], mean[sortedX_idx] + std[sortedX_idx], alpha=.15, color="#377eb8")
+
+
+    plt.scatter(X[labels == 0], y[labels == 0], label="overestimate", color="#B5152C", s=50, edgecolors="#636363", linewidths=0.5)
+    plt.scatter(X[labels == 1], y[labels == 1], label="underestimate", color="#b5152c", s=50, edgecolors="#636363", linewidths=0.5)
+
+
+    plt.show()
 
 
     return labels
