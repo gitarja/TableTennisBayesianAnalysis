@@ -15,70 +15,81 @@ import pickle
 
 # ANALYZED_FEATURES = [
 #
-#     # "receiver_start_fs",
-#     # "hitter_p1_al_mag",
-#     # "receiver_im_racket_dir",
-#     "receiver_fixation_racket_latency",
+#     #
+#
+#     "hitter_p1_cs",
+#     "hitter_p2_cs",
+#     "hitter_p1_al_onset",
+#     "hitter_p1_al_prec",
+#     "hitter_p1_al_mag",
+#     "hitter_p2_al_onset",
 #     "hitter_p2_al_prec",
 #     "hitter_p2_al_mag",
-#     "receiver_p2_al_mag",
-#     "hitter_at_and_after_hit",
-#     "hitter_p1_cs",
-#     "hitter_p2_al_onset",
-#     "hand_movement_sim",
-#     "receiver_p1_al_onset",
-#     "hitter_p1_al_prec",
-#     "receiver_p1_al_mag",
-#     "receiver_p2_al_prec",
-#     "receiver_p2_al_onset",
 #     "hitter_fx_onset",
-#     "receiver_distance_eye_hand",
-#     "hitter_p1_al_onset",
-#     "receiver_p1_al_prec",
 #     "hitter_fx_duration",
-#     "receiver_p3_fx_onset",
+#
 #     "receiver_p1_cs",
-#     "receiver_p3_fx_duration"
+#     "receiver_p2_cs",
+#     "receiver_p1_al_onset",
+#     "receiver_p1_al_prec",
+#     "receiver_p1_al_mag",
+#     "receiver_p2_al_mag",
+#     "receiver_p2_al_onset",
+#     "receiver_p2_al_prec",
+#     "receiver_p3_fx_onset",
+#     "receiver_p3_fx_duration",
+#
+#
+#     "receiver_start_fs",
+#     "receiver_fixation_racket_latency",
+#     "receiver_distance_eye_hand",
+#     "receiver_im_ball_updown",
+#     "receiver_im_racket_ball_angle",
+#     "receiver_im_racket_ball_wrist",
+#     "receiver_im_ball_wrist",
 #
 # ]
 # HITTER_BOOL = [
+#
 #     #
-#     # False,
-#     # True,
-#     # False,
-#     False,
-#     True,
-#     True,
-#     False,
+#
 #     True,
 #     True,
 #     True,
-#     False,
-#     False,
 #     True,
-#     False,
-#     False,
-#     False,
 #     True,
-#     False,
 #     True,
-#     False,
 #     True,
+#     True,
+#     True,
+#     True,
+#
 #     False,
 #     False,
-#     False
+#     False,
+#     False,
+#     False,
+#     False,
+#     False,
+#     False,
+#     False,
+#     False,
+#
+#     False,
+#     False,
+#     False,
+#     False,
+#     False,
+#     False,
+#     False,
+#
 # ]
 # # Binominal
 # BINOMINAL = [
 #
-#     # False,
-#     # False,
-#     # False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
+#     #
+#
+#     True,
 #     True,
 #     False,
 #     False,
@@ -88,32 +99,52 @@ import pickle
 #     False,
 #     False,
 #     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
+#
 #     True,
-#     False
+#     True,
+#     False,
+#     False,
+#     False,
+#     False,
+#     False,
+#     False,
+#     False,
+#     False,
+#
+#
+#     False,
+#     False,
+#     False,
+#     False,
+#     False,
+#     False,
+#     False,
 #
 # ]
 
-
 ANALYZED_FEATURES = [
 
-    "receiver_im_ball_updown",
-    # "receiver_p1_al_prec",
+    "hitter_p1_cs",
+    "hitter_p2_cs",
+    "receiver_p1_cs",
+    "receiver_p2_cs",
+
 
 
 ]
 HITTER_BOOL = [
+    True,
+    True,
     False,
-    # False,
+    False,
 ]
 # Binominal
 BINOMINAL = [
-    False,
-    # False,
+    True,
+    True,
+    True,
+    True,
+
 ]
 if __name__ == '__main__':
     n = 5
@@ -122,50 +153,51 @@ if __name__ == '__main__':
 
     # inefficient group
     lower_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_SUMMARY_FEATURES_PATH,
-                                                    file_summary_path=DOUBLE_SUMMARY_FILE_PATH,
-                                                    include_subjects=lower_group, exclude_failure=True,
-                                                    exclude_no_pair=False, hmm_probs=True)
-    lower_features = lower_reader.getStableUnstableFailureFeatures(group_name="lower",
-                                                                               success_failure=True,
-                                                                               mod="skill_personal_perception_action_impact",
-                                                                               with_control=True, timepoint=True)
-    lower_features["group"] = "lower"
+                                              file_summary_path=DOUBLE_SUMMARY_FILE_PATH,
+                                              include_subjects=lower_group, exclude_failure=True,
+                                              exclude_no_pair=False, hmm_probs=True)
+    lower_features = lower_reader.getStableUnstableFailureFeatures(group_name="inefficient",
+                                                                   success_failure=True,
+                                                                   mod="skill_personal_perception_action_impact",
+                                                                   with_control=True, timepoint=True)
+    lower_features["group"] = "inefficient"
     # efficient group
     upper_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_SUMMARY_FEATURES_PATH,
-                                                  file_summary_path=DOUBLE_SUMMARY_FILE_PATH,
-                                                  include_subjects=upper_group, exclude_failure=True,
-                                                  exclude_no_pair=False, hmm_probs=True)
-    upper_features = upper_reader.getStableUnstableFailureFeatures(group_name="higher", success_failure=True,
-                                                                           mod="skill_personal_perception_action_impact",
-                                                                           with_control=True, timepoint=True)
-    upper_features["group"] = "higher"
+                                              file_summary_path=DOUBLE_SUMMARY_FILE_PATH,
+                                              include_subjects=upper_group, exclude_failure=True,
+                                              exclude_no_pair=False, hmm_probs=True)
+    upper_features = upper_reader.getStableUnstableFailureFeatures(group_name="efficient", success_failure=True,
+                                                                   mod="skill_personal_perception_action_impact",
+                                                                   with_control=True, timepoint=True)
+    upper_features["group"] = "efficient"
 
     df = pd.concat([lower_features, upper_features])
 
     # print(df)
-    df.loc[:, "lower"] = df.group == "lower"
-    df.loc[:, "higher"] = df.group == "higher"
+    df.loc[:, "inefficient"] = df.group == "inefficient"
+    df.loc[:, "efficient"] = df.group == "efficient"
 
     for feature, hitter, bin in zip(ANALYZED_FEATURES, HITTER_BOOL, BINOMINAL):
         clean_df = df.dropna(subset=[feature])
 
-        # scaler = StandardScaler()
-        # average_scaled = scaler.fit_transform(clean_df[feature].values.reshape(-1, 1))
-        # clean_df[feature] = average_scaled.flatten()
-        az.plot_dist(clean_df[feature])
-        plt.show()
+        if bin != True:
+            scaler = StandardScaler()
+            average_scaled = scaler.fit_transform(clean_df[feature].values.reshape(-1, 1))
+            clean_df[feature] = average_scaled.flatten()
+        # az.plot_dist(clean_df[feature])
+        # plt.show()
 
         if hitter:
             subjects = clean_df["hitter"]
             clean_df.loc[:, "th_segments"] = clean_df["hitter_timepoint"] / 100
         else:
             subjects = clean_df["receiver"]
-            clean_df.loc[:, "th_segments"] =  clean_df["receiver_timepoint"]/ 100
+            clean_df.loc[:, "th_segments"] = clean_df["receiver_timepoint"] / 100
 
         subjects_idx, subjects_unique = pd.factorize(subjects)
 
         coords = {"subject_idx": subjects_unique, "obs": range(len(clean_df[feature])),
-                  "group": ["lower", "higher"]}
+                  "group": ["inefficient", "efficient"]}
 
         model = CenteredModel(coords, clean_df, subjects_idx, feature, n, bin, hitter=hitter)
 
@@ -198,6 +230,4 @@ if __name__ == '__main__':
         plt.savefig(DOUBLE_RESULTS_PATH_LONGITUDINAL + image_name + feature + "_" + str(n) + ".png")
         plt.close()
 
-
     del model
-

@@ -1,96 +1,101 @@
 digraph {
-	subgraph "clusterineff_subject_idx (45)" {
-		ineff_subjects_intercept [label="ineff_subjects_intercept
+	subgraph cluster8710 {
+		higher [label="higher
 ~
-Normal" shape=ellipse]
-		label="ineff_subject_idx (45)" labeljust=r labelloc=b style=rounded
+Data" shape=box style="rounded, filled"]
+		mu [label="mu
+~
+Deterministic" shape=box]
+		control_skilled_variable [label="control_skilled_variable
+~
+Deterministic" shape=box]
+		observed [label="observed
+~
+Data" shape=box style="rounded, filled"]
+		prev_observed [label="prev_observed
+~
+Data" shape=box style="rounded, filled"]
+		lower [label="lower
+~
+Data" shape=box style="rounded, filled"]
+		label=8710 labeljust=r labelloc=b style=rounded
 	}
-	subgraph "clustereff_subject_idx (5324)" {
-		eff_subjects_intercept [label="eff_subjects_intercept
+	subgraph "clusterobs (8710)" {
+		growth_model [label="growth_model
 ~
-Normal" shape=ellipse]
-		label="eff_subject_idx (5324)" labeljust=r labelloc=b style=rounded
+Normal" shape=ellipse style=filled]
+		controlled_skill [label="controlled_skill
+~
+Data" shape=box style="rounded, filled"]
+		label="obs (8710)" labeljust=r labelloc=b style=rounded
 	}
-	efficient_mean_1 [label="efficient_mean_1
+	global_skill_slope [label="global_skill_slope
 ~
 Normal" shape=ellipse]
-	nu_minus_one [label="nu_minus_one
-~
-Exponential" shape=ellipse]
-	inefficient_mean_1 [label="inefficient_mean_1
+	global_intercept [label="global_intercept
 ~
 Normal" shape=ellipse]
-	inefficient_std [label="inefficient_std
+	sigma_lower [label="sigma_lower
 ~
-Uniform" shape=ellipse]
-	diff_of_means_0 [label="diff_of_means_0
-~
-Deterministic" shape=box]
-	diff_of_means_1 [label="diff_of_means_1
+HalfNormal" shape=ellipse]
+	global_higher_influenceActorPartner_diff [label="global_higher_influenceActorPartner_diff
 ~
 Deterministic" shape=box]
-	efficient_mean_0 [label="efficient_mean_0
+	global_higher [label="global_higher
 ~
 Normal" shape=ellipse]
-	efficient_std [label="efficient_std
-~
-Uniform" shape=ellipse]
-	nu [label="nu
-~
-Deterministic" shape=box]
-	effect_size [label="effect_size
-~
-Deterministic" shape=box]
-	nu_log10 [label="nu_log10
-~
-Deterministic" shape=box]
-	difference_of_stds [label="difference_of_stds
-~
-Deterministic" shape=box]
-	inefficient_mean_0 [label="inefficient_mean_0
+	global_lower [label="global_lower
 ~
 Normal" shape=ellipse]
-	subgraph cluster2 {
-		w_ineff [label="w_ineff
+	global_influenceActorPartner [label="global_influenceActorPartner
 ~
-Dirichlet" shape=ellipse]
-		w_eff [label="w_eff
+Normal" shape=ellipse]
+	global_lower_influenceActorPartner_diff [label="global_lower_influenceActorPartner_diff
 ~
-Dirichlet" shape=ellipse]
-		label=2 labeljust=r labelloc=b style=rounded
+Deterministic" shape=box]
+	global_sigma [label="global_sigma
+~
+HalfStudentT" shape=ellipse]
+	sigma_higher [label="sigma_higher
+~
+HalfNormal" shape=ellipse]
+	subgraph "clusterturn_take_idx (2)" {
+		global_lower_influenceActorPartner [label="global_lower_influenceActorPartner
+~
+Normal" shape=ellipse]
+		global_higher_influenceActorPartner [label="global_higher_influenceActorPartner
+~
+Normal" shape=ellipse]
+		label="turn_take_idx (2)" labeljust=r labelloc=b style=rounded
 	}
-	subgraph cluster3869 {
-		inefficient [label="inefficient
+	subgraph "clustersubject_idx (70)" {
+		subjects_intercept_W [label="subjects_intercept_W
 ~
-MarginalMixture" shape=ellipse style=filled]
-		label=3869 labeljust=r labelloc=b style=rounded
-	}
-	subgraph cluster5324 {
-		efficient [label="efficient
+Normal" shape=ellipse]
+		subjects_intercept [label="subjects_intercept
 ~
-MarginalMixture" shape=ellipse style=filled]
-		label=5324 labeljust=r labelloc=b style=rounded
+Normal" shape=ellipse]
+		label="subject_idx (70)" labeljust=r labelloc=b style=rounded
 	}
-	nu_minus_one -> nu
-	nu -> nu_log10
-	nu -> inefficient
-	inefficient_mean_1 -> inefficient
-	w_ineff -> inefficient
-	inefficient_mean_0 -> inefficient
-	inefficient_std -> inefficient
-	efficient_mean_0 -> efficient
-	efficient_mean_1 -> efficient
-	efficient_std -> efficient
-	nu -> efficient
-	w_eff -> efficient
-	efficient_mean_0 -> diff_of_means_0
-	inefficient_mean_0 -> diff_of_means_0
-	inefficient_mean_1 -> diff_of_means_1
-	efficient_mean_1 -> diff_of_means_1
-	efficient_std -> difference_of_stds
-	inefficient_std -> difference_of_stds
-	inefficient_std -> effect_size
-	efficient_std -> effect_size
-	diff_of_means_0 -> effect_size
-	diff_of_means_1 -> effect_size
+	growth_model -> observed
+	sigma_higher -> global_higher_influenceActorPartner
+	sigma_lower -> global_lower_influenceActorPartner
+	global_skill_slope -> control_skilled_variable
+	controlled_skill -> control_skilled_variable
+	higher -> mu
+	global_intercept -> mu
+	global_lower_influenceActorPartner -> mu
+	control_skilled_variable -> mu
+	global_higher_influenceActorPartner -> mu
+	global_higher -> mu
+	subjects_intercept -> mu
+	global_lower -> mu
+	global_influenceActorPartner -> mu
+	subjects_intercept_W -> mu
+	prev_observed -> mu
+	lower -> mu
+	mu -> growth_model
+	global_sigma -> growth_model
+	global_higher_influenceActorPartner -> global_higher_influenceActorPartner_diff
+	global_lower_influenceActorPartner -> global_lower_influenceActorPartner_diff
 }

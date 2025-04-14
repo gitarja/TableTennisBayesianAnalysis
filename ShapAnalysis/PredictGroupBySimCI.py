@@ -8,10 +8,7 @@ from sklearn.metrics import matthews_corrcoef, confusion_matrix, f1_score, roc_a
 from imblearn.metrics import geometric_mean_score
 from sklearn.model_selection import StratifiedKFold, train_test_split, GridSearchCV, RepeatedStratifiedKFold
 import pandas as pd
-import shap
-from corr_shap import CorrExplainer
-import matplotlib.pyplot as plt
-from shap.utils._legacy import LogitLink
+from tqdm import tqdm
 
 np.random.seed(1945)  # For Replicability
 
@@ -61,7 +58,6 @@ def trainXGB(X, y, search_params=False):
     else:
 
         params = {
-
             "device": "cuda:0",
             "learning_rate": 0.01,
             "objective": "binary:logistic",
@@ -95,6 +91,24 @@ def evaluateModel(model, X_test, y_test):
 
     return predictions, y_pred
 
+def computeMetrices(y_test, y_pred_bin, y_pred):
+    mcc = matthews_corrcoef(y_test, y_pred_bin)
+    acc = balanced_accuracy_score(y_test, y_pred_bin)
+    auc_pr = roc_auc_score(y_test, y_pred)
+
+
+    return acc, mcc, auc_pr
+
+def hanleyMcneilSE(auc_value, y_true):
+    n1 = np.sum(y_true == 1)  # Number of positive cases
+    n2 = np.sum(y_true == 0)  # Number of negative cases
+
+    # Hanley-McNeil formula for standard error
+    Q1 = auc_value / (2 - auc_value)
+    Q2 = 2 * auc_value**2 / (1 + auc_value)
+    se = np.sqrt((auc_value * (1 - auc_value) + (n1 - 1) * (Q1 - auc_value**2) + (n2 - 1) * (Q2 - auc_value**2)) / (n1 * n2))
+
+    return se
 
 if __name__ == '__main__':
 
@@ -112,13 +126,13 @@ if __name__ == '__main__':
                                       exclude_no_pair=True)
 
     label = "all_lower_upper"
-    mod = "skill_personal_perception_action_impact_ecg"
+    mode = "skill_personal_perception_action_impact_ecg"
     lower_features, skill_lower = lower_reader.getImpressionFeatures(group="lower",
-                                                                     mod=mod,
+                                                                     mod=mode,
                                                                      return_group_skill=True)
 
     upper_features, skill_upper = upper_reader.getImpressionFeatures(group="upper",
-                                                                     mod=mod,
+                                                                     mod=mode,
                                                                      return_group_skill=True)
 
     X_lower = lower_features.loc[:, lower_features.columns != 'labels']
@@ -146,60 +160,63 @@ if __name__ == '__main__':
 
     shap_values_list = []
     X_test_list = []
-    y_test_list = []
-    pred_bin_list = []
-    y_pred_list = []
+    y_test_list_all = []
+
+    auc_list = []
+    mcc_list = []
+    acc_list = []
+
     correct_classification_idx = np.zeros((len(y)))
     kf = StratifiedKFold(n_splits=3, shuffle=True, random_state=1945)
+    N_BOOST = 50
+    for k in tqdm(range(N_BOOST)):
+        y_test_list = []
+        pred_bin_list = []
+        y_pred_list = []
 
-    for i, (train_index, test_index) in enumerate(kf.split(X, y)):
-        X_train = X.iloc[train_index]
-        X_test = X.iloc[test_index]
-        y_train = y[train_index]
-        y_test = y[test_index]
+        for i, (train_index, test_index) in enumerate(kf.split(X, y)):
+            X_train = X.iloc[train_index]
+            X_test = X.iloc[test_index]
+            y_train = y[train_index]
+            y_test = y[test_index]
 
-        model = trainXGB(X_train, y_train, search_params=False)
+            model = trainXGB(X_train, y_train, search_params=False)
+            resample_idx = np.random.choice(range(X_test.shape[0]), size=X_test.shape[0], replace=True)
+            X_test_resample = X_test.iloc[resample_idx]
+            y_test_resample = y_test[resample_idx]
 
-        # compute SHAP
+            pred_bin, y_pred = evaluateModel(model, X_test_resample, y_test_resample)
 
-        model.set_param({"device": "cuda:0"})
-        explainer = CorrExplainer(model.inplace_predict, X, sampling="gauss+empirical",
-                                  link=LogitLink())
-        shap_values = explainer.shap_values(X_test)
-
-        shap_values_list.append(shap_values)
-
-
-
-        # model evaluation
-        pred_bin, y_pred = evaluateModel(model, X_test, y_test)
-
-        pred_bin_list.append(pred_bin)
-        X_test_list.append(X_test)
-        y_test_list.append(y_test)
-        y_pred_list.append(y_pred)
+            pred_bin_list.append(pred_bin)
+            X_test_list.append(X_test)
+            y_test_list.append(y_test_resample)
+            y_test_list_all.append(y_test_resample)
+            y_pred_list.append(y_pred)
 
 
-    all_y_pred = np.concatenate(y_pred_list)
-    np.save("Results\\" + mod + "_pred.npy", all_y_pred)
-    all_shap_values = normalizeShap(np.concatenate(shap_values_list))
-    all_x_test = pd.concat(X_test_list)
-    all_y_tes = np.concatenate(y_test_list)
-    np.save("Results\\" + label + "_shap.npy", all_shap_values)
-    np.save("Results\\" + label + "_yval.npy", all_y_tes)
-    all_x_test.to_pickle("Results\\" + label + "_xval.pkl")
 
-    # shap.summary_plot(all_shap_values, all_x_test, max_display=50)
-    # plt.show()
+        acc, mcc, auc_pr = computeMetrices(np.concatenate(y_test_list), np.concatenate(pred_bin_list), np.concatenate(y_pred_list))
 
-    # compute metrics
-    y_test_list = np.concatenate(y_test_list)
-    pred_bin_list = np.concatenate(pred_bin_list)
-    y_pred_list = np.concatenate(y_pred_list)
-    mcc = matthews_corrcoef(y_test_list, pred_bin_list)
-    cm = confusion_matrix(y_test_list, pred_bin_list, normalize="true")
-    acc = balanced_accuracy_score(y_test_list, pred_bin_list)
-    auc_pr = roc_auc_score(y_test_list, y_pred_list)
+        acc_list.append(acc)
+        mcc_list.append(mcc)
+        auc_list.append(auc_pr)
 
 
-    print("%f, %f, %f" % (acc, mcc, auc_pr))
+
+    #compute CI
+
+    n = len(acc_list)
+    # Standard error of ACC
+    standard_error_acc = np.std(acc_list) / np.sqrt(n)
+    standard_error_auc = hanleyMcneilSE(np.average(auc_list), np.concatenate(y_test_list_all))
+    standard_error_mcc = np.std(mcc_list) / np.sqrt(n)
+    #
+    t_critical = 1.96
+    # # Confidence interval
+    margin_of_error_acc = t_critical * standard_error_acc
+    margin_of_error_mcc = t_critical * standard_error_mcc
+    margin_of_error_auc = t_critical * standard_error_auc
+    #
+    print("%f, %f, %f" % (np.average(acc_list), np.average(mcc_list), np.average(auc_list)))
+    print("%f, %f, %f" % (margin_of_error_acc, margin_of_error_mcc, margin_of_error_auc))
+

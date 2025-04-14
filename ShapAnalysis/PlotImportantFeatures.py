@@ -128,27 +128,22 @@ results_path = os.path.join(
 
 important_features = np.asarray([
     "p1_al_prec_sim",
-    "p1_al_prec_mean",
     "distance_eye_hand_sim",
-    "ec_start_fs_sim",
+    "p1_al_prec_mean",
+    "p2_al_mag_sim",
     "p2_cs_sim",
     "p3_fx_du_sim",
     "p2_cs_mean",
-    "p1_cs_mean",
-    "height_sim",
-    "im_racket_ball_wrist_mean",
-    "p2_al_mag_sim",
-    "p3_fx_onset_sim",
     "p2_al_mag_mean",
+    "ec_start_fs_sim",
+    "p1_cs_mean",
     "p1_al_mag_mean",
-    "im_ball_wrist_mean",
-    "distance_eye_hand_mean",
-    "im_ball_updown_mean",
-    "p1_cs_sim",
-    "im_ball_wrist_sim",
-    "p2_al_prec_mean",
+    "im_racket_ball_wrist_mean",
+    "p2_al_onset_sim",
+    "fixation_racket_latency_sim",
+    "height_sim",
 
-]).reshape((4, 5))
+]).reshape((3, 5))
 
 
 
@@ -176,9 +171,9 @@ important_features = np.asarray([
 #
 # ]).reshape((4, 5))
 
-fig, axs = plt.subplots(nrows=4, ncols=5, constrained_layout=True)
+fig, axs = plt.subplots(nrows=3, ncols=5, constrained_layout=True)
 plotSHAP(shap_values=shap_results, x=xval_results, all_columns=xval_results.columns.values.tolist(),
-         columns=important_features, results_path=results_path, alpha=0.5, dot_size=60, axes=axs)
+         columns=important_features, results_path=results_path, alpha=0.5, dot_size=120, axes=axs)
 sns.despine(fig=fig)
 
 fig.set_size_inches(30.5, 22.5)

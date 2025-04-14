@@ -46,59 +46,6 @@ if __name__ == '__main__':
 
     df = pd.concat([inefficient_features, efficient_features])
 
-    # features = [
-    #
-    #     "receiver_im_ball_updown",
-    #
-    #     "receiver_im_ball_wrist",
-    #     "receiver_start_fs",
-    #     "receiver_im_racket_ball_wrist",
-    #     "hitter_p1_al_mag",
-    #     "receiver_im_racket_dir",
-    #     "receiver_fixation_racket_latency",
-    #     "hitter_p2_al_prec",
-    #     "hitter_p2_al_mag",
-    #     "receiver_p2_al_mag",
-    #     "hitter_at_and_after_hit",
-    #     "hitter_p1_cs",
-    #     "hitter_p2_al_onset",
-    #     "hand_movement_sim",
-    #     "receiver_p1_al_onset",
-    #     "hitter_p1_al_prec",
-    #     "receiver_p1_al_mag",
-    #
-    #     "receiver_p2_al_prec",
-    #     "receiver_p2_al_onset",
-    #     "hitter_fx_onset",
-    #     "receiver_distance_eye_hand",
-    #     "hitter_p1_al_onset",
-    #     "receiver_p1_al_prec",
-    #     "hitter_fx_duration",
-    #     "receiver_p3_fx_onset",
-    #     "height_sim",
-    #     "age_sim",
-    #     "relationship",
-    #     "receiver_p1_cs",
-    #     "receiver_p3_fx_duration",
-    #     "gender_sim",
-    #     "receiver_p3_fx",
-    #     "hitter_fx",
-    #     "hitter_p2_al",
-    #     "receiver_p2_al",
-    #     "receiver_p2_cs",
-    #     "hitter_p2_cs",
-    #     "receiver_p1_al",
-    #     "hitter_p1_al",
-    #
-    # ]
-
-    # features = [
-    #     "receiver_p1_cs",
-    #     "receiver_p2_cs",
-    #     "hitter_p2_cs",
-    #     "hitter_p1_cs",
-    # ]
-
 
     features = [
 
@@ -134,11 +81,7 @@ if __name__ == '__main__':
         az.plot_dist(clean_df[analyzed_features], rug=True)
         plt.show()
 
-        # factorize receiver
-        # ineff_subjects_idx, ineff_subjects_unique = pd.factorize(
-        #     clean_df.loc[clean_df["group"] == "inefficient"]["receiver"].values)
-        # eff_subjects_idx, eff_subjects_unique = pd.factorize(
-        #     clean_df.loc[clean_df["group"] == "efficient"]["receiver"].values)
+
 
         # for skills and personal and ecg
         ineff_subjects_idx, ineff_subjects_unique = pd.factorize(
@@ -151,9 +94,6 @@ if __name__ == '__main__':
         mu_m = clean_df[analyzed_features].mean()
         mu_s = clean_df[analyzed_features].std() * 2
 
-        # for others predictor
-        # inefficient_obv = clean_df.loc[clean_df["group"] == "inefficient"][analyzed_features].values
-        # efficient_obv = clean_df.loc[clean_df["group"] == "efficient"][analyzed_features].values
 
         # for skills and personal and ecg
         inefficient_obv = clean_df.loc[clean_df["group"] == "inefficient"].groupby("session")[
@@ -208,23 +148,6 @@ if __name__ == '__main__':
                                     lam=lambda_1, observed=efficient_obv)
 
 
-
-            # # mixture
-            # ineff_subjects_intercept = pm.Normal("ineff_subjects_intercept", 0, 0.01, dims=("ineff_subject_idx", "components"))
-            # eff_subjects_intercept = pm.Normal("eff_subjects_intercept", 0, 0.01, dims=("ineff_subject_idx", "components"))
-            # inefficient_mean = pm.Normal('inefficient_mean', mu=[0, 0.5], sigma=0.5, shape=2)
-            # efficient_mean = pm.Normal('efficient_mean', mu=[0, 0.5], sigma=0.5, shape=2)
-            #
-            # inefficient_std = pm.Uniform("inefficient_std", lower=sigma_low, upper=sigma_high, shape=2)
-            # efficient_std = pm.Uniform("efficient_std", lower=sigma_low, upper=sigma_high, shape=2)
-            # weights = pm.Dirichlet("w", np.ones(2))
-            #
-            # inefficient = pm.NormalMixture("inefficient", w=weights, mu=inefficient_mean + ineff_subjects_intercept[ineff_subjects_idx], sigma=inefficient_std,
-            #                            observed=inefficient_obv)
-            # efficient = pm.NormalMixture("efficient", w=weights,
-            #                                mu=efficient_mean + ineff_subjects_intercept[ineff_subjects_idx],
-            #                                sigma=efficient_std,
-            #                                observed=inefficient_obv)
 
 
 

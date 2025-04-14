@@ -4,9 +4,11 @@ import matplotlib.pyplot as plt
 import arviz as az
 import xarray as xr
 import numpy as np
-from scipy.special import expit
-import seaborn as sns
+import pandas as pd
 from matplotlib.lines import Line2D
+from Utils.GroupClassification import groupLabeling
+from Utils.Conf import  DOUBLE_SUMMARY_FEATURES_PATH, DOUBLE_SUMMARY_FILE_PATH
+from Double.GlobalFeaturesReader import GlobalDoubleFeaturesReader
 # sns.set_style("white")
 plt.rcParams["text.usetex"] = True
 plt.rcParams["font.family"] = "Arial"
@@ -14,73 +16,86 @@ plt.rcParams['font.size'] = 20
 plt.rcParams.update({'xtick.labelsize': 25, 'ytick.labelsize': 25})
 # save the model
 n = 5
+
+def gedDF():
+    inefficient_group, efficient_group = groupLabeling()
+
+    # inefficient group
+    inefficient_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_SUMMARY_FEATURES_PATH,
+                                                    file_summary_path=DOUBLE_SUMMARY_FILE_PATH,
+                                                    include_subjects=inefficient_group, exclude_failure=True,
+                                                    exclude_no_pair=False, hmm_probs=True)
+    inefficient_features = inefficient_reader.getStableUnstableFailureFeatures(group_name="inefficient",
+                                                                               success_failure=True,
+                                                                               mod="skill_personal_perception_action_impact",
+                                                                               with_control=True)
+    inefficient_features["group"] = "inefficient"
+    # efficient group
+    efficient_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_SUMMARY_FEATURES_PATH,
+                                                  file_summary_path=DOUBLE_SUMMARY_FILE_PATH,
+                                                  include_subjects=efficient_group, exclude_failure=True,
+                                                  exclude_no_pair=False, hmm_probs=True)
+    efficient_features = efficient_reader.getStableUnstableFailureFeatures(group_name="efficient", success_failure=True,
+                                                                           mod="skill_personal_perception_action_impact",
+                                                                           with_control=True)
+    efficient_features["group"] = "efficient"
+
+    df = pd.concat([inefficient_features, efficient_features])
+
+    return df
 features = [
-    # "receiver_start_fs",
-    # "hitter_p1_al_mag",
-    # "receiver_im_racket_dir",
-    # "receiver_fixation_racket_latency",
-    # "hitter_p2_al_prec",
-    # "hitter_p2_al_mag",
-    # "receiver_p2_al_mag",
-    # "hitter_at_and_after_hit",
-    # "hitter_p1_cs",
-    # "hitter_p2_al_onset",
-    # "hand_movement_sim",
-    # "receiver_p1_al_onset",
-    # "hitter_p1_al_prec",
-    # "receiver_p1_al_mag",
-    # "receiver_p2_al_prec",
-    # "receiver_p2_al_onset",
-    # "hitter_fx_onset",
-    # "receiver_distance_eye_hand",
-    # "hitter_p1_al_onset",
-    # "receiver_p1_al_prec",
-    # "hitter_fx_duration",
-    # "receiver_p3_fx_onset",
+    "receiver_im_ball_wrist",
+    "receiver_im_racket_ball_wrist",
+    "receiver_im_racket_ball_angle",
     "receiver_im_ball_updown",
-    # "receiver_p3_fx_duration"
 
 ]
 
-# features = ["receiver_fixation_racket_latency"]
+# features = ["hitter_p2_cs"]
 for analyzed_features in features:
     print(analyzed_features)
-
+    df = gedDF()
+    print(analyzed_features)
+    clean_df = df.dropna(subset=[analyzed_features])
+    mean_ori = np.nanmean(clean_df[analyzed_features].values.reshape(-1, 1))
+    std_ori = np.nanstd(clean_df[analyzed_features].values.reshape(-1, 1))
 
     with open(DOUBLE_RESULTS_PATH_LONGITUDINAL + "idata_" + analyzed_features + "_" + str(n) + ".pkl", 'rb') as handle:
         idata = pickle.load(handle)
-    # hierarchical_loo = az.plot_ppc(idata, kind="cumulative")
+
+
+    # print(az.summary(
+    #     idata,
+    #     var_names=[
+    #         "global_efficient", "global_inefficient",
+    #         "global_efficient_seg", "global_inefficient_seg",
+    #         "global_th_segment",
+    #         "global_skill_slope",
+    #         "global_diff_of_means",
+    #         "global_seg_diff_of_means"
+    #     ],
+    # ))
+
+    # axes = az.plot_forest(idata,
+    #                       kind='forestplot',
+    #                       var_names=["global_diff_of_means", "global_seg_diff_of_means"],
+    #                       combined=True,
+    #                       figsize=(9, 7))
     # plt.show()
-    # compared posterior to observed
-    # az.plot_trace(idata, var_names=[     "global_higher", "global_lower",
-    #         "global_higher_seg", "global_lower_seg"])
-    # plt.show()
-
-    print(az.summary(
-        idata,
-        var_names=[
-            "global_higher", "global_lower",
-            "global_higher_seg", "global_lower_seg",
-            "global_th_segment",
-            "global_skill_slope"
-        ],
-    ))
-
-
-    # global_higher = posterior["global_higher"].mean(dim="sample")
-    # global_higher_seg = posterior["global_higher_seg"].mean(dim="sample")
+    # global_efficient = posterior["global_efficient"].mean(dim="sample")
+    # global_efficient_seg = posterior["global_efficient_seg"].mean(dim="sample")
     #
-    # global_lower = posterior["global_lower"].mean(dim="sample")
-    # global_lower_seg = posterior["global_lower_seg"].mean(dim="sample")
+    # global_inefficient = posterior["global_inefficient"].mean(dim="sample")
+    # global_inefficient_seg = posterior["global_inefficient_seg"].mean(dim="sample")
     #
     # global_skill_slope = posterior["global_skill_slope"].mean(dim="sample")
 
     posterior = az.extract(idata.posterior)
-    global_higher = posterior["global_higher"]
-    global_higher_seg = posterior["global_higher_seg"]
+    global_efficient = posterior["global_efficient"]
+    global_efficient_seg = posterior["global_efficient_seg"]
 
-    global_lower = posterior["global_lower"]
-    global_lower_seg = posterior["global_lower_seg"]
+    global_inefficient = posterior["global_inefficient"]
+    global_inefficient_seg = posterior["global_inefficient_seg"]
 
     global_skill_slope = posterior["global_skill_slope"]
 
@@ -93,21 +108,30 @@ for analyzed_features in features:
     time = 100
     time_xi = xr.DataArray(np.arange(time) / 100)
     # plot line
-    fig, ax = plt.subplots(figsize=(12, 8))
+    fig, ax = plt.subplots(figsize=(8, 8))
 
-    y_higher = global_intercept + global_higher * 1 + global_higher_seg * (
+    y_efficient = global_intercept + global_efficient * 1 + global_efficient_seg * (
         time_xi) + global_th_segment * time_xi + global_skill_slope
-    y_higher_mean = global_intercept.mean() + global_higher.mean() * 1 + global_higher_seg.mean() * (
+
+    y_efficient_mean = global_intercept.mean() + global_efficient.mean() * 1 + global_efficient_seg.mean() * (
         time_xi) + global_th_segment.mean() * time_xi + global_skill_slope.mean()
 
-    y_lower = global_intercept + global_lower * 1 + global_lower_seg * (
+    y_inefficient = global_intercept + global_inefficient * 1 + global_inefficient_seg * (
         time_xi) + global_th_segment * time_xi + global_skill_slope
-    y_lower_mean = global_intercept.mean() + global_lower.mean() * 1 + global_lower_seg.mean() * (
+    y_inefficient_mean = global_intercept.mean() + global_inefficient.mean() * 1 + global_inefficient_seg.mean() * (
         time_xi) + global_th_segment.mean() * time_xi + global_skill_slope.mean()
+
+
+    # rescaling
+    # y_efficient = (y_efficient* std_ori) + mean_ori
+    # y_efficient_mean = (y_efficient_mean * std_ori) + mean_ori
+    #
+    # y_inefficient = (y_inefficient * std_ori) + mean_ori
+    # y_inefficient_mean = (y_inefficient_mean * std_ori) + mean_ori
 
     # ax.plot(
     #     time_xi,
-    #     y_higher.values.reshape(8000, n).T,
+    #     y_efficient.values.reshape(8000, n).T,
     #     color="#66c2a5",
     #     linewidth=0.05,
     #     alpha=0.05,
@@ -115,7 +139,7 @@ for analyzed_features in features:
     #
     # ax.plot(
     #     time_xi,
-    #     y_lower.values.reshape(8000, n).T,
+    #     y_inefficient.values.reshape(8000, n).T,
     #     color="#fb8072",
     #     linewidth=0.05,
     #     alpha=0.05,
@@ -124,7 +148,7 @@ for analyzed_features in features:
 
     az.plot_hdi(
         time_xi,
-        y_higher.values.reshape(4, 2000, time),
+        y_efficient.values.reshape(4, 2000, time),
         hdi_prob=0.95,
         fill_kwargs={"alpha": 0.1, "linewidth": 0.1},
         color="#69A87F",
@@ -132,7 +156,7 @@ for analyzed_features in features:
 
     az.plot_hdi(
         time_xi,
-        y_lower.values.reshape(4, 2000, time),
+        y_inefficient.values.reshape(4, 2000, time),
         hdi_prob=0.95,
         fill_kwargs={"alpha": 0.1, "linewidth": 0.1},
         color="#B5152C",
@@ -140,7 +164,7 @@ for analyzed_features in features:
 
     ax.plot(
         time_xi,
-        y_higher_mean,
+        y_efficient_mean,
         color="#69A87F",
         lw=3,
         linestyle='dashed'
@@ -148,7 +172,7 @@ for analyzed_features in features:
 
     ax.plot(
         time_xi,
-        y_lower_mean,
+        y_inefficient_mean,
         color="#B5152C",
         lw=3,
         linestyle='dashed'
@@ -156,7 +180,7 @@ for analyzed_features in features:
     ax.set_ylabel(features_explanation[analyzed_features], fontsize=28)
     ax.set_xlabel(r"T of episode / 100", fontsize=28)
     ax.set_frame_on(False)
-    ax.set_ylim([0.19, 0.25])
+    # ax.set_ylim([0.19, 0.25])
 
     xmin, xmax = ax.get_xaxis().get_view_interval()
     ymin, ymax = ax.get_yaxis().get_view_interval()

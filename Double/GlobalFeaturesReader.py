@@ -2,10 +2,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from Utils.Conf import SINGLE_FEATURES_FILE_PATH, NORMALIZE_X_DOUBLE_EPISODE_COLUMNS, HMM_MODEL_PATH, \
-    SINGLE_SUMMARY_FILE_PATH, DOUBLE_SUMMARY_FILE_PATH
+    SINGLE_SUMMARY_FILE_PATH, DOUBLE_SUMMARY_FILE_PATH, ECG_FEATURES_FILE_PATH
 from sklearn.impute import KNNImputer
 from scipy.ndimage import label
-
+from scipy import stats
+import hrvanalysis
+from scipy.signal import correlate
+from dtaidistance import dtw, similarity
 
 class GlobalFeaturesReader:
 
@@ -57,7 +60,7 @@ class GlobalDoubleFeaturesReader:
         self.single_summary_df = pd.read_csv(SINGLE_SUMMARY_FILE_PATH)
         self.double_summary_df = pd.read_csv(DOUBLE_SUMMARY_FILE_PATH)
         self.df_summary = pd.read_csv(file_summary_path)
-
+        self.ecg_df = pd.read_pickle(ECG_FEATURES_FILE_PATH)
         self.df = pd.read_pickle(file_path)
 
         if hmm_probs:
@@ -604,6 +607,7 @@ class GlobalDoubleFeaturesReader:
         for name, group in group_df:
             # n_data = len(group["hitter_pr_p2_al"]) - (n_segment - 1)
             # print(n_data)
+
             group_name = name[0]
             skill_subjects = group[["skill_subject1", "skill_subject2"]].values[0]
             subjects = group[["id_subject1", "id_subject2"]].values[0]
@@ -629,7 +633,7 @@ class GlobalDoubleFeaturesReader:
                 hitter_skill = skill_subjects[group["hitter"].values.astype(int)[1:]]
 
                 receiver_idx = group["receiver"].values.astype(int)[1:]
-                hitter_idx = group["hitter"].values.astype(int)[:-1]
+                hitter_idx = group["hitter"].values.astype(int)[1:]
 
                 # onset of forward swing
                 onset_forward_swing_prev_list.append(prev_fs)
@@ -686,7 +690,7 @@ class GlobalDoubleFeaturesReader:
         :param group_name:
         :return:
         '''
-
+        double_ecg = self.ecg_df[self.ecg_df["double_single"] == "D"]
         def genderSim(s1, s2):
             if ((s1 == "Man") & (s2 == "Man")):
                 return 0.0
@@ -694,6 +698,17 @@ class GlobalDoubleFeaturesReader:
                 return 1.0
             else:
                 return 2.0
+
+        def maxCrossCorrelation(s1, s2):
+            a = s1 / np.mean(s1)
+            v = s2 / np.mean(s2)
+            a = np.convolve(a, np.ones(5) / 5, mode='valid')
+            v = np.convolve(v, np.ones(5) / 5, mode='valid')
+            # corr = correlate(a, v, mode='valid')
+            # return np.max(corr)
+
+            return  dtw.distance(a, v)
+
 
         group_df = self.df.groupby(['session_id', 'episode_label'])
 
@@ -759,6 +774,9 @@ class GlobalDoubleFeaturesReader:
         weight_sim_list = []
         age_sim_list = []
         relationship_list = []
+
+
+        rr_sim_list = []
 
         receiver_timepoint_list = []
         hitter_timepoint_list = []
@@ -937,6 +955,13 @@ class GlobalDoubleFeaturesReader:
                             0]
                     relationship_avg = np.ones_like(receiver) * (0.5 * (subject_1_rel + subject_2_rel))
 
+                    #ECG
+                    group_name_split = name[0].split("_")
+                    trial_date = group_name_split[0]
+                    trial_session = group_name_split[1]
+                    trial_name = group_name_split[2]
+                    trial_rr = double_ecg[(double_ecg["date"] == trial_date) & (double_ecg["session"] == trial_session)  & (double_ecg["trial_name"] == trial_name) ]
+                    rr_sim = np.ones_like(receiver) * maxCrossCorrelation(trial_rr["rr1"].values[0], trial_rr["rr2"].values[0])
                     # time point
                     receiver_timepoint = group["observation_label"].values[receiver_idx]
                     hitter_timepoint = group["observation_label"].values[receiver_idx]
@@ -1016,6 +1041,9 @@ class GlobalDoubleFeaturesReader:
                     weight_sim_list.append(weight_sim)
                     age_sim_list.append(age_sim)
                     relationship_list.append(relationship_avg)
+
+                    # ecg
+                    rr_sim_list.append(rr_sim)
 
                     label_list.append(labels)
 
@@ -1102,6 +1130,10 @@ class GlobalDoubleFeaturesReader:
                 "relationship": np.concatenate(relationship_list).astype(float)
             })
 
+        if "ecg" in mod:
+            fetures_summary.update({
+                "rr_sim": np.concatenate(rr_sim_list).astype(float),
+            })
         if with_control:
             fetures_summary.update({"receiver": np.concatenate(receiver_list), "session": np.concatenate(session_list),
                                     "hitter": np.concatenate(hitter_list),
@@ -1334,6 +1366,7 @@ class ImpressionFeatures:
 
         self.single_summary_df = pd.read_csv(SINGLE_SUMMARY_FILE_PATH)
         self.double_summary_df = pd.read_csv(DOUBLE_SUMMARY_FILE_PATH)
+        self.ecg_df = pd.read_pickle(ECG_FEATURES_FILE_PATH)
 
         if filter_out:
             df_summary = self.df_summary[
@@ -1371,18 +1404,31 @@ class ImpressionFeatures:
             y = 1
 
         def computeStyleSim(features_name, s1, s2, bins=7, is_int=False):
+            # histogram used as empirical data
             # a = stats.ks_2samp(self.single_df[self.single_df["id_subject"] == s1][features_name].values,
             #                self.single_df[self.single_df["id_subject"] == s2][features_name].values, )
             #
             # return a.statistic
-            x1 = self.single_df[self.single_df["id_subject"] == s1][features_name].values
-            x2 = self.single_df[self.single_df["id_subject"] == s2][features_name].values
 
-            x1 = x1[~np.isnan(x1)]
-            x2 = x2[~np.isnan(x2)]
-            n_min = len(x2) if len(x1) > len(x2) else len(x1)
-            x1 = x1[:n_min]
-            x2 = x2[:n_min]
+            if features_name == "rr":
+
+                x1 =  self.ecg_df[(self.ecg_df["subject1"] == s1) & (self.ecg_df["double_single"] == "S")]["rr1"].values[0]
+                x2 = self.ecg_df[(self.ecg_df["subject1"] == s2) & (self.ecg_df["double_single"] == "S")]["rr1"].values[0]
+
+                x1 = x1 / np.mean(x1)
+                x2 = x2 / np.mean(x2)
+
+                # return np.abs(x1["lf_hf_ratio"] - x2["lf_hf_ratio"])
+
+            else:
+                x1 = self.single_df[self.single_df["id_subject"] == s1][features_name].values
+                x2 = self.single_df[self.single_df["id_subject"] == s2][features_name].values
+
+                x1 = x1[~np.isnan(x1)]
+                x2 = x2[~np.isnan(x2)]
+                n_min = len(x2) if len(x1) > len(x2) else len(x1)
+                x1 = x1[:n_min]
+                x2 = x2[:n_min]
             x = np.concatenate([x1, x2])
             if is_int:
                 max_x = np.max(x) + 1
@@ -1393,16 +1439,59 @@ class ImpressionFeatures:
                 data2 = np.histogram(x2, bins=bins, range=(np.min(x), np.max(x)), density=True)[0]
 
             bc_coeff = np.sum(np.sqrt(data1 * data2))
-            bhattacharyya_distance = -np.log(bc_coeff)
+            bhattacharyya_distance = np.log(bc_coeff)
 
-            return bhattacharyya_distance
+            return bc_coeff
+
+        # def computeStyleSimContinous(features_name, s1, s2, N_STEPS = 100):
+        #     def get_density(x, cov_factor=0.2):
+        #         # Produces a continuous density function for the data in 'x'. Some benefit may be gained from adjusting the cov_factor.
+        #         density = gaussian_kde(x)
+        #         density.covariance_factor = lambda: cov_factor
+        #         density._compute_covariance()
+        #         return density
+        #     x1 = self.single_df[self.single_df["id_subject"] == s1][features_name].values
+        #     x2 = self.single_df[self.single_df["id_subject"] == s2][features_name].values
+        #
+        #     x1 = x1[~np.isnan(x1)]
+        #     x2 = x2[~np.isnan(x2)]
+        #     n_min = len(x2) if len(x1) > len(x2) else len(x1)
+        #     x1 = x1[:n_min]
+        #     x2 = x2[:n_min]
+        #     cX = np.concatenate((x1, x2))
+        #
+        #     # Get density functions:
+        #     d1 = get_density(x1)
+        #     d2 = get_density(x2)
+        #     # Calc coeff:
+        #     xs = np.linspace(min(cX), max(cX), N_STEPS)
+        #     bht = 0
+        #     for x in xs:
+        #         p1 = d1(x)
+        #         p2 = d2(x)
+        #         bht += np.sqrt(p1 * p2) * (np.max(cX) - np.min(cX)) / N_STEPS
+        #
+        #     return -np.log(bht[0])
+
 
         def computeMeanFeatures(features_name, s1, s2):
-            single_df = self.single_df
-            df1 = single_df[single_df["id_subject"] == s1][features_name].values
-            df2 = single_df[single_df["id_subject"] == s2][features_name].values
+            if features_name == "rr":
+                x1 = self.ecg_df[(self.ecg_df["subject1"] == s1) & (self.ecg_df["double_single"] == "S")][
+                    "rr1"].values[0]
+                x2 = self.ecg_df[(self.ecg_df["subject1"] == s2) & (self.ecg_df["double_single"] == "S")][
+                    "rr1"].values[0]
+                x1 = x1 / np.mean(x1)
+                x2 = x2 / np.mean(x2)
+                # x1 = hrvanalysis.get_time_domain_features(x1)
+                # x2 = hrvanalysis.get_time_domain_features(x2)
+                return 0.5 * (np.nanmean(x1) + np.nanmean(x2))
+            else:
+                single_df = self.single_df
+                x1 = single_df[single_df["id_subject"] == s1][features_name].values
+                x2 = single_df[single_df["id_subject"] == s2][features_name].values
+                return 0.5 * (np.nanmean(x1) + np.nanmean(x2))
             # n_min = len(df2) if len(df1) > len(df2) else len(df1)
-            return 0.5 * (np.nanmean(df1) + np.nanmean(df2))
+
             #return np.nanmean(np.concatenate([df1, df2]))
 
         # same: 0, different = 1
@@ -1483,6 +1572,10 @@ class ImpressionFeatures:
         weight_list = []  # weight difference
         age_list = []  # education same: 0, education differed: 1
         relationship_list = []
+
+        # ecg
+        ecg_sim_list = []
+        ecg_mean_list = []
         for _, g in self.df_summary.iterrows():
             s1 = g["Subject1"]
             s2 = g["Subject2"]
@@ -1499,6 +1592,9 @@ class ImpressionFeatures:
                 s2_relationship = "R2"
 
             # similarity
+            # ECG similarity
+            ecg_sim = computeStyleSim("rr", s1, s2)
+
             # p1
             p1_al_on_sim = computeStyleSim("pr_p1_al_on", s1, s2)
             p1_al_prec_sim = computeStyleSim("pr_p1_al_prec", s1, s2)
@@ -1527,6 +1623,11 @@ class ImpressionFeatures:
             im_ball_wrist_sim = computeStyleSim("im_ball_wrist", s1, s2, bins=5)
 
             # means
+
+            # ECG mean
+            ecg_mean = computeMeanFeatures("rr", s1, s2)
+
+
             p1_al_on_mean = computeMeanFeatures("pr_p1_al_on", s1, s2)
             p1_al_prec_mean = computeMeanFeatures("pr_p1_al_prec", s1, s2)
             p1_al_gM_mean = computeMeanFeatures("pr_p1_al_gM", s1, s2)
@@ -1653,6 +1754,10 @@ class ImpressionFeatures:
             im_racket_ball_wrist_mean_list.append(im_racket_ball_wrist_mean)
             im_ball_wrist_mean_list.append(im_ball_wrist_mean)
 
+            # ecg
+            ecg_sim_list.append(ecg_sim)
+            ecg_mean_list.append(ecg_mean)
+
 
 
         fetures_summary = {
@@ -1666,7 +1771,8 @@ class ImpressionFeatures:
             })
 
         if "perception" in mod:
-            fetures_summary.update({"p1_al_onset_sim": p1_al_on_sim_list,
+            fetures_summary.update({
+                "p1_al_onset_sim": p1_al_on_sim_list,
                                     "p1_al_prec_sim": p1_al_prec_sim_list,
                                     "p1_al_mag_sim": p1_al_gM_sim_list,
 
@@ -1703,12 +1809,12 @@ class ImpressionFeatures:
                 "ec_start_fs_sim": ec_start_fs_sim_list,
                 "fixation_racket_latency_sim": fixation_racket_latency_sim_list,
                 "distance_eye_hand_sim": distance_eye_hand_sim_list,
-                "im_ball_updown_sim": im_ball_updown_sim_list,
+
 
                 "ec_start_fs_mean": ec_start_fs_mean_list,
                 "fixation_racket_latency_mean": fixation_racket_latency_mean_list,
                 "distance_eye_hand_mean": distance_eye_hand_mean_list,
-                "im_ball_updown_mean": im_ball_updown_mean_list,
+
             })
 
         if "impact" in mod:
@@ -1717,10 +1823,12 @@ class ImpressionFeatures:
                 "im_racket_ball_angle_sim": im_racket_ball_angle_sim_list,
                 "im_racket_ball_wrist_sim": im_racket_ball_wrist_sim_list,
                 "im_ball_wrist_sim": im_ball_wrist_sim_list,
+                "im_ball_updown_sim": im_ball_updown_sim_list,
 
                 "im_racket_ball_angle_mean": im_racket_ball_angle_mean_list,
                 "im_racket_ball_wrist_mean": im_racket_ball_wrist_mean_list,
                 "im_ball_wrist_mean": im_ball_wrist_mean_list,
+                "im_ball_updown_mean": im_ball_updown_mean_list,
             })
 
         if "personal" in mod:
@@ -1731,6 +1839,12 @@ class ImpressionFeatures:
 
                 "age_sim": age_list,  # education same: 0, education differed: 1
                 "relationship": relationship_list
+            })
+
+        if "ecg" in mod:
+            fetures_summary.update({
+            "ecg_sim": ecg_sim_list,
+            "ecg_mean": ecg_mean_list
             })
 
 

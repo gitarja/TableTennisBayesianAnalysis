@@ -1,5 +1,8 @@
 import os
 
+import matplotlib.pyplot as plt
+import pandas as pd
+
 from Validation.CrossValidation import SubjectCrossValidation, DoubleSubjectCrossValidation
 from Double.GlobalFeaturesReader import GlobalFeaturesReader
 from BayesianAnalysis.GroupClassification import outliersDetection, outliersLabeling
@@ -33,13 +36,16 @@ def groupClassifcation():
 
 
 def groupLabeling():
-    # load single and double data
+    # # load single and double data
     # single_fr = SubjectCrossValidation()
     # double_fr = DoubleSubjectCrossValidation()
     # fr = GlobalFeaturesReader(single_fr.getSummary(), double_fr.getSummary())
     # X, y, group_label = fr.getSingleDoubleFeatures(col="skill", log_scale=False)
-    #
     # X = np.average(X, axis=-1, keepdims=False)
+    # # import seaborn as sns
+    # # df = pd.DataFrame({"x": X, "y": y})
+    # # sns.jointplot(data=df, x="x", y="y")
+    # # plt.show()
     #
     # labels = outliersLabeling(X, y)
     # upper_idx = np.argwhere(labels == 1).flatten()

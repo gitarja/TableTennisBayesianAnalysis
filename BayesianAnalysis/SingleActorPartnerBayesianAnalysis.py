@@ -12,7 +12,7 @@ import arviz as az
 import pickle
 import scipy.stats as stats
 from sklearn.preprocessing import StandardScaler
-from ActorPartnerModel import CenteredModel
+from ActorPartnerModel import SingleCenteredModel
 
 # PREV_ANALYZED_FEATURES = ["onset_forward_swing"]
 # NEXT_ANALYZED_FEATURES = ["onset_forward_swing"]
@@ -92,7 +92,7 @@ if __name__ == '__main__':
                   "obs": range(len(clean_df[next_feature + "_next"])),
                   "group": ["lower", "higher"]}
 
-        model = CenteredModel(coords, clean_df, actor_subjects_idx, partner_subjects_idx, turn_take_unique_idx,
+        model = SingleCenteredModel(coords, clean_df, actor_subjects_idx,
                               prev_feature, next_feature, hitter=False)
         with model:
             # debug the model
@@ -107,16 +107,15 @@ if __name__ == '__main__':
             )
             idata.extend(pm.sample_posterior_predictive(idata))
 
-        # az.plot_posterior(
-        #     idata, var_names=["global_higher_influenceActorPartner_diff", "global_lower_influenceActorPartner_diff",
-        #                       "global_influenceActorPartner_diff"], figsize=(15, 10),
-        # )
-        # plt.show()
+        az.plot_posterior(
+            idata, var_names=["global_higher_influenceActorPartner", "global_lower_influenceActorPartner"], figsize=(15, 10),
+        )
+        plt.show()
 
         # save the model
-        file_name = "idata_"
-        with open(DOUBLE_RESULTS_PATH_APM_TTEST + file_name + prev_feature + "_prev_" + next_feature + "_next_" + str(
-                N_SAMPLES) + ".pkl", 'wb') as handle:
-            print("write data into: " + file_name + prev_feature + "_prev_" + next_feature + "_next_" + str(
-                N_SAMPLES) + ".pkl")
-            pickle.dump(idata, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        # file_name = "idata_"
+        # with open(DOUBLE_RESULTS_PATH_APM_TTEST + file_name + prev_feature + "_prev_" + next_feature + "_next_" + str(
+        #         N_SAMPLES) + ".pkl", 'wb') as handle:
+        #     print("write data into: " + file_name + prev_feature + "_prev_" + next_feature + "_next_" + str(
+        #         N_SAMPLES) + ".pkl")
+        #     pickle.dump(idata, handle, protocol=pickle.HIGHEST_PROTOCOL)

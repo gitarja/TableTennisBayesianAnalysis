@@ -29,18 +29,18 @@ if __name__ == '__main__':
         }
 
         X_train, X_val, y_train, y_val = train_test_split(
-            X, y, test_size=0.1, random_state=1945, stratify=y)
+            X, y, test_size=0.05, random_state=1945, stratify=y)
         d_train = xgboost.DMatrix(X_train, label=y_train)
         d_val = xgboost.DMatrix(X_val, label=y_val)
 
         params = {
             "device": "cuda:0",
-            "learning_rate": 0.05,
+            "learning_rate": 0.01,
             "objective": "binary:logistic",
             "subsample": .75,
             "max_depth": 3,
             "eval_metric": "aucpr",
-            "alpha": .05,
+            "alpha": .25,
             "min_child_weight": 3,
         }
         model = xgboost.train(
@@ -90,7 +90,7 @@ print(np.average(y == 0))
 
 # split data
 
-n_booststrap = 20
+n_booststrap = 50
 
 X_test_list = []
 n_column = X.shape[1]
@@ -99,7 +99,7 @@ bootstrap_results = np.zeros((n_booststrap, n_column))  # times 3 for KFold
 index = 0
 
 shap_values_list = []
-kf = StratifiedKFold(n_splits=3, shuffle=True, random_state=1945)
+kf = StratifiedKFold(n_splits=5, shuffle=True, random_state=1945)
 for i, (train_index, test_index) in enumerate(kf.split(X, y)):
     X_train = X.iloc[train_index]
     X_test = X.iloc[test_index]

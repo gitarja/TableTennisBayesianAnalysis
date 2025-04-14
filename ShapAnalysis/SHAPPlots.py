@@ -7,6 +7,7 @@ from Utils.Conf import features_explanation
 import statsmodels.api as sm
 from sklearn.preprocessing import PolynomialFeatures
 from matplotlib.ticker import FormatStrFormatter
+from matplotlib import colors
 sns.set_theme()
 sns.set(font_scale=5)
 sns.set(font="Arial")
@@ -15,6 +16,16 @@ plt.rcParams["text.usetex"] = True
 plt.rcParams["font.family"] = "Arial"
 plt.rcParams['font.size'] = 30
 
+
+def plotSummary(shap_values, x, columns, results_path="", prefix="",):
+
+    columns_explanation = [features_explanation[c] for c in columns]
+    explanation = shap.Explanation(values=shap_values, data=x.values, feature_names=columns_explanation)
+    ax = shap.plots.beeswarm(explanation,  max_display=16, show=False, plot_size=(11.69,8.27), alpha=0.7)
+    ax.set_xlim(-1, 1)
+    # plt.show()
+    plt.savefig(results_path + "\\plot_summary_" + prefix + ".pdf", format='pdf', transparent=True)
+    plt.close()
 
 def plotSHAP(shap_values, x, columns, results_path="", prefix="", alpha=0.15, dot_size=10):
     # plt.rcParams["font.family"] = "Arial"
