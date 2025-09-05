@@ -13,141 +13,87 @@ from sklearn.preprocessing import StandardScaler
 import arviz as az
 import pickle
 
-# ANALYZED_FEATURES = [
-#
-#     #
-#
-#     "hitter_p1_cs",
-#     "hitter_p2_cs",
-#     "hitter_p1_al_onset",
-#     "hitter_p1_al_prec",
-#     "hitter_p1_al_mag",
-#     "hitter_p2_al_onset",
-#     "hitter_p2_al_prec",
-#     "hitter_p2_al_mag",
-#     "hitter_fx_onset",
-#     "hitter_fx_duration",
-#
-#     "receiver_p1_cs",
-#     "receiver_p2_cs",
-#     "receiver_p1_al_onset",
-#     "receiver_p1_al_prec",
-#     "receiver_p1_al_mag",
-#     "receiver_p2_al_mag",
-#     "receiver_p2_al_onset",
-#     "receiver_p2_al_prec",
-#     "receiver_p3_fx_onset",
-#     "receiver_p3_fx_duration",
-#
-#
-#     "receiver_start_fs",
-#     "receiver_fixation_racket_latency",
-#     "receiver_distance_eye_hand",
-#     "receiver_im_ball_updown",
-#     "receiver_im_racket_ball_angle",
-#     "receiver_im_racket_ball_wrist",
-#     "receiver_im_ball_wrist",
-#
-# ]
-# HITTER_BOOL = [
-#
-#     #
-#
-#     True,
-#     True,
-#     True,
-#     True,
-#     True,
-#     True,
-#     True,
-#     True,
-#     True,
-#     True,
-#
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#
-# ]
-# # Binominal
-# BINOMINAL = [
-#
-#     #
-#
-#     True,
-#     True,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#
-#     True,
-#     True,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#
-#
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#     False,
-#
-# ]
 
 ANALYZED_FEATURES = [
-
-    "hitter_p1_cs",
     "hitter_p2_cs",
-    "receiver_p1_cs",
     "receiver_p2_cs",
 
+    "hitter_p1_cs",
+    "receiver_p1_cs",
+    "receiver_start_fs",
 
+    "receiver_im_racket_ball_wrist",
+    "hitter_bouncing_to_partner",
+    "receiver_distance_eye_hand",
+    "hitter_p2_al_onset",
+    "receiver_p2_al_prec",
+    "receiver_im_ball_updown",
+    "receiver_p1_al_mag",
+    "hitter_p1_al_prec",
+    "hitter_p1_al_mag",
+    "receiver_p2_al_onset",
+    "hitter_at_and_after_hit",
 
 ]
 HITTER_BOOL = [
     True,
+    False,
+
     True,
     False,
     False,
+
+    False,
+    True,
+    False,
+    True,
+    False,
+    False,
+    False,
+    True,
+    True,
+    False,
+    True,
 ]
 # Binominal
 BINOMINAL = [
     True,
     True,
+
     True,
     True,
+    False,
+
+    False,
+    False,
+    False,
+    False,
+    False,
+    False,
+    False,
+    False,
+    False,
+    False,
+    False,
 
 ]
+
+# ANALYZED_FEATURES = [
+#     "hitter_bouncing_to_partner",
+#
+#
+# ]
+# HITTER_BOOL = [
+#
+#     False,
+#
+# ]
+# BINOMINAL = [
+#
+#     False,
+# ]
 if __name__ == '__main__':
-    n = 5
+    n = 10
 
     lower_group, upper_group = groupLabeling()
 
@@ -158,17 +104,18 @@ if __name__ == '__main__':
                                               exclude_no_pair=False, hmm_probs=True)
     lower_features = lower_reader.getStableUnstableFailureFeatures(group_name="inefficient",
                                                                    success_failure=True,
-                                                                   mod="skill_personal_perception_action_impact",
-                                                                   with_control=True, timepoint=True)
-    lower_features["group"] = "inefficient"
+                                                                   mod="skill_personal_perception_action_impact_ecg_me_other",
+                                                                   with_control=True, timepoint=True, min_group_n=n)
+
     # efficient group
     upper_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_SUMMARY_FEATURES_PATH,
                                               file_summary_path=DOUBLE_SUMMARY_FILE_PATH,
                                               include_subjects=upper_group, exclude_failure=True,
                                               exclude_no_pair=False, hmm_probs=True)
     upper_features = upper_reader.getStableUnstableFailureFeatures(group_name="efficient", success_failure=True,
-                                                                   mod="skill_personal_perception_action_impact",
-                                                                   with_control=True, timepoint=True)
+                                                                   mod="skill_personal_perception_action_impact_ecg_me_other",
+                                                          with_control=True, timepoint=True, min_group_n=n)
+    lower_features["group"] = "inefficient"
     upper_features["group"] = "efficient"
 
     df = pd.concat([lower_features, upper_features])
@@ -188,18 +135,28 @@ if __name__ == '__main__':
         # plt.show()
 
         if hitter:
-            subjects = clean_df["hitter"]
-            clean_df.loc[:, "th_segments"] = clean_df["hitter_timepoint"] / 100
+            clean_df.loc[:, "th_segments"] = clean_df["hitter_timepoint"]/100
         else:
-            subjects = clean_df["receiver"]
-            clean_df.loc[:, "th_segments"] = clean_df["receiver_timepoint"] / 100
 
-        subjects_idx, subjects_unique = pd.factorize(subjects)
+            clean_df.loc[:, "th_segments"] = clean_df["receiver_timepoint"]/100
 
-        coords = {"subject_idx": subjects_unique, "obs": range(len(clean_df[feature])),
+        hitters = clean_df["hitter"]
+        receivers = clean_df["receiver"]
+        subjects_idx = np.unique(np.concatenate([clean_df["receiver"].values, clean_df["hitter"].values]))#
+        sessions_idx = np.unique(clean_df["session"])
+
+        hitters_idx = np.searchsorted(subjects_idx, hitters)
+
+        receivers_idx = np.searchsorted(subjects_idx, receivers)
+
+        session_idx = np.searchsorted(sessions_idx, clean_df["session"])
+
+        coords = {"subject_idx": subjects_idx,
+                  "session_idx": sessions_idx,
+                  "obs": range(len(clean_df[feature])),
                   "group": ["inefficient", "efficient"]}
 
-        model = CenteredModel(coords, clean_df, subjects_idx, feature, n, bin, hitter=hitter)
+        model = CenteredModel(coords, clean_df, hitters_idx, receivers_idx, session_idx, feature, n, bin, hitter=hitter)
 
         with model:
             print(model.debug())
@@ -208,8 +165,8 @@ if __name__ == '__main__':
 
             idata.extend(
                 pm.sample(random_seed=100, target_accept=TARGET_ACC, idata_kwargs={"log_likelihood": True},
-                          draws=2000,
-                          chains=N_CHAINS, tune=3000, cores=N_CORE, compile_kwargs=dict(mode="NUMBA"))
+                          draws=N_SAMPLES,
+                          chains=N_CHAINS, tune=N_TUNE, cores=N_CORE, compile_kwargs=dict(mode="NUMBA"))
             )
             idata.extend(pm.sample_posterior_predictive(idata))
 
@@ -228,6 +185,10 @@ if __name__ == '__main__':
               .to_series()
               .plot(kind="barh"))
         plt.savefig(DOUBLE_RESULTS_PATH_LONGITUDINAL + image_name + feature + "_" + str(n) + ".png")
+        plt.close()
+
+        hierarchical_loo = az.plot_ppc(idata)
+        plt.savefig(DOUBLE_RESULTS_PATH_LONGITUDINAL  +  image_name + feature + "_ppc.png", format='png')
         plt.close()
 
     del model

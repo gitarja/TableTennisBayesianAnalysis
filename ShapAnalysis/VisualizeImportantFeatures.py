@@ -86,8 +86,8 @@ def plotSHAP(shap_values, x, all_columns, columns, results_path="", prefix="", a
 
             ymin, ymax = ax.get_yaxis().get_view_interval()
             ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-            # y_ticks = np.arange(ymin, ymax, (ymax - ymin) / 3)
-            # ax.set_yticks(y_ticks)
+            y_ticks = np.arange(ymin, ymax, (ymax - ymin) / 3)
+            ax.set_yticks(y_ticks)
 
             ax.tick_params(axis='x', labelsize=25)
             ax.tick_params(axis='y', labelsize=25)
@@ -100,7 +100,7 @@ shap_results = np.load("Results\\Final2\\Full-model\\" + label + "_shap.npy")
 xval_results = pd.read_pickle("Results\\Final2\\Full-model\\" + label + "_xval.pkl")
 
 results_path = os.path.join(
-    "F:\\users\\prasetia\\Personal-OneDrive\\OneDrive\\ExperimentResults\\DoubleTennis\\Final\\", label)
+    "F:\\users\\prasetia\\Personal-OneDrive\\OneDrive\\ExperimentResults\\DoubleTennis\\Final2\\", label)
 
 # important_features = np.asarray([
 #     "receiver_im_ball_updown",
@@ -128,22 +128,11 @@ results_path = os.path.join(
 
 important_features = np.asarray([
     "p1_al_prec_sim",
-    "distance_eye_hand_sim",
-    "p1_al_prec_mean",
-    "p2_al_mag_sim",
-    "p2_cs_sim",
-    "p3_fx_du_sim",
-    "p2_cs_mean",
-    "p2_al_mag_mean",
-    "ec_start_fs_sim",
     "p1_cs_mean",
-    "p1_al_mag_mean",
-    "im_racket_ball_wrist_mean",
-    "p2_al_onset_sim",
-    "fixation_racket_latency_sim",
-    "height_sim",
+    "p1_al_prec_mean",
 
-]).reshape((3, 5))
+
+]).reshape((3, 1))
 
 
 
@@ -171,11 +160,13 @@ important_features = np.asarray([
 #
 # ]).reshape((4, 5))
 
-fig, axs = plt.subplots(nrows=3, ncols=5, constrained_layout=True)
+
+
+fig, axs = plt.subplots(nrows=3, ncols=3, constrained_layout=True)
 plotSHAP(shap_values=shap_results, x=xval_results, all_columns=xval_results.columns.values.tolist(),
-         columns=important_features, results_path=results_path, alpha=0.5, dot_size=120, axes=axs)
+         columns=important_features, results_path=results_path, alpha=1., dot_size=130, axes=axs)
 sns.despine(fig=fig)
 
-fig.set_size_inches(30.5, 22.5)
+fig.set_size_inches(22.5, 22.5)
 plt.savefig(results_path + "\\important_features2.pdf", format='pdf', transparent=True, bbox_inches='tight')
 plt.close()

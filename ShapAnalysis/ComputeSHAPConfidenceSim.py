@@ -14,9 +14,7 @@ import matplotlib.pyplot as plt
 from shap.utils._legacy import LogitLink
 
 if __name__ == '__main__':
-    def normalizeShap(arr):
-        scaled_arr = arr / np.max(np.abs(arr))
-        return scaled_arr
+
 
 
     def trainXGB(X, y):
@@ -35,22 +33,24 @@ if __name__ == '__main__':
 
         params = {
             "device": "cuda:0",
-            "learning_rate": 0.01,
             "objective": "binary:logistic",
-            "subsample": .75,
+            "eval_metric": "logloss",
+
+            "learning_rate": 0.02,
+            "subsample": 1.,
             "max_depth": 3,
-            "eval_metric": "aucpr",
-            "alpha": .25,
+            "alpha": .05,
             "min_child_weight": 3,
+            "max_delta_step": 3,
+
         }
         model = xgboost.train(
             params,
             d_train,
-            5000,
+            100,
             evals=[(d_val, "val")],
             verbose_eval=False,
             early_stopping_rounds=50,
-            num_boost_round=100
         )
 
         return model
@@ -72,9 +72,11 @@ upper_reader = ImpressionFeatures(file_path=DOUBLE_SUMMARY_FEATURES_PATH,
                                   exclude_no_pair=True)
 
 label = "all_lower_upper"
-lower_features = lower_reader.getImpressionFeatures(group="lower", mod="skill_personal_perception_action_impact")
+# mod = "skill_personal_perception_action_impact_ecg_me"
+mod = "skill_personal_perception_action_impact_ecg_me"
+lower_features = lower_reader.getImpressionFeatures(group="lower", mod=mod)
 
-upper_features = upper_reader.getImpressionFeatures(group="upper", mod="skill_personal_perception_action_impact")
+upper_features = upper_reader.getImpressionFeatures(group="upper", mod=mod)
 
 X_lower = lower_features.loc[:, lower_features.columns != 'labels']
 y_lower = lower_features["labels"].values
@@ -99,14 +101,14 @@ bootstrap_results = np.zeros((n_booststrap, n_column))  # times 3 for KFold
 index = 0
 
 shap_values_list = []
-kf = StratifiedKFold(n_splits=5, shuffle=True, random_state=1945)
+kf = StratifiedKFold(n_splits=3, shuffle=True, random_state=1945)
 for i, (train_index, test_index) in enumerate(kf.split(X, y)):
     X_train = X.iloc[train_index]
     X_test = X.iloc[test_index]
     y_train = y[train_index]
     y_test = y[test_index]
     model_perm = trainXGB(X_train, y_train)
-    explainer = CorrExplainer(model_perm.inplace_predict, X, sampling="gauss+empirical",
+    explainer = CorrExplainer(model_perm.inplace_predict, X_train, sampling="gauss+empirical",
                               link=LogitLink())
     for j in range(n_booststrap):
         resample_idx = np.random.choice(range(X_test.shape[0]), size=X_test.shape[0], replace=True)
@@ -115,6 +117,6 @@ for i, (train_index, test_index) in enumerate(kf.split(X, y)):
         shap_values_list.append(shap_values)
 
 # normalize SHAP
-all_shap_values = normalizeShap(np.concatenate(shap_values_list))
+all_shap_values = np.concatenate(shap_values_list)
 
 np.save("Results\\" + label + "_bootstrap_shap.npy", all_shap_values)

@@ -59,13 +59,16 @@ def trainXGB(X, y, search_params=False):
 
         params = {
             "device": "cuda:0",
-            "learning_rate": 0.01,
             "objective": "binary:logistic",
-            "subsample": .75,
-            "max_depth": 5,
-            "eval_metric": "aucpr",
-            "alpha": .3,
+            "eval_metric": "logloss",
+
+            "learning_rate": 0.03,
+            "subsample": 1.,
+            "max_depth": 3,
+            "alpha": .05,
             "min_child_weight": 3,
+            "max_delta_step": 3,
+
         }
 
         model = xgboost.train(
@@ -126,13 +129,14 @@ if __name__ == '__main__':
                                       exclude_no_pair=True)
 
     label = "all_lower_upper"
-    mode = "skill_personal_perception_action_impact_ecg"
+    # mode = "skill_personal_perception_action_impact_ecg_me"
+    mod = "top-1"
     lower_features, skill_lower = lower_reader.getImpressionFeatures(group="lower",
-                                                                     mod=mode,
+                                                                     mod=mod,
                                                                      return_group_skill=True)
 
     upper_features, skill_upper = upper_reader.getImpressionFeatures(group="upper",
-                                                                     mod=mode,
+                                                                     mod=mod,
                                                                      return_group_skill=True)
 
     X_lower = lower_features.loc[:, lower_features.columns != 'labels']
@@ -167,8 +171,9 @@ if __name__ == '__main__':
     acc_list = []
 
     correct_classification_idx = np.zeros((len(y)))
-    kf = StratifiedKFold(n_splits=3, shuffle=True, random_state=1945)
     N_BOOST = 50
+    kf = StratifiedKFold(n_splits=3, shuffle=True, random_state=1945)
+
     for k in tqdm(range(N_BOOST)):
         y_test_list = []
         pred_bin_list = []

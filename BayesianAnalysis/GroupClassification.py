@@ -79,7 +79,7 @@ def outliersLabeling(X, y):
     post = az.extract(idata.posterior)
     preds = post["intercept"] + post["slope"] * xr.DataArray(X)
 
-    std = np.std(preds, axis=0) * 0.75 # ref https://doi.org/10.1109/TIP.2008.926150
+    std = np.std(preds, axis=0) * 0.0 # ref https://doi.org/10.1109/TIP.2008.926150
     mean = np.average(preds, axis=0)
 
     # print(mean)
@@ -96,24 +96,24 @@ def outliersLabeling(X, y):
     # labels[ (y > mean)] = 1 # upper
     # labels[ (y < mean)] = 0 #  lower
 
-    # # show the linear reg
-    # plt.rcParams["text.usetex"] = True
-    # plt.rcParams["font.family"] = "Arial"
-    # plt.rcParams['font.size'] = 20
-    #
-    # plt.plot(X, mean, color="#636363")
-    # sortedX_idx = np.argsort(X)
-    # plt.fill_between(X[sortedX_idx], mean[sortedX_idx] - std[sortedX_idx], mean[sortedX_idx] + std[sortedX_idx], alpha=.15, color="#377eb8")
-    #
-    # print(np.sum(labels==3))
-    # print(np.sum(labels == 0))
-    # print(np.sum(labels == 1))
-    #
-    # plt.scatter(X[labels == 0], y[labels == 0], label="overestimate", color="#B5152C", s=50, edgecolors="#636363", linewidths=0.5)
-    # plt.scatter(X[labels == 1], y[labels == 1], label="underestimate", color="#68a880", s=50, edgecolors="#636363", linewidths=0.5)
-    #
-    #
-    # plt.show()
+    # show the linear reg
+    plt.rcParams["text.usetex"] = True
+    plt.rcParams["font.family"] = "Arial"
+    plt.rcParams['font.size'] = 20
+
+    plt.plot(X, mean, color="#636363")
+    sortedX_idx = np.argsort(X)
+    plt.fill_between(X[sortedX_idx], mean[sortedX_idx] - std[sortedX_idx], mean[sortedX_idx] + std[sortedX_idx], alpha=.15, color="#377eb8")
+
+    print(np.sum(labels==3))
+    print(np.sum(labels == 0))
+    print(np.sum(labels == 1))
+
+    plt.scatter(X[labels == 0], y[labels == 0], label="overestimate", color="#B5152C", s=50, edgecolors="#636363", linewidths=0.1)
+    plt.scatter(X[labels == 1], y[labels == 1], label="underestimate", color="#68a880", s=50, edgecolors="#636363", linewidths=0.1)
+
+
+    plt.show()
 
 
     return labels

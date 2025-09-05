@@ -32,33 +32,49 @@ if __name__ == '__main__':
                                                   include_subjects=efficient_group, exclude_failure=True,
                                                   exclude_no_pair=False, hmm_probs=True)
 
-    inefficient_features = inefficient_reader.getStableUnstableFailureFeatures(group_name="inefficient",
-                                                                               success_failure=True,
-                                                                               mod="ecg",
-                                                                               with_control=True)
+    inefficient_features = inefficient_reader.getSingleDoubleFeatures()
     inefficient_features["group"] = "inefficient"
     # efficient group
 
-    efficient_features = efficient_reader.getStableUnstableFailureFeatures(group_name="efficient", success_failure=True,
-                                                                           mod="ecg",
-                                                                           with_control=True)
+    efficient_features = efficient_reader.getSingleDoubleFeatures()
     efficient_features["group"] = "efficient"
 
     df = pd.concat([inefficient_features, efficient_features])
 
-
     features = [
 
-        "rr_sim",
-    ]
-    efficient_mean_list = []
-    inefficient_mean_list = []
-    efficient_hdi_list = []
-    inefficient_hdi_list = []
-    effect_size_mean_list = []
-    effect_size_hdi_list = []
-    features_list = []
+        "v_hitter_p1_cs",
+        "v_hitter_p1_al_onset",
+        "v_hitter_p1_al_prec",
+        "v_hitter_p1_al_mag",
+        "v_receiver_p1_al_onset",
+        "v_receiver_p1_al_prec",
+        "v_receiver_p1_al_mag",
+        "v_receiver_p1_cs",
+        "v_start_fs",
+        "v_bounce_point",
+        "v_spatial_use",
+        "v_hitter_p2_al_onset",
+        "v_hitter_p2_al_prec",
+        "v_hitter_p2_al_mag",
+        "v_hitter_p2_cs",
+        "v_hitter_p3_fx_onset",
+        "v_hitter_p3_fx_duration",
+        "v_receiver_p2_al_onset",
+        "v_receiver_p2_al_prec",
+        "v_receiver_p2_al_mag",
+        "v_receiver_p2_cs",
+        "v_receiver_p3_fx_onset",
+        "v_receiver_p3_fx_duration",
+        "v_fixation_racket_latency",
+        "v_distance_eye_han",
+        "v_im_ball_wrist",
+        "v_im_racket_ball_wrist",
+        "v_im_racket_ball_angle",
+        "v_im_ball_updown",
+        "lfhf_sim"
 
+    ]
     for f in features:
         print(f)
         analyzed_features = f
@@ -68,72 +84,72 @@ if __name__ == '__main__':
         mean_ori = np.nanmean(clean_df[analyzed_features].values.reshape(-1, 1))
         std_ori = np.nanstd(clean_df[analyzed_features].values.reshape(-1, 1))
 
-
-
         # standarized features (do not do it for numbers)
         scaler = StandardScaler()
         average_scaled = scaler.fit_transform(clean_df[analyzed_features].values.reshape(-1, 1))
         clean_df[analyzed_features] = average_scaled.flatten()
 
+        # az.plot_dist(clean_df[analyzed_features].values)
+        # plt.show()
+
+        subjects_idx = np.unique(np.concatenate([clean_df["id_subject"].values, clean_df["id_partner"].values]))
+        # factorize subjects
+        ineff_subjects_idx = np.searchsorted(subjects_idx,
+                                               clean_df.loc[clean_df["group"] == "inefficient"]["id_subject"].values)
+        eff_subjects_idx = np.searchsorted(subjects_idx,
+                                               clean_df.loc[clean_df["group"] == "efficient"]["id_subject"].values)
 
 
 
-        az.plot_dist(clean_df[analyzed_features], rug=True)
-        plt.show()
+        # factorize partner
+        ineff_partners_idx = np.searchsorted(subjects_idx,
+                                               clean_df.loc[clean_df["group"] == "inefficient"]["id_partner"].values)
 
 
+        eff_partners_idx =np.searchsorted(subjects_idx,
+                                               clean_df.loc[clean_df["group"] == "efficient"]["id_partner"].values)
 
-        # for skills and personal and ecg
-        ineff_subjects_idx, ineff_subjects_unique = pd.factorize(
-            clean_df.loc[clean_df["group"] == "inefficient"].groupby("session")["receiver"].last())
-        eff_subjects_idx, eff_subjects_unique = pd.factorize(
-            clean_df.loc[clean_df["group"] == "efficient"].groupby("session")["receiver"].last())
 
 
 
         mu_m = clean_df[analyzed_features].mean()
         mu_s = clean_df[analyzed_features].std() * 2
 
+        # for others predictor
+        inefficient_obv = clean_df.loc[clean_df["group"] == "inefficient"][analyzed_features].values
+        efficient_obv = clean_df.loc[clean_df["group"] == "efficient"][analyzed_features].values
 
-        # for skills and personal and ecg
-        inefficient_obv = clean_df.loc[clean_df["group"] == "inefficient"].groupby("session")[
-            analyzed_features].mean().values
-        efficient_obv = clean_df.loc[clean_df["group"] == "efficient"].groupby("session")[
-            analyzed_features].mean().values
+        coords = {
+            # subjects id
+            "subject_idx": subjects_idx,
 
-        coords = {"ineff_subject_idx": ineff_subjects_unique, "eff_subject_idx": eff_subjects_unique,
                   "components": range(2)}
 
-        sigma_low = 10 ** -1
-        sigma_high = 10
+
         with pm.Model(coords=coords) as model:  # model specifications in PyMC3 are wrapped in a with-statement
-
-            # number
-
-            # ineff_subjects_intercept = pm.TruncatedNormal("ineff_subjects_intercept", 0, 0.1, lower=0, dims="ineff_subject_idx")
-            # eff_subjects_intercept = pm.TruncatedNormal("eff_subjects_intercept", 0, 0.1, lower=0,  dims="eff_subject_idx")
-            # inefficient_mean = pm.TruncatedNormal('inefficient_mean', mu=0, sigma=1, lower=0)
-            # efficient_mean = pm.TruncatedNormal('efficient_mean', mu=0, sigma=1, lower=0)
-            # inefficient_std = inefficient_mean
-            # efficient_std = efficient_mean
-            #
-            # inefficient = pm.Poisson("inefficient",
-            #                          mu=inefficient_mean + ineff_subjects_intercept[ineff_subjects_idx],
-            #                          observed=inefficient_obv)
-            # efficient = pm.Poisson("efficient",
-            #                        mu=efficient_mean + eff_subjects_intercept[eff_subjects_idx],
-            #                        observed=efficient_obv )
 
             # continous
 
             # random intercept
-            ineff_subjects_intercept = pm.Normal("ineff_subjects_intercept", 0, 0.1, dims="ineff_subject_idx")
-            eff_subjects_intercept = pm.Normal("eff_subjects_intercept", 0, 0.1, dims="eff_subject_idx")
-            inefficient_mean = pm.Normal('inefficient_mean', mu=mu_m, sigma=mu_s)
-            efficient_mean = pm.Normal('efficient_mean', mu=mu_m, sigma=mu_s)
+            subjects_subject_intercept = pm.Normal("subjects_subject_intercept", 0, 0.1, dims="subject_idx")
 
-            inefficient_std = pm.Uniform("inefficient_std", lower=sigma_low, upper=sigma_high)
-            efficient_std = pm.Uniform("efficient_std", lower=sigma_low, upper=sigma_high)
+
+
+
+            inefficient_mean = pm.Normal('inefficient_mean', mu=mu_m, sigma=1)
+            efficient_mean = pm.Normal('efficient_mean', mu=mu_m, sigma=1)
+
+            inefficient_std = pm.HalfCauchy("inefficient_std", 1.0)
+            efficient_std = pm.HalfCauchy("efficient_std", 1.0)
+            inefficient_latent = pm.Deterministic("iefficient_latent", inefficient_mean
+                                                  + (
+                                                          subjects_subject_intercept[ineff_subjects_idx] +
+                                                          subjects_subject_intercept[ineff_partners_idx]) / 2)
+
+            efficient_latent = pm.Deterministic("efficient_latent", efficient_mean
+                                                + (
+                                                        subjects_subject_intercept[eff_subjects_idx] +
+                                                        subjects_subject_intercept[eff_partners_idx]) / 2)
 
             nu_minus_one = pm.Exponential("nu_minus_one", 1 / 29.0)
             nu = pm.Deterministic("nu", nu_minus_one + 1)
@@ -142,22 +158,21 @@ if __name__ == '__main__':
             lambda_1 = efficient_std ** -2
             lambda_2 = inefficient_std ** -2
             inefficient = pm.StudentT("inefficient", nu=nu,
-                                      mu=inefficient_mean + ineff_subjects_intercept[ineff_subjects_idx], lam=lambda_2,
+                                      mu=inefficient_latent, lam=lambda_2,
                                       observed=inefficient_obv)
-            efficient = pm.StudentT("efficient", nu=nu, mu=efficient_mean + eff_subjects_intercept[eff_subjects_idx],
+            efficient = pm.StudentT("efficient", nu=nu, mu=efficient_latent,
                                     lam=lambda_1, observed=efficient_obv)
 
-
-
-
-
             # means difference and others
-
             diff_of_means = pm.Deterministic("difference_of_means", efficient_mean - inefficient_mean)
             diff_of_stds = pm.Deterministic("difference_of_stds", efficient_std - inefficient_std)
             effect_size = pm.Deterministic(
                 "effect_size", diff_of_means / np.sqrt((inefficient_std ** 2 + efficient_std ** 2) / 2)
             )
+
+            diff_of_eff_subs = pm.Deterministic("diff_of_eff_subs", subjects_subject_intercept[eff_subjects_idx] - subjects_subject_intercept[eff_partners_idx])
+            diff_of_ineff_subs = pm.Deterministic("diff_of_ineff_subs", subjects_subject_intercept[ineff_subjects_idx] -
+                                                subjects_subject_intercept[ineff_partners_idx])
 
             # debug and sampling
         with model:
@@ -173,23 +188,17 @@ if __name__ == '__main__':
             )
             idata.extend(pm.sample_posterior_predictive(idata))
 
-
         # print loo
-        hierarchical_loo = az.plot_ppc(idata, kind='cumulative')
-        plt.savefig(DOUBLE_RESULTS_PATH_TTEST + "PPC\\" + analyzed_features + ".png", format='png')
+        hierarchical_loo = az.plot_ppc(idata)
+        plt.savefig(DOUBLE_RESULTS_PATH_TTEST + "PPC_supp\\" + analyzed_features + "_mean.png", format='png')
         plt.close()
-
 
         trace_post = az.extract(idata.posterior)
 
-
-
         # save the model
-        with open(DOUBLE_RESULTS_PATH_TTEST + "model\\" + "idata_" + analyzed_features + ".pkl", 'wb') as handle:
+        with open(DOUBLE_RESULTS_PATH_TTEST + "model_supp\\" + "idata_" + analyzed_features + "_mean.pkl", 'wb') as handle:
             print("write data into: " + "idata_ttest_" + analyzed_features + ".pkl")
             pickle.dump(idata, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-
 
         del model
         del idata

@@ -54,8 +54,8 @@ def groupLabeling():
     # upper_group = group_label[upper_idx]
     # lower_group = group_label[lower_idx]
 
-    lower_group = np.load(os.path.join(DOUBLE_GROUPS_FILE_PATH, "lower_group_5std.npy"))
-    upper_group = np.load(os.path.join(DOUBLE_GROUPS_FILE_PATH, "upper_group_5std.npy"))
+    lower_group = np.load(os.path.join(DOUBLE_GROUPS_FILE_PATH, "lower_group_0std.npy"))
+    upper_group = np.load(os.path.join(DOUBLE_GROUPS_FILE_PATH, "upper_group_0std.npy"))
 
     print(len(lower_group))
     print(len(upper_group))

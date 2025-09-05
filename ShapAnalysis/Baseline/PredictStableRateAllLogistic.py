@@ -1,34 +1,26 @@
 import os
 
 os.environ['OMP_NUM_THREADS'] = '8'
-# This must happen before pymc is imported, so you might
-# need to restart the kernel for it to take effect.
+from Utils.GroupClassification import groupLabeling
+import numpy as np
+from Utils.Conf import DOUBLE_SUMMARY_FEATURES_PATH, DOUBLE_SUMMARY_FILE_PATH
+from Double.GlobalFeaturesReader import ImpressionFeatures
+import xgboost
+from sklearn.metrics import matthews_corrcoef, confusion_matrix, f1_score, roc_auc_score, auc, balanced_accuracy_score, \
+    make_scorer, precision_recall_curve
+from imblearn.metrics import geometric_mean_score
+from sklearn.model_selection import StratifiedKFold, train_test_split, GridSearchCV, RepeatedStratifiedKFold
 import pandas as pd
 
-import sys
-
-sys.path.append(os.path.dirname(__file__))
-import numpy as np
-
-from Double.GlobalFeaturesReader import GlobalFeaturesReader, GlobalDoubleFeaturesReader
-from Utils.Conf import DOUBLE_SUMMARY_FILE_PATH
-from sklearn.model_selection import StratifiedKFold, train_test_split, GridSearchCV, KFold
-from Utils.Conf import DOUBLE_FEATURES_FILE_PATH
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import matthews_corrcoef, confusion_matrix, f1_score, roc_curve, auc, balanced_accuracy_score, \
-    make_scorer, average_precision_score, precision_recall_curve
-import matplotlib.pyplot as plt
-from imblearn.metrics import geometric_mean_score
-
-from Utils.GroupClassification import groupClassifcation, groupLabeling
-
+import optuna
+from sklearn.model_selection import cross_val_score
 from sklearn.impute import KNNImputer
 from imblearn.under_sampling import CondensedNearestNeighbour
+from sklearn.linear_model import LogisticRegression
+
+np.random.seed(1945)  # For Replicability
 
 
-def normalizeShap(arr):
-    scaled_arr = arr / np.max(np.abs(arr))
-    return scaled_arr
 
 
 def trainModel(X, y, search_params=False):
@@ -40,131 +32,130 @@ def trainModel(X, y, search_params=False):
         'Balanced_Accuracy': 'balanced_accuracy'
     }
 
+    X_train, X_val, y_train, y_val = train_test_split(
+        X, y, test_size=0.1, random_state=1945, stratify=y)
+
     if search_params:
 
-        params = {
-            'C': [.3, .5, .7, 1],
-        }
 
-        skf = StratifiedKFold(n_splits=3, shuffle=True, random_state=1945)
 
-        model = LogisticRegression(random_state=0, solver="liblinear", class_weight="balanced")
-        grid_search = GridSearchCV(model, param_grid=params, scoring=scoring, refit="MCC", n_jobs=4,
-                                   cv=skf.split(X, y), verbose=3)
 
-        grid_search.fit(X, y)
-        print(grid_search.best_score_)
-        print(grid_search.best_params_)
+        def objective(trial):
+            params = {
+
+                "class_weight": "balanced", "solver" : "liblinear",
+                "tol": trial.suggest_float("tol", 0.01, 1),
+                "C": trial.suggest_float("C", 0.5, 10),
+                "max_iter" : 1000
+
+            }
+
+            model = LogisticRegression(**params)
+            score = cross_val_score(model, X_train, y_train, cv=3, scoring="accuracy").mean()
+            return score
+
+        study = optuna.create_study(direction="maximize")
+        study.optimize(objective, n_trials=100)
+
+        print("Best params:", study.best_params)
         exit()
 
     else:
 
-        # train more for 0 class
-        failure_idx = np.argwhere(y == 0).flatten()
-        success_idx = np.argwhere(y == 1).flatten()
-
-        resample_success_idx = np.random.choice(range(len(success_idx)), size=int(len(success_idx) * .45),
-                                                replace=True)
-
-        X_success = X[resample_success_idx]
-        y_success = y[resample_success_idx]
-
-        X_failure = X[failure_idx]
-        y_failure = y[failure_idx]
-
-        X = np.concatenate([X_success, X_failure])
-        y = np.concatenate([y_success, y_failure])
-
-        model = LogisticRegression(random_state=0, class_weight="balanced", C=1, solver="liblinear").fit(X, y)
+        model = LogisticRegression(random_state=0, tol=0.10332172197769018, C=7.423715585041371, max_iter=10000, class_weight="balanced", solver="liblinear").fit(X, y)
 
     return model
 
 
 def evaluateModel(model, X_test, y_test):
     y_pred = model.predict_proba(X_test)[:, 1]
-    predictions = [round(value) for value in y_pred]
-    mcc = matthews_corrcoef(y_test, predictions)
-    cm = confusion_matrix(y_test, predictions, normalize="true")
-    acc = balanced_accuracy_score(y_test, predictions)
-    fpr, tpr, thresholds = roc_curve(y_test, y_pred, pos_label=1)
-
-    precision, recall, _ = precision_recall_curve(1 - y_test, 1 - y_pred)
-
-    # Calculate the AUC-PR
-    auc_pr = auc(recall, precision)
-
-    f1 = f1_score(y_test, predictions, average='weighted')
-
-    g_mean = geometric_mean_score(y_test, predictions)
-
-    print("AUC", auc_pr)
-    print("MCC", mcc)
-    print("ACC", acc)
-    print("-------------------------")
-    return mcc, cm, acc, auc_pr, f1, g_mean
+    predictions = [1 if value >= 0.5 else 0 for value in y_pred]
 
 
-np.random.seed(1945)  # For Replicability
-inefficient_group, efficient_group = groupLabeling()
-all_groups = np.concatenate([inefficient_group, efficient_group])
-label = "all_af"
+    return predictions, y_pred
 
-kf = KFold(n_splits=5, shuffle=True, random_state=1954)
-auc_list = []
-acc_list = []
-mcc_list = []
-cm_list = []
+
+
+
+lower_group, upper_group = groupLabeling()
+
+# lower group
+lower_reader = ImpressionFeatures(file_path=DOUBLE_SUMMARY_FEATURES_PATH,
+                                  file_summary_path=DOUBLE_SUMMARY_FILE_PATH,
+                                  include_subjects=lower_group, exclude_failure=False,
+                                  exclude_no_pair=True)
+# upper group
+upper_reader = ImpressionFeatures(file_path=DOUBLE_SUMMARY_FEATURES_PATH,
+                                  file_summary_path=DOUBLE_SUMMARY_FILE_PATH,
+                                  include_subjects=upper_group, exclude_failure=False,
+                                  exclude_no_pair=True)
+
+label = "all_lower_upper"
+mod = "skill_personal_perception_action_impact_ecg_me"
+
+lower_features, skill_lower = lower_reader.getImpressionFeatures(group="lower",
+                                                                 mod=mod,
+                                                                 return_group_skill=True)
+
+upper_features, skill_upper = upper_reader.getImpressionFeatures(group="upper",
+                                                                 mod=mod,
+                                                                 return_group_skill=True)
+
+X_lower = lower_features.loc[:, lower_features.columns != 'labels']
+y_lower = lower_features["labels"].values
+
+X_upper = upper_features.loc[:, upper_features.columns != 'labels']
+y_upper = upper_features["labels"].values
+
+X = pd.concat([X_lower, X_upper])
+y = np.concatenate([y_lower, y_upper])
+
+print(X.columns.__len__())
+# group_skill = np.concatenate([skill_lower, skill_upper])
+# individual_skill = X["subject_skill"].values
+
+# plt.scatter(individual_skill, group_skill)
+# plt.show()
+print(np.average(y == 1))
+print(np.average(y == 0))
+
+# search params
+# model = trainModel(X, y, search_params=True)
+
 shap_values_list = []
 X_test_list = []
-for i, (train_index, test_index) in enumerate(kf.split(all_groups)):
-    train_subjects = all_groups[train_index]
-    test_subjects = all_groups[test_index]
+y_test_list = []
+pred_bin_list = []
+y_pred_list = []
+correct_classification_idx = np.zeros((len(y)))
+kf = StratifiedKFold(n_splits=3, shuffle=True, random_state=1945)
 
-    train_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_FEATURES_FILE_PATH,
-                                              file_summary_path=DOUBLE_SUMMARY_FILE_PATH,
-                                              exclude_failure=False, exclude_no_pair=True, hmm_probs=True,
-                                              include_subjects=train_subjects)
+for i, (train_index, test_index) in enumerate(kf.split(X, y)):
+    X_train = X.iloc[train_index].values
+    X_test = X.iloc[test_index].values
+    y_train = y[train_index]
+    y_test = y[test_index]
 
-    train_features = train_reader.getStableUnstableFailureFeatures(group_name="train_subjects", success_failure=True,
-                                                                   mod="full_mode")
-
-    test_reader = GlobalDoubleFeaturesReader(file_path=DOUBLE_FEATURES_FILE_PATH,
-                                             file_summary_path=DOUBLE_SUMMARY_FILE_PATH,
-                                             exclude_failure=False, exclude_no_pair=True, hmm_probs=True,
-                                             include_subjects=test_subjects)
-
-    test_features = test_reader.getStableUnstableFailureFeatures(group_name="test_subjects",
-                                                                 success_failure=True,
-                                                                 mod="full_mode")
-
-
-    X_train = train_features.loc[:, train_features.columns != 'labels']
-    X_test = test_features.loc[:, test_features.columns != 'labels']
-    y_train = train_features["labels"].values
-    y_test = test_features["labels"].values
-
-    all_X = pd.concat([X_train, X_test])
-    imputer = KNNImputer(n_neighbors=5).fit(all_X)
-    X_train = imputer.transform(X_train)
-    X_test = imputer.transform(X_test)
-    # split data
-
-    # create baseline model and test it
     model = trainModel(X_train, y_train, search_params=False)
 
-    mcc, cm, acc, auc_score, f1, g_mean = evaluateModel(model, X_test, y_test)
-
-    auc_list.append(auc_score)
-    mcc_list.append(mcc)
-    acc_list.append(acc)
-    cm_list.append(np.expand_dims(cm, 0))
 
 
-print("%f, %f, %f, %f, %f, %f" % (
-    np.average(auc_list), np.std(auc_list), np.average(mcc_list), np.std(mcc_list), np.average(acc_list),
-    np.std(acc_list)))
+    # model evaluation
+    pred_bin, y_pred = evaluateModel(model, X_test, y_test)
 
-confusion_mat = np.concatenate(cm_list, axis=0)
+    pred_bin_list.append(pred_bin)
+    X_test_list.append(X_test)
+    y_test_list.append(y_test)
+    y_pred_list.append(y_pred)
 
-print(np.average(confusion_mat, axis=0))
-print(np.std(confusion_mat, axis=0))
+
+# compute metrics
+y_test_list = np.concatenate(y_test_list)
+pred_bin_list = np.concatenate(pred_bin_list)
+y_pred_list = np.concatenate(y_pred_list)
+mcc = matthews_corrcoef(y_test_list, pred_bin_list)
+cm = confusion_matrix(y_test_list, pred_bin_list, normalize="true")
+acc = balanced_accuracy_score(y_test_list, pred_bin_list)
+auc_pr = roc_auc_score(y_test_list, y_pred_list)
+
+print("%f, %f, %f" % (acc, mcc, auc_pr))

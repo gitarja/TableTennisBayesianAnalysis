@@ -8,19 +8,19 @@ import statsmodels.api as sm
 from sklearn.preprocessing import PolynomialFeatures
 from matplotlib.ticker import FormatStrFormatter
 from matplotlib import colors
-sns.set_theme()
-sns.set(font_scale=5)
-sns.set(font="Arial")
-sns.set_style("white")
-plt.rcParams["text.usetex"] = True
-plt.rcParams["font.family"] = "Arial"
-plt.rcParams['font.size'] = 30
+# sns.set_theme()
+# sns.set(font_scale=5)
+# sns.set(font="Arial")
+# sns.set_style("white")
+# plt.rcParams["text.usetex"] = True
+# plt.rcParams["font.family"] = "Arial"
+# plt.rcParams['font.size'] = 30
 
 
 def plotSummary(shap_values, x, columns, results_path="", prefix="",):
 
     columns_explanation = [features_explanation[c] for c in columns]
-    explanation = shap.Explanation(values=shap_values, data=x.values, feature_names=columns_explanation)
+    explanation = shap.Explanation(values=shap_values, data=x.values,  feature_names=columns_explanation)
     ax = shap.plots.beeswarm(explanation,  max_display=16, show=False, plot_size=(11.69,8.27), alpha=0.7)
     ax.set_xlim(-1, 1)
     # plt.show()
@@ -91,8 +91,9 @@ def plotSHAP(shap_values, x, columns, results_path="", prefix="", alpha=0.15, do
 
             ax.tick_params(axis='x', labelsize=25)
             ax.tick_params(axis='y', labelsize=25)
-            plt.savefig(results_path + "\\" + c + "_" + prefix + ".pdf", format='pdf', transparent=True)
-            plt.close()
+            plt.show()
+            # plt.savefig(results_path + "\\" + c + "_" + prefix + ".pdf", format='pdf', transparent=True)
+            # plt.close()
         except:
             print(c)
 

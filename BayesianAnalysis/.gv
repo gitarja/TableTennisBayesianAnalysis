@@ -1,101 +1,113 @@
 digraph {
-	subgraph cluster8710 {
-		higher [label="higher
-~
-Data" shape=box style="rounded, filled"]
-		mu [label="mu
+	subgraph "clusterobs (8603) x axis (2)" {
+		m_post [label="m_post
 ~
 Deterministic" shape=box]
-		control_skilled_variable [label="control_skilled_variable
+		y_a [label="y_a
+~
+Data" shape=box style="rounded, filled"]
+		b [label="b
+~
+Normal" shape=ellipse]
+		x [label="x
+~
+Data" shape=box style="rounded, filled"]
+		y_f [label="y_f
+~
+Data" shape=box style="rounded, filled"]
+		label="obs (8603) x axis (2)" labeljust=r labelloc=b style=rounded
+	}
+	subgraph "clustergroup_idx (2)" {
+		tau_sens [label="tau_sens
 ~
 Deterministic" shape=box]
-		observed [label="observed
-~
-Data" shape=box style="rounded, filled"]
-		prev_observed [label="prev_observed
-~
-Data" shape=box style="rounded, filled"]
-		lower [label="lower
-~
-Data" shape=box style="rounded, filled"]
-		label=8710 labeljust=r labelloc=b style=rounded
-	}
-	subgraph "clusterobs (8710)" {
-		growth_model [label="growth_model
-~
-Normal" shape=ellipse style=filled]
-		controlled_skill [label="controlled_skill
-~
-Data" shape=box style="rounded, filled"]
-		label="obs (8710)" labeljust=r labelloc=b style=rounded
-	}
-	global_skill_slope [label="global_skill_slope
-~
-Normal" shape=ellipse]
-	global_intercept [label="global_intercept
-~
-Normal" shape=ellipse]
-	sigma_lower [label="sigma_lower
-~
-HalfNormal" shape=ellipse]
-	global_higher_influenceActorPartner_diff [label="global_higher_influenceActorPartner_diff
+		tau_prior [label="tau_prior
 ~
 Deterministic" shape=box]
-	global_higher [label="global_higher
+		log_tau_sens [label="log_tau_sens
 ~
 Normal" shape=ellipse]
-	global_lower [label="global_lower
+		log_tau_prior [label="log_tau_prior
 ~
 Normal" shape=ellipse]
-	global_influenceActorPartner [label="global_influenceActorPartner
+		label="group_idx (2)" labeljust=r labelloc=b style=rounded
+	}
+	subgraph "clustergroup_idx (2) x axis (2)" {
+		mu_group [label="mu_group
 ~
 Normal" shape=ellipse]
-	global_lower_influenceActorPartner_diff [label="global_lower_influenceActorPartner_diff
+		label="group_idx (2) x axis (2)" labeljust=r labelloc=b style=rounded
+	}
+	subgraph "clustersubject_idx (74) x axis (2)" {
+		subject_intercept [label="subject_intercept
+~
+Normal" shape=ellipse]
+		label="subject_idx (74) x axis (2)" labeljust=r labelloc=b style=rounded
+	}
+	subgraph "clustersession_idx (64) x axis (2)" {
+		session_intercept [label="session_intercept
+~
+Normal" shape=ellipse]
+		label="session_idx (64) x axis (2)" labeljust=r labelloc=b style=rounded
+	}
+	tau_sens_diff [label="tau_sens_diff
 ~
 Deterministic" shape=box]
-	global_sigma [label="global_sigma
+	sigma_a [label="sigma_a
 ~
-HalfStudentT" shape=ellipse]
-	sigma_higher [label="sigma_higher
+HalfCauchy" shape=ellipse]
+	sigma_f [label="sigma_f
 ~
-HalfNormal" shape=ellipse]
-	subgraph "clusterturn_take_idx (2)" {
-		global_lower_influenceActorPartner [label="global_lower_influenceActorPartner
+HalfCauchy" shape=ellipse]
+	tau_prior_diff [label="tau_prior_diff
 ~
-Normal" shape=ellipse]
-		global_higher_influenceActorPartner [label="global_higher_influenceActorPartner
+Deterministic" shape=box]
+	nu [label="nu
 ~
-Normal" shape=ellipse]
-		label="turn_take_idx (2)" labeljust=r labelloc=b style=rounded
+Deterministic" shape=box]
+	nu_minus_one [label="nu_minus_one
+~
+Exponential" shape=ellipse]
+	subgraph "cluster8603 x 2" {
+		inefficient [label="inefficient
+~
+StudentT" shape=ellipse style=filled]
+		efficient [label="efficient
+~
+StudentT" shape=ellipse style=filled]
+		label="8603 x 2" labeljust=r labelloc=b style=rounded
 	}
-	subgraph "clustersubject_idx (70)" {
-		subjects_intercept_W [label="subjects_intercept_W
+	subgraph "clusterobs (8603)" {
+		prediction_error [label="prediction_error
 ~
-Normal" shape=ellipse]
-		subjects_intercept [label="subjects_intercept
+Deterministic" shape=box]
+		corrective_amp [label="corrective_amp
 ~
-Normal" shape=ellipse]
-		label="subject_idx (70)" labeljust=r labelloc=b style=rounded
+Deterministic" shape=box]
+		label="obs (8603)" labeljust=r labelloc=b style=rounded
 	}
-	growth_model -> observed
-	sigma_higher -> global_higher_influenceActorPartner
-	sigma_lower -> global_lower_influenceActorPartner
-	global_skill_slope -> control_skilled_variable
-	controlled_skill -> control_skilled_variable
-	higher -> mu
-	global_intercept -> mu
-	global_lower_influenceActorPartner -> mu
-	control_skilled_variable -> mu
-	global_higher_influenceActorPartner -> mu
-	global_higher -> mu
-	subjects_intercept -> mu
-	global_lower -> mu
-	global_influenceActorPartner -> mu
-	subjects_intercept_W -> mu
-	prev_observed -> mu
-	lower -> mu
-	mu -> growth_model
-	global_sigma -> growth_model
-	global_higher_influenceActorPartner -> global_higher_influenceActorPartner_diff
-	global_lower_influenceActorPartner -> global_lower_influenceActorPartner_diff
+	inefficient -> y_a
+	efficient -> y_f
+	log_tau_prior -> tau_prior
+	log_tau_sens -> tau_sens
+	subject_intercept -> b
+	mu_group -> b
+	session_intercept -> b
+	x -> m_post
+	tau_sens -> m_post
+	b -> m_post
+	tau_prior -> m_post
+	nu_minus_one -> nu
+	nu -> inefficient
+	sigma_a -> inefficient
+	b -> inefficient
+	nu -> efficient
+	sigma_a -> efficient
+	m_post -> efficient
+	y_f -> corrective_amp
+	y_a -> corrective_amp
+	b -> prediction_error
+	x -> prediction_error
+	tau_prior -> tau_prior_diff
+	tau_sens -> tau_sens_diff
 }

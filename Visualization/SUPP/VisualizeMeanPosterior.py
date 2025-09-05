@@ -55,39 +55,45 @@ def gedDF():
     return df
 
 
-feature_type = "t-test-shap-important"
+feature_type = "t-test"
 if feature_type == "t-test":
     features = [
-        "hitter_p2_cs",
-        "receiver_p2_cs",
-        "hitter_p1_cs",
-        "receiver_p1_cs",
-        "receiver_start_fs",
-        "receiver_im_racket_ball_wrist",
-        "hitter_bouncing_to_partner",
-        "receiver_distance_eye_hand",
-        "hitter_p2_al_onset",
-        "receiver_p2_al_prec",
-        "receiver_im_ball_updown",
-        "receiver_p1_al_mag",
-        "hitter_p1_al_prec",
-        "hitter_p1_al_mag",
-        "receiver_p2_al_onset",
-        "hitter_at_and_after_hit",
+        "receiver_p1_al_prec",
+        # "hitter_p2_cs",
+        # "receiver_p2_cs",
+        # "hitter_p1_cs",
+        # "receiver_p1_cs",
+        # "receiver_start_fs",
+        # "receiver_im_racket_ball_wrist",
+        # "hitter_bouncing_to_partner",
+        # "receiver_distance_eye_hand",
+        # "hitter_p2_al_onset",
+        # "receiver_p2_al_prec",
+        # "receiver_im_ball_updown",
+        # "receiver_p1_al_mag",
+        # "hitter_p1_al_prec",
+        # "hitter_p1_al_mag",
+        # "receiver_p2_al_onset",
+        # "hitter_at_and_after_hit",
 
     ]
-    height = len(features) * (6 / 10)
+    height = len(features) * (5 / 10)
 if feature_type == "t-test-mean":
     features = [
         "var_start_fs",
-
+        "var_receiver_p1_al_onset",
+        "var_spatial_use",
+        "var_hitter_p1_cs",
+        "var_hitter_p2_cs",
 
     ]
 if feature_type == "t-test-std":
     features = [
         "var_im_ball_updown",
         "var_im_racket_ball_wrist",
-
+        "var_hitter_p2_al_onset",
+        "var_hitter_p1_cs",
+        "var_receiver_p1_al_onset",
 
     ]
 if feature_type == "t-test-shap-important":
@@ -97,77 +103,53 @@ if feature_type == "t-test-shap-important":
         "im_racket_ball_wrist_mean",
         "im_racket_ball_angle_sim",
         "p1_al_prec_mean",
-        "p2_cs_mean",
         "me_whole_mean",
+        "p2_cs_mean",
         "p1_al_onset_mean",
         "p2_cs_sim",
         "im_racket_ball_angle_mean",
-        "ec_start_fs_sim",
         "ecg_lfhf_sim",
+        "ec_start_fs_sim",
         "p2_al_onset_mean",
         "im_ball_updown_sim",
         "me_whole_sim"
 
     ]
-    height = len(features) * (4.7 / 10)
-
-if feature_type == "t-test-insignificant":
-    features = [
-        "hitter_p1_al_onset",
-        "age_sim",
-        "receiver_p3_fx_duration",
-        "hitter_p2_al_mag",
-        "ecg_lfhf_sim",
-        "ecg_lfhf_mean",
-        "receiver_p2_al_mag",
-        "me_whole_sim",
-        "me_whole_mean",
-        "individual_skill_sim",
-        "receiver_p1_al_onset",
-        "hitter_fx_duration",
-        "receiver_im_racket_ball_angle",
-        "hitter_p2_al_prec",
-        "relationship",
-        "height_sim",
-        "receiver_p1_al_prec",
-        "individual_skill",
-
-    ]
-    height = len(features) * (4.5 / 10)
-if feature_type == "t-test-insignificant-gender":
-    features = ["gender_sim"]
-    height = 3 * (3.5 / 10)
-
+    height = len(features) * (3.95 / 10)
 means_effectient_list = []
 means_ineffecient_list = []
 for analyzed_features in features:
-    with open(DOUBLE_RESULTS_PATH_TTEST + "\\model_supp\\bc\\" + "idata_" + analyzed_features + "_study1.pkl", 'rb') as handle:
-    # with open(DOUBLE_RESULTS_PATH_TTEST + "\\model_final\\" + "idata_" + analyzed_features + ".pkl",
-    #               'rb') as handle:
+    with open(DOUBLE_RESULTS_PATH_TTEST + "\\model_final\\" + "idata_" + analyzed_features + ".pkl", 'rb') as handle:
         idata = pickle.load(handle)
 
     trace_post = az.extract(idata.posterior)
-    #for j in range(3):
+
     mean_effecient = trace_post['efficient_mean'].data.flatten()
     mean_ineffecient = trace_post['inefficient_mean'].data.flatten()
-    means_effectient_list.append(np.median(mean_effecient))
-    means_ineffecient_list.append(np.median(mean_ineffecient))
 
-# height = len(features) * (2.5 / 10)
-y = np.arange(len(means_effectient_list), 0, -1)
-plt.rcParams["figure.figsize"] = (3, height)
-fig, ax = plt.subplots()
-ax.spines['top'].set_visible(False)
-ax.spines['right'].set_visible(False)
-ax.spines['left'].set_visible(False)
-ax.set_yticks([])
-ax.set_xticks([-0.5, 0, 0.5])
-plt.scatter(means_effectient_list, y, c="#68a880", marker="o", alpha=0.7, linewidths=0, s=30)
-plt.scatter(means_ineffecient_list, y, c="#b5202d", marker="^", alpha=0.7, linewidths=0, s=30)
-plt.xlim(-1, 1)
+    df_efficient = pd.DataFrame({"posterior":mean_effecient, "group":"efficient" })
+    df_inefficient = pd.DataFrame({"posterior": mean_ineffecient, "group": "inefficient"})
 
-# plt.show()
-ymin, ymax = ax.get_ylim()
-ax.vlines([0.], ymin, ymax, ls='--', colors="#000000")
-results_path = "F:\\users\\prasetia\\Personal-OneDrive\\OneDrive\\ExperimentResults\\DoubleTennis\\Final2\\all_lower_upper\\"
-plt.savefig(os.path.join(results_path, "MeanDifference", feature_type+"_means.pdf"))
+    fig, ax = plt.subplots(figsize=(8, 4))  # width=10, height=6 inches
+    sns.kdeplot(data=df_efficient, x="posterior",  color="#68a880", fill=True, alpha=.3, linewidth=1,)
+    sns.kdeplot(data=df_inefficient, x="posterior", color="#b5202d", fill=True, alpha=.3, linewidth=1,)
+    plt.legend().remove()
+    sns.despine()
+
+    ax.set_yticks([])
+
+    xmin, xmax = ax.get_xaxis().get_view_interval()
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+    x_ticks = np.arange(xmin, xmax, (xmax - xmin) / 4)
+    ax.set_xticks(x_ticks)
+
+    # if "_cs" in analyzed_features:
+    #     plt.xlim(0.0, 1.0)
+    # else:
+    #     plt.xlim(-0.5, 0.5)
+    # plt.show()
+    results_path = "F:\\users\\prasetia\\Personal-OneDrive\\OneDrive\\ExperimentResults\\DoubleTennis\\Final2\\all_lower_upper\\"
+    plt.savefig(os.path.join(results_path, "MeanGroups", analyzed_features + "_means.pdf"))
+    plt.close()
+
+

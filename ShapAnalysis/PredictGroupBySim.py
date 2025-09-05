@@ -8,20 +8,23 @@ from sklearn.metrics import matthews_corrcoef, confusion_matrix, f1_score, roc_a
 from imblearn.metrics import geometric_mean_score
 from sklearn.model_selection import StratifiedKFold, train_test_split, GridSearchCV, RepeatedStratifiedKFold
 import pandas as pd
-import shap
+import optuna
+from sklearn.model_selection import cross_val_score
 from corr_shap import CorrExplainer
 import matplotlib.pyplot as plt
 from shap.utils._legacy import LogitLink
+import shap
+from scipy import stats
 
 np.random.seed(1945)  # For Replicability
 
 
-def normalizeShap(arr):
-    scaled_arr = arr / np.max(np.abs(arr))
-    return scaled_arr
+# def normalizeShap(arr):
+#     scaled_arr = arr / np.max(np.abs(arr))
+#     return scaled_arr
 
 
-def trainXGB(X, y, search_params=False):
+def trainXGB(X, y, x_test=None, y_test=None, search_params=False):
     mcc_scorer = make_scorer(matthews_corrcoef)
 
     # Step 5: Create a scoring dictionary
@@ -34,42 +37,75 @@ def trainXGB(X, y, search_params=False):
     d_train = xgboost.DMatrix(X_train, label=y_train, enable_categorical=True)
     d_val = xgboost.DMatrix(X_val, label=y_val, enable_categorical=True)
 
+    # d_train = xgboost.DMatrix(X, label=y, enable_categorical=True)
+    # d_val = xgboost.DMatrix(x_test, label=y_test, enable_categorical=True)
+
     if search_params:
 
-        params = {
-            'max_depth': [3, 5, 7, 10],
-            'alpha': [0.05, .1, .25, .3, .5],
-            'subsample': [.25, .35, .5, .75, 1.],
-            'learning_rate': [0.01, 0.05, 0.1],
-            "min_child_weight": [1, 3, 4, 5],
-            # "max_leaves": [3, 7, 5, 10, 15],
-            # "scale_pos_weight": [.5,1 ],
+        # params = {
+        #     'max_depth': [3, 5, 7, 10],
+        #     'alpha': [0.05, .1, .25, .3, .5],
+        #     'subsample': [.25, .35, .5, .75, 1.],
+        #     'learning_rate': [0.01, 0.03, 0.05],
+        #     "min_child_weight": [1, 3, 4, 5],
+        #     "max_delta_step": [1, 3],
+        #
+        #     # "gamma": [0, 0.2, 0.5, 0.75, 1.],
+        #     # "max_leaves": [3, 7, 5, 10, 15],
+        #     # "scale_pos_weight": [.5,1 ],
+        #
+        # }
+        #
+        # skf = StratifiedKFold(n_splits=2, shuffle=True, random_state=1945)
+        #
+        # model = xgboost.XGBClassifier(objective="binary:logistic", eval_metric="aucpr")
+        # grid_search = GridSearchCV(model, param_grid=params, scoring=scoring, refit="MCC", n_jobs=4,
+        #                            cv=skf.split(X, y), verbose=3)
+        #
+        # grid_search.fit(X, y)
+        # print(grid_search.best_score_)
+        # print(grid_search.best_params_)
+        # exit()
 
-        }
+        def objective(trial):
+            params = {
+                "device": "cuda:0",
 
-        skf = StratifiedKFold(n_splits=2, shuffle=True, random_state=1945)
+                "objective": "binary:logistic",
+                "eval_metric": "logloss",
+                "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.05, log=True),
+                "max_depth": trial.suggest_int("max_depth", 3, 5),
+                "subsample": trial.suggest_float("subsample", 0.5, 1.0),
+                "min_child_weight": trial.suggest_int("min_child_weight", 1, 3),
+                "alpha": trial.suggest_float("alpha", 0, .3),
+                "max_delta_step": trial.suggest_int("max_delta_step", 1, 3)
+            }
 
-        model = xgboost.XGBClassifier(objective="binary:logistic", eval_metric="aucpr")
-        grid_search = GridSearchCV(model, param_grid=params, scoring=scoring, refit="MCC", n_jobs=2,
-                                   cv=skf.split(X, y), verbose=3)
+            model = xgboost.XGBClassifier(**params)
+            score = cross_val_score(model, X_train, y_train, cv=3, scoring="accuracy").mean()
+            return score
 
-        grid_search.fit(X, y)
-        print(grid_search.best_score_)
-        print(grid_search.best_params_)
+        study = optuna.create_study(direction="maximize")
+        study.optimize(objective, n_trials=100)
+
+        print("Best params:", study.best_params)
+
         exit()
 
     else:
 
         params = {
-
             "device": "cuda:0",
-            "learning_rate": 0.01,
             "objective": "binary:logistic",
-            "subsample": .75,
-            "max_depth": 5,
-            "eval_metric": "aucpr",
-            "alpha": .3,
+            "eval_metric": "logloss",
+
+            "learning_rate": 0.02,
+            "subsample": 1.,
+            "max_depth": 3,
+            "alpha": .05,
             "min_child_weight": 3,
+            "max_delta_step": 3,
+
         }
 
         model = xgboost.train(
@@ -89,9 +125,8 @@ def evaluateModel(model, X_test, y_test):
     d_test = xgboost.DMatrix(X_test, label=y_test, enable_categorical=True)
 
     y_pred = model.predict(d_test)
-    # predictions = [1 if value >= 0.45 else 0 for value in y_pred]
-    predictions = [round(value) for value in y_pred]
-
+    predictions = [1 if value >= 0.5 else 0 for value in y_pred]
+    # predictions = [round(value) for value in y_pred]
 
     return predictions, y_pred
 
@@ -112,7 +147,8 @@ if __name__ == '__main__':
                                       exclude_no_pair=True)
 
     label = "all_lower_upper"
-    mod = "skill_personal_perception_action_impact_ecg"
+    mod = "skill_personal_perception_action_impact_ecg_me"
+    # mod = "top-2"
     lower_features, skill_lower = lower_reader.getImpressionFeatures(group="lower",
                                                                      mod=mod,
                                                                      return_group_skill=True)
@@ -131,8 +167,8 @@ if __name__ == '__main__':
     y = np.concatenate([y_lower, y_upper])
 
     print(X.columns.__len__())
-    # group_skill = np.concatenate([skill_lower, skill_upper])
-    # individual_skill = X["subject_skill"].values
+
+
 
     # plt.scatter(individual_skill, group_skill)
     # plt.show()
@@ -142,15 +178,14 @@ if __name__ == '__main__':
     # search params
     # model = trainXGB(X, y, search_params=True)
 
-
-
     shap_values_list = []
     X_test_list = []
     y_test_list = []
+    y_test_idx_list = []
     pred_bin_list = []
     y_pred_list = []
     correct_classification_idx = np.zeros((len(y)))
-    kf = StratifiedKFold(n_splits=3, shuffle=True, random_state=1945)
+    kf = StratifiedKFold(n_splits=3, shuffle=True)
 
     for i, (train_index, test_index) in enumerate(kf.split(X, y)):
         X_train = X.iloc[train_index]
@@ -158,18 +193,16 @@ if __name__ == '__main__':
         y_train = y[train_index]
         y_test = y[test_index]
 
-        model = trainXGB(X_train, y_train, search_params=False)
+        model = trainXGB(X_train, y_train, X_test, y_test, search_params=False)
 
-        # compute SHAP
+        # # compute SHAP
 
         model.set_param({"device": "cuda:0"})
-        explainer = CorrExplainer(model.inplace_predict, X, sampling="gauss+empirical",
+        explainer = CorrExplainer(model.inplace_predict, X_train, sampling="gauss+empirical",
                                   link=LogitLink())
         shap_values = explainer.shap_values(X_test)
 
         shap_values_list.append(shap_values)
-
-
 
         # model evaluation
         pred_bin, y_pred = evaluateModel(model, X_test, y_test)
@@ -178,28 +211,45 @@ if __name__ == '__main__':
         X_test_list.append(X_test)
         y_test_list.append(y_test)
         y_pred_list.append(y_pred)
-
+        y_test_idx_list.append(test_index)
 
     all_y_pred = np.concatenate(y_pred_list)
     np.save("Results\\" + mod + "_pred.npy", all_y_pred)
-    all_shap_values = normalizeShap(np.concatenate(shap_values_list))
+    all_shap_values = np.concatenate(shap_values_list)
     all_x_test = pd.concat(X_test_list)
     all_y_tes = np.concatenate(y_test_list)
     np.save("Results\\" + label + "_shap.npy", all_shap_values)
     np.save("Results\\" + label + "_yval.npy", all_y_tes)
     all_x_test.to_pickle("Results\\" + label + "_xval.pkl")
 
-    # shap.summary_plot(all_shap_values, all_x_test, max_display=50)
-    # plt.show()
+    shap.summary_plot(all_shap_values, all_x_test, max_display=50)
+    plt.show()
 
     # compute metrics
     y_test_list = np.concatenate(y_test_list)
     pred_bin_list = np.concatenate(pred_bin_list)
     y_pred_list = np.concatenate(y_pred_list)
+    y_test_idx_list = np.concatenate(y_test_idx_list)
     mcc = matthews_corrcoef(y_test_list, pred_bin_list)
-    cm = confusion_matrix(y_test_list, pred_bin_list, normalize="true")
+    cm = confusion_matrix(y_test_list, pred_bin_list)
     acc = balanced_accuracy_score(y_test_list, pred_bin_list)
     auc_pr = roc_auc_score(y_test_list, y_pred_list)
 
-
+    print(cm)
     print("%f, %f, %f" % (acc, mcc, auc_pr))
+
+    # plot prediction
+    # individual_skill = X["subject_skill"].values
+    # group_skill = np.concatenate([skill_lower, skill_upper])
+    #
+    # correct_idx = y_test_list == pred_bin_list
+    # incorrect_idx = y_test_list != pred_bin_list
+    # # show the linear reg
+    # plt.rcParams["text.usetex"] = True
+    # plt.rcParams["font.family"] = "Arial"
+    # plt.rcParams['font.size'] = 20
+    # plt.scatter(individual_skill[y == 0], group_skill[y == 0], label="overestimate", color="#B5152C", s=50, edgecolors="#636363", linewidths=0.1)
+    # plt.scatter(individual_skill[y == 1], group_skill[y == 1], label="underestimate", color="#68a880", s=50, edgecolors="#636363", linewidths=0.1)
+    # plt.scatter(individual_skill[y_test_idx_list[incorrect_idx]], group_skill[y_test_idx_list[incorrect_idx]], label="underestimate", color="#000000", s=50,
+    #             edgecolors="#000000", linewidths=0.5)
+    # plt.show()

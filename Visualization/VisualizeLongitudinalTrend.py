@@ -15,7 +15,7 @@ plt.rcParams["font.family"] = "Arial"
 plt.rcParams['font.size'] = 20
 plt.rcParams.update({'xtick.labelsize': 25, 'ytick.labelsize': 25})
 # save the model
-n = 5
+n = 10
 
 def gedDF():
     inefficient_group, efficient_group = groupLabeling()
@@ -27,7 +27,7 @@ def gedDF():
                                                     exclude_no_pair=False, hmm_probs=True)
     inefficient_features = inefficient_reader.getStableUnstableFailureFeatures(group_name="inefficient",
                                                                                success_failure=True,
-                                                                               mod="skill_personal_perception_action_impact",
+                                                                               mod="skill_personal_perception_action_impact_other",
                                                                                with_control=True)
     inefficient_features["group"] = "inefficient"
     # efficient group
@@ -36,7 +36,7 @@ def gedDF():
                                                   include_subjects=efficient_group, exclude_failure=True,
                                                   exclude_no_pair=False, hmm_probs=True)
     efficient_features = efficient_reader.getStableUnstableFailureFeatures(group_name="efficient", success_failure=True,
-                                                                           mod="skill_personal_perception_action_impact",
+                                                                           mod="skill_personal_perception_action_impact_other",
                                                                            with_control=True)
     efficient_features["group"] = "efficient"
 
@@ -44,14 +44,26 @@ def gedDF():
 
     return df
 features = [
-    "receiver_im_ball_wrist",
+    "hitter_p2_cs",
+    "receiver_p2_cs",
+    "hitter_p1_cs",
+    "receiver_p1_cs",
+    "receiver_start_fs",
     "receiver_im_racket_ball_wrist",
-    "receiver_im_racket_ball_angle",
+    "hitter_bouncing_to_partner",
+    "receiver_distance_eye_hand",
+    "hitter_p2_al_onset",
+    "receiver_p2_al_prec",
     "receiver_im_ball_updown",
+    "receiver_p1_al_mag",
+    "hitter_p1_al_prec",
+    "hitter_p1_al_mag",
+    "receiver_p2_al_onset",
+    "hitter_at_and_after_hit",
 
 ]
 
-# features = ["hitter_p2_cs"]
+# features = ["hitter_bouncing_to_partner"]
 for analyzed_features in features:
     print(analyzed_features)
     df = gedDF()
@@ -78,7 +90,7 @@ for analyzed_features in features:
 
     # axes = az.plot_forest(idata,
     #                       kind='forestplot',
-    #                       var_names=["global_diff_of_means", "global_seg_diff_of_means"],
+    #                       var_names=["global_efficient", "global_efficient"],
     #                       combined=True,
     #                       figsize=(9, 7))
     # plt.show()
@@ -97,58 +109,43 @@ for analyzed_features in features:
     global_inefficient = posterior["global_inefficient"]
     global_inefficient_seg = posterior["global_inefficient_seg"]
 
-    global_skill_slope = posterior["global_skill_slope"]
+
 
     subjects_intercept = posterior["subjects_intercept"].mean(dim="subject_idx")
-    subjects_intercept_seg = posterior["subjects_intercept_seg"].mean(dim="subject_idx")
+    sessions_intercept = posterior["sessions_intercept"].mean(dim="session_idx")
 
-    global_intercept = posterior["global_intercept"] + subjects_intercept
-    global_th_segment = posterior["global_th_segment"] + subjects_intercept_seg
+
+
+
+
+    global_intercept =  posterior["global_intercept"] + subjects_intercept + sessions_intercept
+    global_th_segment = posterior["global_th_segment"]
+
+
+
 
     time = 100
     time_xi = xr.DataArray(np.arange(time) / 100)
     # plot line
     fig, ax = plt.subplots(figsize=(8, 8))
 
-    y_efficient = global_intercept + global_efficient * 1 + global_efficient_seg * (
-        time_xi) + global_th_segment * time_xi + global_skill_slope
+    y_efficient = global_intercept + global_efficient + global_efficient_seg * (
+        time_xi) + global_th_segment * time_xi
 
-    y_efficient_mean = global_intercept.mean() + global_efficient.mean() * 1 + global_efficient_seg.mean() * (
-        time_xi) + global_th_segment.mean() * time_xi + global_skill_slope.mean()
+    y_efficient_mean = global_intercept.mean()   + global_efficient.mean() + global_efficient_seg.mean() * (
+        time_xi) + global_th_segment.mean() * time_xi
 
-    y_inefficient = global_intercept + global_inefficient * 1 + global_inefficient_seg * (
-        time_xi) + global_th_segment * time_xi + global_skill_slope
-    y_inefficient_mean = global_intercept.mean() + global_inefficient.mean() * 1 + global_inefficient_seg.mean() * (
-        time_xi) + global_th_segment.mean() * time_xi + global_skill_slope.mean()
+    y_inefficient = global_intercept + global_inefficient  + global_inefficient_seg * (
+        time_xi) + global_th_segment * time_xi
 
+    y_inefficient_mean = global_intercept.mean() + global_inefficient.mean() + global_inefficient_seg.mean() * (
+        time_xi) + global_th_segment.mean() * time_xi
 
-    # rescaling
-    # y_efficient = (y_efficient* std_ori) + mean_ori
-    # y_efficient_mean = (y_efficient_mean * std_ori) + mean_ori
-    #
-    # y_inefficient = (y_inefficient * std_ori) + mean_ori
-    # y_inefficient_mean = (y_inefficient_mean * std_ori) + mean_ori
-
-    # ax.plot(
-    #     time_xi,
-    #     y_efficient.values.reshape(8000, n).T,
-    #     color="#66c2a5",
-    #     linewidth=0.05,
-    #     alpha=0.05,
-    # )
-    #
-    # ax.plot(
-    #     time_xi,
-    #     y_inefficient.values.reshape(8000, n).T,
-    #     color="#fb8072",
-    #     linewidth=0.05,
-    #     alpha=0.05,
-    # )
 
 
     az.plot_hdi(
         time_xi,
-        y_efficient.values.reshape(4, 2000, time),
+        y_efficient.values.reshape(4, 1000, time),
         hdi_prob=0.95,
         fill_kwargs={"alpha": 0.1, "linewidth": 0.1},
         color="#69A87F",
@@ -156,7 +153,7 @@ for analyzed_features in features:
 
     az.plot_hdi(
         time_xi,
-        y_inefficient.values.reshape(4, 2000, time),
+        y_inefficient.values.reshape(4, 1000, time),
         hdi_prob=0.95,
         fill_kwargs={"alpha": 0.1, "linewidth": 0.1},
         color="#B5152C",
