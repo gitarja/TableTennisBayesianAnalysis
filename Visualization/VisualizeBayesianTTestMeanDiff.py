@@ -25,7 +25,7 @@ plt.rcParams['font.size'] = 20
 # plt.rcParams.update({'xtick.labelsize': 25, 'ytick.labelsize': 25})
 
 
-feature_type = "t-test-shap-important"
+feature_type = "t-test-post"
 if feature_type == "t-test":
     features = [
         "hitter_p2_cs",
@@ -104,6 +104,14 @@ if feature_type == "t-test-insignificant":
 
     ]
     height = len(features) * (3.5 / 10)
+if feature_type == "t-test-post":
+    features = [
+        "double_self_report_score",
+        "double_team_score",
+        "double_facilitating_skill",
+        "double_partner_skill",
+        "subject_indv_myskill",
+    ]
 
 if feature_type == "t-test-insignificant-gender":
     features = ["gender_sim"]
@@ -112,13 +120,13 @@ if feature_type == "t-test-insignificant-gender":
 models = []
 
 for analyzed_features in features:
-    with open(DOUBLE_RESULTS_PATH_TTEST + "\\model_supp\\bc\\" + "idata_" + analyzed_features + "_study1.pkl", 'rb') as handle:
+    with open(DOUBLE_RESULTS_PATH_TTEST + "\\model_supp\\" + "idata_" + analyzed_features + ".pkl", 'rb') as handle:
     # with open(DOUBLE_RESULTS_PATH_TTEST + "\\model_final\\" + "idata_" + analyzed_features + ".pkl", 'rb') as handle:
         idata = pickle.load(handle)
-    idata.posterior['effect_size'] = idata.posterior['effect_size'].dropna(dim="draw", how="any")
+    # idata.posterior['effect_size'] = idata.posterior['effect_size'].dropna(dim="draw", how="any")
 
     models.append(idata)
-height = len(features) * (4.5 / 10)
+height = len(features) * (6.5 / 10)
 # height = len(features) * (3.5 / 10)
 
 axis = az.plot_forest(
@@ -136,8 +144,8 @@ axis = az.plot_forest(
 
 )[0]
 ymin, ymax = axis.get_ylim()
-axis.set_xticks([-0.5, 0, 0.5])
-axis.set_xlim(-1.5, 1.5)
+# axis.set_xticks([-0.5, 0, 0.5])
+# axis.set_xlim(-1.5, 1.5)
 
 #axis.set_xticks([-1.5, 0, 1.5])
 #axis.set_xlim(-2.5, 2.5)

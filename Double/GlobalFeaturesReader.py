@@ -1183,15 +1183,18 @@ class GlobalDoubleFeaturesReader:
 
         return pd.DataFrame(fetures_summary)
 
-    def getFEFeatures(self, min_group_n=3):
+    def getFEFeatures(self, min_group_n=3, max_event=0):
 
         def convertSegmentationLabel(v):
-            v[v<=10] = 0
-            v[(v>10) & (v<=40)] = 1
-            v[v > 40] = 2
+            v[v<=15] = 0
+            v[(v > 15) & (v <= 30)] = 1
+            v[(v > 30) & (v <= 50)] = 2
+            v[v > 50] = 3
             return v
         scaler = StandardScaler()
         df = self.df.iloc[self.df["success"].values == 1]
+        if max_event > 0:
+            df = df.iloc[df["observation_label"].values < max_event]
         group_df = df.groupby(['session_id', 'episode_label'])
 
         # prior
@@ -1231,7 +1234,7 @@ class GlobalDoubleFeaturesReader:
 
                 subjects = group[["id_subject1", "id_subject2"]].values[0]
 
-                receiver = subjects[prev_data["receiver"].values[receiver_idx].astype(int)]
+                receiver = subjects[curr_data["receiver"].values[hitter_idx].astype(int)]
                 hitter = subjects[curr_data["hitter"].values[hitter_idx].astype(int)]
                 session = curr_data["session_id"].values[hitter_idx]
 
@@ -1292,7 +1295,7 @@ class GlobalDoubleFeaturesReader:
             "sense_racket_ball_wrist": np.concatenate(sense_racket_ball_wrist),
             "sense_ball_updown": np.concatenate(sense_im_ball_updown),
 
-            "observation_seg" : np.concatenate(observation_list),
+            "event_seg" : np.concatenate(observation_list),
             "receiver": np.concatenate(receiver_list),
             "hitter": np.concatenate(hitter_list),
             "session": np.concatenate(session_list),

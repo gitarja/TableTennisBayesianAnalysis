@@ -67,16 +67,19 @@ if __name__ == '__main__':
         mu_m = clean_df[analyzed_features].mean()
         mu_s = clean_df[analyzed_features].std() * 2
 
+        subjects_idx = np.unique(np.concatenate([clean_df["subject_indv_id"].values]))
+
+        gender_idx = np.unique(np.concatenate([clean_df["subject_indv_gender"].values]))
         # idx
-        ineff_subjects_idx, ineff_subjects_unique = pd.factorize(
-            clean_df.loc[clean_df["group"] == "inefficient"]["subject_indv_id"].values)
-        eff_subjects_idx, eff_subjects_unique = pd.factorize(
-            clean_df.loc[clean_df["group"] == "efficient"]["subject_indv_id"].values)
+        ineff_subjects_idx = np.searchsorted(subjects_idx, clean_df.loc[clean_df["group"] == "inefficient"][
+            "subject_indv_id"].values)
+        eff_subjects_idx = np.searchsorted(subjects_idx, clean_df.loc[clean_df["group"] == "efficient"][
+            "subject_indv_id"].values)
         # gender
-        ineff_subjects_gender, _ = pd.factorize(
-            clean_df.loc[clean_df["group"] == "inefficient"]["subject_indv_gender"].values)
-        eff_subjects_gender, _ = pd.factorize(
-            clean_df.loc[clean_df["group"] == "efficient"]["subject_indv_gender"].values)
+        ineff_gender_idx = np.searchsorted(gender_idx, clean_df.loc[clean_df["group"] == "inefficient"][
+            "subject_indv_gender"].values)
+        eff_gender_idx = np.searchsorted(gender_idx, clean_df.loc[clean_df["group"] == "efficient"][
+            "subject_indv_gender"].values)
         # order of trial
 
         inefficient_obv = clean_df.loc[clean_df["group"] == "inefficient"][analyzed_features].values.astype(int)
@@ -84,11 +87,11 @@ if __name__ == '__main__':
 
 
 
-        inefficient_obv = inefficient_obv - inefficient_obv.min()
-        efficient_obv = efficient_obv - efficient_obv.min()
+        inefficient_obv = inefficient_obv - 1
+        efficient_obv = efficient_obv - 1
 
-        coords = {"ineff_subject_idx": ineff_subjects_unique,
-                  "eff_subject_idx": eff_subjects_unique,
+        coords = {"subject_idx": subjects_idx,
+
                   "subject_genders": range(2),
 
                   }
@@ -103,28 +106,26 @@ if __name__ == '__main__':
             # continous
 
             # random intercept
-            ineff_subjects_intercept = pm.Normal("ineff_subjects_intercept", 0, 0.1, dims="ineff_subject_idx")
-            eff_subjects_intercept = pm.Normal("eff_subjects_intercept", 0, 0.1, dims="eff_subject_idx")
+            subjects_intercept = pm.Normal("subjects_intercept", 0, 0.1, dims="subject_idx")
 
             subjects_gender_intercept = pm.Normal("subjects_gender_intercept", 0, 0.1,
                                                         dims="subject_genders")
 
 
              # using STD led to unconverge
-            # inefficient_std = pm.HalfNormal("inefficient_std", 0.1)
-            # efficient_std = pm.HalfNormal("efficient_std",  0.1)
 
-            inefficient_mean = pm.Normal('inefficient_mean', mu=0, sigma=1)
 
-            efficient_mean = pm.Normal('efficient_mean', mu=0, sigma=1)
+            inefficient_mean = pm.Normal('inefficient_mean', mu=0, sigma=0.5)
+
+            efficient_mean = pm.Normal('efficient_mean', mu=0, sigma=0.5)
 
 
             inefficient_mu = pm.Deterministic("inefficient_mu",
-                                              inefficient_mean  + ineff_subjects_intercept[ineff_subjects_idx] +
-                                              subjects_gender_intercept[ineff_subjects_gender] )
+                                              inefficient_mean  + subjects_intercept[ineff_subjects_idx] +
+                                              subjects_gender_intercept[ineff_gender_idx] )
 
-            efficient_mu = pm.Deterministic("efficient_mu", efficient_mean  + eff_subjects_intercept[eff_subjects_idx] +
-                                            subjects_gender_intercept[eff_subjects_gender] )
+            efficient_mu = pm.Deterministic("efficient_mu", efficient_mean  + subjects_intercept[eff_subjects_idx] +
+                                            subjects_gender_intercept[eff_gender_idx] )
 
             # using different cutpoints caused spreading posterior
             cutpoints_mu = np.linspace(-1, 1, K - 1)
@@ -141,10 +142,7 @@ if __name__ == '__main__':
                                            observed=efficient_obv, sigma=1)
 
             diff_of_means = pm.Deterministic("difference_of_means", efficient_mean - inefficient_mean)
-            # diff_of_stds = pm.Deterministic("difference_of_stds", efficient_std - inefficient_std)
-            # effect_size = pm.Deterministic(
-            #     "effect_size", diff_of_means / np.sqrt((inefficient_std ** 2 + efficient_std ** 2) / 2)
-            # )
+
             effect_size = pm.Deterministic(
                 "effect_size", diff_of_means
             )

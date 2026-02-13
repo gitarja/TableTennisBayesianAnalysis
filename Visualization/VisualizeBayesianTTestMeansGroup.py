@@ -55,7 +55,7 @@ def gedDF():
     return df
 
 
-feature_type = "t-test-shap-important"
+feature_type = "t-test-post"
 if feature_type == "t-test":
     features = [
         "hitter_p2_cs",
@@ -134,6 +134,16 @@ if feature_type == "t-test-insignificant":
 
     ]
     height = len(features) * (4.5 / 10)
+if feature_type == "t-test-post":
+    features = [
+        "double_self_report_score",
+        "double_team_score",
+        "double_facilitating_skill",
+        "double_partner_skill",
+        "subject_indv_myskill",
+    ]
+    height = len(features) * (4 / 10)
+
 if feature_type == "t-test-insignificant-gender":
     features = ["gender_sim"]
     height = 3 * (3.5 / 10)
@@ -141,7 +151,7 @@ if feature_type == "t-test-insignificant-gender":
 means_effectient_list = []
 means_ineffecient_list = []
 for analyzed_features in features:
-    with open(DOUBLE_RESULTS_PATH_TTEST + "\\model_supp\\bc\\" + "idata_" + analyzed_features + "_study1.pkl", 'rb') as handle:
+    with open(DOUBLE_RESULTS_PATH_TTEST + "\\model_supp\\" + "idata_" + analyzed_features + ".pkl", 'rb') as handle:
     # with open(DOUBLE_RESULTS_PATH_TTEST + "\\model_final\\" + "idata_" + analyzed_features + ".pkl",
     #               'rb') as handle:
         idata = pickle.load(handle)
@@ -164,7 +174,7 @@ ax.set_yticks([])
 ax.set_xticks([-0.5, 0, 0.5])
 plt.scatter(means_effectient_list, y, c="#68a880", marker="o", alpha=0.7, linewidths=0, s=30)
 plt.scatter(means_ineffecient_list, y, c="#b5202d", marker="^", alpha=0.7, linewidths=0, s=30)
-plt.xlim(-1, 1)
+plt.xlim(-0.7, 0.7)
 
 # plt.show()
 ymin, ymax = ax.get_ylim()

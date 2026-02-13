@@ -1,27 +1,60 @@
 digraph {
-	subgraph "clusterobs (8603) x axis (2)" {
-		m_post [label="m_post
-~
-Deterministic" shape=box]
-		y_a [label="y_a
-~
-Data" shape=box style="rounded, filled"]
-		b [label="b
-~
-Normal" shape=ellipse]
+	subgraph "clusterobs (3330) x axis (8)" {
 		x [label="x
 ~
 Data" shape=box style="rounded, filled"]
+		label="obs (3330) x axis (8)" labeljust=r labelloc=b style=rounded
+	}
+	subgraph "clusterobs (3330)" {
 		y_f [label="y_f
 ~
 Data" shape=box style="rounded, filled"]
-		label="obs (8603) x axis (2)" labeljust=r labelloc=b style=rounded
-	}
-	subgraph "clustergroup_idx (2)" {
-		tau_sens [label="tau_sens
+		sensory_evidence [label="sensory_evidence
 ~
 Deterministic" shape=box]
-		tau_prior [label="tau_prior
+		priors_model [label="priors_model
+~
+Deterministic" shape=box]
+		m_post [label="m_post
+~
+Deterministic" shape=box]
+		label="obs (3330)" labeljust=r labelloc=b style=rounded
+	}
+	sense_noise [label="sense_noise
+~
+Normal" shape=ellipse]
+	b [label="b
+~
+Gamma" shape=ellipse]
+	a [label="a
+~
+Gamma" shape=ellipse]
+	prior_noise [label="prior_noise
+~
+Normal" shape=ellipse]
+	sigma_f [label="sigma_f
+~
+HalfCauchy" shape=ellipse]
+	subgraph "clustersubject_idx (37)" {
+		subject_intercept [label="subject_intercept
+~
+Normal" shape=ellipse]
+		label="subject_idx (37)" labeljust=r labelloc=b style=rounded
+	}
+	subgraph "clustersession_idx (51)" {
+		session_intercept [label="session_intercept
+~
+Normal" shape=ellipse]
+		label="session_idx (51)" labeljust=r labelloc=b style=rounded
+	}
+	subgraph "clusteraxis (8)" {
+		sigma_sensory [label="sigma_sensory
+~
+Normal" shape=ellipse]
+		label="axis (8)" labeljust=r labelloc=b style=rounded
+	}
+	subgraph "clustergroup_idx (2) x event_idx (4)" {
+		w [label="w
 ~
 Deterministic" shape=box]
 		log_tau_sens [label="log_tau_sens
@@ -30,84 +63,64 @@ Normal" shape=ellipse]
 		log_tau_prior [label="log_tau_prior
 ~
 Normal" shape=ellipse]
-		label="group_idx (2)" labeljust=r labelloc=b style=rounded
+		label="group_idx (2) x event_idx (4)" labeljust=r labelloc=b style=rounded
 	}
-	subgraph "clustergroup_idx (2) x axis (2)" {
-		mu_group [label="mu_group
-~
-Normal" shape=ellipse]
-		label="group_idx (2) x axis (2)" labeljust=r labelloc=b style=rounded
-	}
-	subgraph "clustersubject_idx (74) x axis (2)" {
-		subject_intercept [label="subject_intercept
-~
-Normal" shape=ellipse]
-		label="subject_idx (74) x axis (2)" labeljust=r labelloc=b style=rounded
-	}
-	subgraph "clustersession_idx (64) x axis (2)" {
-		session_intercept [label="session_intercept
-~
-Normal" shape=ellipse]
-		label="session_idx (64) x axis (2)" labeljust=r labelloc=b style=rounded
-	}
-	tau_sens_diff [label="tau_sens_diff
+	subgraph "cluster2 x 4" {
+		tau_prior [label="tau_prior
 ~
 Deterministic" shape=box]
-	sigma_a [label="sigma_a
-~
-HalfCauchy" shape=ellipse]
-	sigma_f [label="sigma_f
-~
-HalfCauchy" shape=ellipse]
-	tau_prior_diff [label="tau_prior_diff
+		tau_sens [label="tau_sens
 ~
 Deterministic" shape=box]
-	nu [label="nu
-~
-Deterministic" shape=box]
-	nu_minus_one [label="nu_minus_one
-~
-Exponential" shape=ellipse]
-	subgraph "cluster8603 x 2" {
-		inefficient [label="inefficient
-~
-StudentT" shape=ellipse style=filled]
-		efficient [label="efficient
-~
-StudentT" shape=ellipse style=filled]
-		label="8603 x 2" labeljust=r labelloc=b style=rounded
+		label="2 x 4" labeljust=r labelloc=b style=rounded
 	}
-	subgraph "clusterobs (8603)" {
-		prediction_error [label="prediction_error
+	subgraph cluster3330 {
+		w_obs [label="w_obs
 ~
 Deterministic" shape=box]
-		corrective_amp [label="corrective_amp
+		y_f_like [label="y_f_like
 ~
-Deterministic" shape=box]
-		label="obs (8603)" labeljust=r labelloc=b style=rounded
+SkewStudentT" shape=ellipse style=filled]
+		label=3330 labeljust=r labelloc=b style=rounded
 	}
-	inefficient -> y_a
-	efficient -> y_f
+	subgraph cluster4 {
+		tau_prior_sense_diff_eff [label="tau_prior_sense_diff_eff
+~
+Deterministic" shape=box]
+		tau_sens_diff [label="tau_sens_diff
+~
+Deterministic" shape=box]
+		tau_prior_diff [label="tau_prior_diff
+~
+Deterministic" shape=box]
+		tau_prior_sense_diff_ineff [label="tau_prior_sense_diff_ineff
+~
+Deterministic" shape=box]
+		label=4 labeljust=r labelloc=b style=rounded
+	}
+	y_f_like -> y_f
+	session_intercept -> priors_model
+	prior_noise -> priors_model
+	subject_intercept -> priors_model
+	sense_noise -> sensory_evidence
+	session_intercept -> sensory_evidence
+	x -> sensory_evidence
+	sigma_sensory -> sensory_evidence
 	log_tau_prior -> tau_prior
 	log_tau_sens -> tau_sens
-	subject_intercept -> b
-	mu_group -> b
-	session_intercept -> b
-	x -> m_post
-	tau_sens -> m_post
-	b -> m_post
-	tau_prior -> m_post
-	nu_minus_one -> nu
-	nu -> inefficient
-	sigma_a -> inefficient
-	b -> inefficient
-	nu -> efficient
-	sigma_a -> efficient
-	m_post -> efficient
-	y_f -> corrective_amp
-	y_a -> corrective_amp
-	b -> prediction_error
-	x -> prediction_error
+	tau_prior -> w
+	tau_sens -> w
+	w -> w_obs
+	sensory_evidence -> m_post
+	priors_model -> m_post
+	b -> y_f_like
+	a -> y_f_like
+	sigma_f -> y_f_like
+	m_post -> y_f_like
 	tau_prior -> tau_prior_diff
 	tau_sens -> tau_sens_diff
+	tau_prior -> tau_prior_sense_diff_eff
+	tau_sens -> tau_prior_sense_diff_eff
+	tau_prior -> tau_prior_sense_diff_ineff
+	tau_sens -> tau_prior_sense_diff_ineff
 }

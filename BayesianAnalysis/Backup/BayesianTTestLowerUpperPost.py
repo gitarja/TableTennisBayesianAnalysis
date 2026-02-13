@@ -61,34 +61,37 @@ if __name__ == '__main__':
         analyzed_features = f
         clean_df = df.dropna(subset=[analyzed_features])
 
-        # mean and std ori
-        mean_ori = np.nanmean(clean_df[analyzed_features].values.reshape(-1, 1))
-        std_ori = np.nanstd(clean_df[analyzed_features].values.reshape(-1, 1))
 
-        mu_m = clean_df[analyzed_features].mean()
-        mu_s = clean_df[analyzed_features].std() * 2
+        subjects_idx = np.unique(np.concatenate([clean_df["double_subject_id"].values]))
 
-        # idx
-        ineff_subjects_idx, ineff_subjects_unique = pd.factorize(
-            clean_df.loc[clean_df["group"] == "inefficient"]["double_subject_id"].values)
-        eff_subjects_idx, eff_subjects_unique = pd.factorize(
-            clean_df.loc[clean_df["group"] == "efficient"]["double_subject_id"].values)
-        # gender
-        ineff_subjects_gender, _ = pd.factorize(
-            clean_df.loc[clean_df["group"] == "inefficient"]["double_subject_gender"].values)
-        eff_subjects_gender, _ = pd.factorize(
-            clean_df.loc[clean_df["group"] == "efficient"]["double_subject_gender"].values)
-        # order of trial
-        ineff_order_play, _ = pd.factorize(
-            clean_df.loc[clean_df["group"] == "inefficient"]["double_order_play"].values)
-        eff_order_play, _ = pd.factorize(
-            clean_df.loc[clean_df["group"] == "efficient"]["double_order_play"].values)
+        gender_idx = np.unique(np.concatenate([clean_df["double_subject_gender"].values]))
 
-        # skill comparison
-        ineff_skill_comp, _ = pd.factorize(
-            clean_df.loc[clean_df["group"] == "inefficient"]["double_skill_comp"].values)
-        eff_skill_comp, _ = pd.factorize(
-            clean_df.loc[clean_df["group"] == "efficient"]["double_skill_comp"].values)
+        order_play_idx = np.unique(np.concatenate([clean_df["double_order_play"].values]))
+
+        skill_compt_idx = np.unique(np.concatenate([clean_df["double_skill_comp"].values]))
+
+
+        # factorize
+        ineff_subjects_idx = np.searchsorted(subjects_idx, clean_df.loc[clean_df["group"] == "inefficient"]["double_subject_id"].values)
+        eff_subjects_idx = np.searchsorted(subjects_idx, clean_df.loc[clean_df["group"] == "efficient"][
+            "double_subject_id"].values)
+
+        ineff_gender_idx = np.searchsorted(gender_idx, clean_df.loc[clean_df["group"] == "inefficient"][
+            "double_subject_gender"].values)
+        eff_gender_idx = np.searchsorted(gender_idx, clean_df.loc[clean_df["group"] == "efficient"][
+            "double_subject_gender"].values)
+
+        ineff_order_play_idx = np.searchsorted(order_play_idx, clean_df.loc[clean_df["group"] == "inefficient"][
+            "double_order_play"].values)
+        eff_order_play_idx = np.searchsorted(order_play_idx, clean_df.loc[clean_df["group"] == "efficient"][
+            "double_order_play"].values)
+
+        ineff_skill_comp_idx = np.searchsorted(skill_compt_idx, clean_df.loc[clean_df["group"] == "inefficient"][
+            "double_skill_comp"].values)
+        eff_skill_comp_idx = np.searchsorted(skill_compt_idx, clean_df.loc[clean_df["group"] == "efficient"][
+            "double_skill_comp"].values)
+
+
 
         clean_df[analyzed_features].values.astype(int)
         inefficient_obv = clean_df.loc[clean_df["group"] == "inefficient"][analyzed_features].values.astype(int)
@@ -104,8 +107,7 @@ if __name__ == '__main__':
         # az.plot_dist(efficient_obv)
         # plt.show()
 
-        coords = {"ineff_subject_idx": ineff_subjects_unique,
-                  "eff_subject_idx": eff_subjects_unique,
+        coords = {"subject_idx": subjects_idx,
                   "subject_genders": range(2),
                   "order_play": range(2),
                   "skill_comp": range(2),
@@ -121,33 +123,34 @@ if __name__ == '__main__':
             # continous
 
             # random intercept
-            ineff_subjects_intercept = pm.Normal("ineff_subjects_intercept", 0, 0.1, dims="ineff_subject_idx")
-            eff_subjects_intercept = pm.Normal("eff_subjects_intercept", 0, 0.1, dims="eff_subject_idx")
+            subjects_intercept = pm.Normal("subjects_intercept", 0, 0.1, dims="subject_idx")
 
-            subjects_gender_intercept = pm.Normal("subjects_gender_intercept", 0, 0.1,
+            gender_intercept = pm.Normal("subjects_gender_intercept", 0, 0.1,
                                                   dims="subject_genders")
 
             order_play_intercept = pm.Normal("order_play_intercept", 0, 0.1,
                                              dims="order_play")
 
-            # using STD led to divergence
-            # inefficient_std = pm.HalfNormal("inefficient_std", 0.1)
-            # efficient_std = pm.HalfNormal("efficient_std",  0.1)
+            skill_component_intercept =  pm.Normal("skill_component_intercept", 0, 0.1,
+                                             dims="skill_comp")
 
-            inefficient_mean = pm.Normal('inefficient_mean', mu=0, sigma=1, dims="skill_comp")
+            inefficient_mean = pm.Normal('inefficient_mean', mu=0, sigma=0.5)
 
-            efficient_mean = pm.Normal('efficient_mean', mu=0, sigma=1, dims="skill_comp")
+            efficient_mean = pm.Normal('efficient_mean', mu=0, sigma=0.5)
+
+            # inefficient_std = pm.HalfCauchy("inefficient_std", .5)
+            # efficient_std = pm.HalfCauchy("efficient_std", .5)
 
             inefficient_mu = pm.Deterministic("inefficient_mu",
-                                              inefficient_mean[ineff_skill_comp] + ineff_subjects_intercept[
+                                              inefficient_mean + subjects_intercept[
                                                   ineff_subjects_idx] +
-                                              subjects_gender_intercept[ineff_subjects_gender] + order_play_intercept[
-                                                  ineff_order_play])
+                                              gender_intercept[ineff_gender_idx] + order_play_intercept[
+                                                  ineff_order_play_idx] + skill_component_intercept[ineff_skill_comp_idx])
 
             efficient_mu = pm.Deterministic("efficient_mu",
-                                            efficient_mean[eff_skill_comp] + eff_subjects_intercept[eff_subjects_idx] +
-                                            subjects_gender_intercept[eff_subjects_gender] + order_play_intercept[
-                                                eff_order_play])
+                                            efficient_mean + subjects_intercept[eff_subjects_idx] +
+                                            gender_intercept[eff_gender_idx] + order_play_intercept[
+                                                eff_order_play_idx] + skill_component_intercept[eff_skill_comp_idx])
 
             # using different cutpoints caused spreading posterior
             cutpoints_mu = np.linspace(-1, 1, K-1) # the questionarie ranges from 1-7
@@ -160,19 +163,9 @@ if __name__ == '__main__':
             efficient = pm.OrderedProbit("efficient", eta=efficient_mu, cutpoints=cutpoints,
                                          observed=efficient_obv, sigma=1)
 
-            diff_of_means1 = pm.Deterministic("difference_of_means1", efficient_mean[0] - inefficient_mean[0])
-            diff_of_means2 = pm.Deterministic("difference_of_means2", efficient_mean[0] - inefficient_mean[1])
-            diff_of_means3 = pm.Deterministic("difference_of_means3", efficient_mean[1] - inefficient_mean[0])
-            diff_of_means4 = pm.Deterministic("difference_of_means4", efficient_mean[1] - inefficient_mean[1])
-            diff_of_means5 = pm.Deterministic("difference_of_means5", efficient_mean[0] - efficient_mean[1])
-            diff_of_means6 = pm.Deterministic("difference_of_means6", inefficient_mean[0] - inefficient_mean[1])
-            # diff_of_stds = pm.Deterministic("difference_of_stds", efficient_std - inefficient_std)
-            # effect_size = pm.Deterministic(
-            #     "effect_size", diff_of_means / np.sqrt((inefficient_std ** 2 + efficient_std ** 2) / 2)
-            # )
+            diff_of_means = pm.Deterministic("difference_of_means", efficient_mean - inefficient_mean)
             effect_size = pm.Deterministic(
-                "effect_size", (pm.math.abs(diff_of_means1) + pm.math.abs(diff_of_means2) + pm.math.abs(
-                    diff_of_means3) + pm.math.abs(diff_of_means4) + pm.math.abs(diff_of_means4) + pm.math.abs(diff_of_means6))
+                "effect_size", diff_of_means / 1
             )
 
             # debug and sampling

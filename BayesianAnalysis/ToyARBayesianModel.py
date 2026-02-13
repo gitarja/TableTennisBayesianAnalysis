@@ -11,7 +11,7 @@ from Utils.Conf import N_CORE, N_TUNE, N_CHAINS, N_SAMPLES, DOUBLE_SUMMARY_FE_FE
 import arviz as az
 import pickle
 from sklearn.preprocessing import StandardScaler
-from BayesianRegressionModels import BayesianHirModel
+from BayesianRegressionModels import BayesianHirSegmentModel
 from sklearn.preprocessing import StandardScaler
 
 plt.rcParams["text.usetex"] = True
@@ -48,6 +48,7 @@ if __name__ == '__main__':
     group_idx = np.unique(clean_df["group"].values)
     event_idx = np.unique(clean_df["event_seg"].values)
 
+
     prior_mean_group = clean_df.groupby("hitter")["priors_mean"].mean().reset_index()
     priors_mean = prior_mean_group.loc[np.argwhere(prior_mean_group["hitter"].values == subjects_idx).flatten()]["priors_mean"].values
 
@@ -56,11 +57,10 @@ if __name__ == '__main__':
 
     # normalize the predictors
     session_v_idx = np.searchsorted(sessions_idx, clean_df["session"].values)
-    hitter_v_idx = np.searchsorted(subjects_idx, clean_df["hitter"].values)
-    receiver_v_idx = np.searchsorted(subjects_idx, clean_df["receiver"].values)
+    actor_v_idx = np.searchsorted(subjects_idx, clean_df["hitter"].values)
+    partner_v_idx = np.searchsorted(subjects_idx, clean_df["receiver"].values)
     group_v_idx = np.searchsorted(group_idx, clean_df["group"].values)
-    event_v_idx = np.searchsorted(event_idx, clean_df["event_seg"].values)
-
+    event_v_idx =  np.searchsorted(event_idx, clean_df["event_seg"].values)
 
 
     y_f = clean_df["post_visual_angle_error"].values
@@ -88,32 +88,34 @@ if __name__ == '__main__':
         "axis": range(8),
         "event_idx": event_idx,
         "feature": range(4),
-    }
-    type_model= "reactive"
 
-    model = BayesianHirModel(coords, X_std, y_f_std, priors_mean, priors_std,  session_v_idx, hitter_v_idx, group_v_idx, event_v_idx, mode=type_model)
+    }
+
+    type_model = "ARFE"
+    model = BayesianHirSegmentModel(coords, X_std, y_f_std, priors_mean, priors_std,  session_v_idx, actor_v_idx, partner_v_idx, group_v_idx, event_v_idx)
 
     with model:
         # debug the model
+        # pm.model_to_graphviz(model).view()
         print(model.debug())
-        pm.model_to_graphviz(model).view()
-    #     # Inference!
-    #     idata = pm.sample_prior_predictive()
-    #     idata.extend(
-    #         pm.sample(random_seed=100, target_accept=TARGET_ACC, idata_kwargs={"log_likelihood": True},
-    #                   draws=N_SAMPLES,
-    #                   chains=N_CHAINS, tune=N_TUNE, cores=N_CORE, compile_kwargs=dict(mode="NUMBA"),
-    #                   init="jitter+adapt_diag")
-    #     )
-    #     idata.extend(pm.sample_posterior_predictive(idata))
-    #
-    # # print loo
-    # hierarchical_loo = az.plot_ppc(idata)
-    # plt.savefig(DOUBLE_RESULTS_PATH_TTEST + "PPC_regression\\minimize_"+str(type_model)+".png", format='png')
-    # plt.close()
-    #
-    # trace_post = az.extract(idata.posterior)
-    # # print(az.summary(idata))
-    # # save the model
-    # with open(DOUBLE_RESULTS_PATH_TTEST + "model_regression\\" + "idata_"+str(type_model)+".pkl", 'wb') as handle:
-    #     pickle.dump(idata, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        # Inference!
+        idata = pm.sample_prior_predictive()
+        idata.extend(
+            pm.sample(random_seed=100, target_accept=TARGET_ACC, idata_kwargs={"log_likelihood": True},
+                      draws=N_SAMPLES,
+                      chains=N_CHAINS, tune=N_TUNE, cores=N_CORE, compile_kwargs=dict(mode="NUMBA"),
+                      init="jitter+adapt_diag")
+        )
+        idata.extend(pm.sample_posterior_predictive(idata))
+
+    # print loo
+    hierarchical_loo = az.plot_ppc(idata)
+    plt.savefig(DOUBLE_RESULTS_PATH_TTEST + "PPC_regression\\minimize_"+type_model+".png", format='png')
+    plt.close()
+
+    trace_post = az.extract(idata.posterior)
+    # print(az.summary(idata))
+    # save the model
+    with open(DOUBLE_RESULTS_PATH_TTEST + "model_regression\\" + "idata_"+type_model+".pkl", 'wb') as handle:
+        pickle.dump(idata, handle, protocol=pickle.HIGHEST_PROTOCOL)
